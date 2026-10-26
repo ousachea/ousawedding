@@ -94,7 +94,7 @@ const units = computed(() => {
           <tr v-for="(week, i) in calendar.weeks" :key="i">
             <td v-for="(day, j) in week" :key="j">
               <span v-if="day" class="day tabular" :class="{ wedding: day.wedding, event: day.event && !day.wedding }">
-                {{ day.n }}<WeddingIcon v-if="day.wedding" name="heart" class="heart" />
+                {{ day.n }}
                 <span v-if="day.wedding" class="visually-hidden">({{ t('countdown.weddingDay') }})</span>
                 <span v-else-if="day.event" class="visually-hidden">({{ t('countdown.ceremonyDay') }})</span>
               </span>
@@ -148,7 +148,10 @@ const units = computed(() => {
 .calendar td { width: 2.6rem; height: 2.6rem; padding: 0; }
 .day { position: relative; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin: auto; border-radius: 50%; font-size: 0.95rem; }
 .day.event { border: 1px solid color-mix(in srgb, var(--c-accent) 75%, transparent); }
-.day.wedding { background: var(--c-accent); color: var(--c-tertiary); font-weight: 700; box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-accent) 30%, transparent); }
+/* The big day is a filled heart (a mask, so it takes the theme colour), with the date on top */
+.countdown { --heart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21.5S1 15 1 7.6C1 4 3.6 1.2 6.9 1.2c2.2 0 4 1.2 5.1 3 1.1-1.8 2.9-3 5.1-3C20.4 1.2 23 4 23 7.6 23 15 12 21.5 12 21.5z'/%3E%3C/svg%3E"); }
+.day.wedding { isolation: isolate; padding-bottom: 0.2em; color: var(--c-tertiary); font-weight: 700; }
+.day.wedding::before { content: ''; position: absolute; inset: -0.35rem -0.4rem -0.5rem; z-index: -1; background: var(--c-accent); mask: var(--heart) center / contain no-repeat; }
 /* The big day beats twice like a heart, then rests */
 @media (prefers-reduced-motion: no-preference) {
   .day.wedding { animation: heartbeat 2.8s ease-in-out infinite; }
@@ -159,11 +162,10 @@ const units = computed(() => {
   16% { transform: scale(1); }
   23% { transform: scale(1.1); }
 }
-.heart { position: absolute; top: -0.45rem; right: -0.45rem; width: 1rem; height: 1rem; color: #fff; fill: var(--c-secondary); }
 .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-3); font-size: 0.8rem; opacity: 0.85; }
 .legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
 .key { width: 0.8rem; height: 0.8rem; border-radius: 50%; }
-.key.wedding { background: var(--c-accent); }
+.key.wedding { border-radius: 0; background: var(--c-accent); mask: var(--heart) center / contain no-repeat; }
 .key.event { border: 1px solid var(--c-accent); }
 .add-cal { margin-top: var(--space-5); text-align: center; }
 .add-cal .btn { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--c-accent); color: color-mix(in srgb, var(--c-accent) 55%, #fff); background: transparent; }
@@ -185,8 +187,8 @@ const units = computed(() => {
 .style-floral .num { color: var(--c-accent); font-size: clamp(2.2rem, 10vw, 3.2rem); }
 .style-floral .lbl { color: var(--c-text); opacity: 0.75; }
 .style-floral .calendar caption { color: var(--c-secondary); }
-.style-floral .day.wedding { background: var(--c-secondary); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-secondary) 20%, transparent); }
-.style-floral .heart { fill: var(--c-accent); }
+.style-floral .day.wedding { color: #fff; }
+.style-floral .day.wedding::before { background: var(--c-secondary); }
 .style-floral .key.wedding { background: var(--c-secondary); }
 .style-floral .add-cal .btn { border-color: var(--c-secondary); color: var(--c-secondary); }
 .style-floral .add-cal .btn:hover { background: color-mix(in srgb, var(--c-secondary) 10%, transparent); }

@@ -14,6 +14,42 @@ const w = computed(() => data.value!.wedding)
 const loc = computed(() => locale.value as Locale)
 const floral = computed(() => w.value.theme.style === 'floral')
 
+// Floral style: the flowers lean as the phone tilts (gyroscope), via --tilt-x / --tilt-y on the page (-1..1).
+// iOS only reports tilt after the visitor allows it, and the request must come from a tap, so it is asked
+// on the first tap (usually "Open invitation" on the envelope). Smoothed so the flowers drift, not jitter.
+const page = ref<HTMLElement>()
+let stopTilt = () => {}
+onMounted(() => {
+  if (!floral.value || !('DeviceOrientationEvent' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const clamp = (v: number) => Math.max(-1, Math.min(1, v))
+  let target = [0, 0]
+  const now = [0, 0]
+  let frame = 0
+  const step = () => {
+    for (const i of [0, 1]) now[i]! += (target[i]! - now[i]!) * 0.1
+    page.value?.style.setProperty('--tilt-x', now[0]!.toFixed(3))
+    page.value?.style.setProperty('--tilt-y', now[1]!.toFixed(3))
+    frame = Math.abs(target[0]! - now[0]!) + Math.abs(target[1]! - now[1]!) > 0.002 ? requestAnimationFrame(step) : 0
+  }
+  // gamma: left/right tilt; beta: forward/back, about 45° when a phone is held to read
+  const onTilt = (e: DeviceOrientationEvent) => {
+    if (e.gamma === null || e.beta === null) return
+    target = [clamp(e.gamma / 30), clamp((e.beta - 45) / 30)]
+    frame ||= requestAnimationFrame(step)
+  }
+  const start = () => addEventListener('deviceorientation', onTilt)
+  const ask = (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission
+  const askOnTap = () => ask!().then(s => s === 'granted' && start()).catch(() => {})
+  if (ask) addEventListener('click', askOnTap, { once: true })
+  else start()
+  stopTilt = () => {
+    removeEventListener('deviceorientation', onTilt)
+    removeEventListener('click', askOnTap)
+    cancelAnimationFrame(frame)
+  }
+})
+onBeforeUnmount(() => stopTilt())
+
 // Personal invitations are resolved in the browser only, so guest names never reach server HTML or caches
 const token = typeof route.query.invite === 'string' ? route.query.invite : undefined
 const invite = ref<ResolvedInvitation | null>(null)
@@ -119,7 +155,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="wedding themed" :class="`style-${w.theme.style ?? 'classic'}`" :style="themeStyle">
+  <div ref="page" class="wedding themed" :class="`style-${w.theme.style ?? 'classic'}`" :style="themeStyle">
     <WeddingEnvelope
       v-if="!isPreview"
       :monogram="w.monogram"
@@ -136,8 +172,9 @@ useSeoMeta({
     <main>
       <WeddingHero :data="data!" :intro-delay="introDelay" />
       <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" :when="`${data!.display[loc].date} · ${data!.display[loc].time}`" :event-days="data!.events.map(e => e.startUtc)" :ics-url="`/api/public/weddings/${w.slug}/events/all.ics?lang=${loc}`" />
+      <WeddingFlorals v-if="floral" class="fl-sprig" variant="sprig" :seed="0" />
       <WeddingEventTimeline :data="data!" />
-      <WeddingFlorals v-if="floral" class="fl-divider" flip />
+      <WeddingFlorals v-if="floral" class="fl-divider" :seed="1" flip />
 
       <section v-for="b in textBlocks" :id="b.key" :key="b.key" class="story" :aria-labelledby="`${b.key}-title`">
         <div class="container story-inner">
@@ -147,14 +184,17 @@ useSeoMeta({
           <p v-reveal="200" class="story-text">{{ b.text }}</p>
         </div>
       </section>
+      <WeddingFlorals v-if="floral && textBlocks.length" class="fl-sprig" variant="sprig" :seed="2" />
 
+      <WeddingFlorals v-if="floral" class="fl-garland" variant="garland" />
       <WeddingGallery v-if="data!.gallery.length" :images="data!.gallery" :motif="w.theme.motif" />
+      <WeddingFlorals v-if="floral" class="fl-sprig fl-right" variant="sprig" :seed="1" flip />
       <WeddingRsvpForm :data="data!" :token="token" :invite="invite" :invite-state="inviteState" @saved="onSaved" />
 
     </main>
 
     <div v-if="floral" class="fl-bottom" aria-hidden="true">
-      <WeddingFlorals />
+      <WeddingFlorals :seed="1" />
       <WeddingFlorals flip />
     </div>
     <WeddingFooter :data="data!" />
@@ -175,6 +215,9 @@ useSeoMeta({
 :lang(km) .story-text { font-size: 1.1rem; }
 .story + .story { padding-top: 0; }
 .fl-divider { width: min(58%, 320px); margin: calc(-1 * var(--space-6)) 0 0 auto; }
+.fl-sprig { width: min(44%, 220px); margin: calc(-1 * var(--space-5)) auto calc(-1 * var(--space-5)) 0; }
+.fl-sprig.fl-right { margin-inline: auto 0; }
+.fl-garland { width: min(92%, 520px); margin: var(--space-2) auto; }
 .fl-bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: 20%; margin-bottom: calc(-1 * var(--space-6)); }
 .fl-bottom > * { width: min(40%, 260px); }
 </style>

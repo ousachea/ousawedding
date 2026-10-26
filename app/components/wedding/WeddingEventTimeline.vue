@@ -193,22 +193,23 @@ function remaining(e: Item) {
 .style-floral .timeline::before { left: 50%; background: var(--c-text); opacity: 0.6; }
 /* Two columns; each item spans two rows starting one row after the previous, so left and right interleave */
 .style-floral .timeline { display: grid; grid-template-columns: 1fr 1fr; }
-.style-floral .item { grid-column: 2; grid-row: var(--row) / span 2; padding: 0 0 var(--space-5) 1.6rem; }
-.style-floral .item:nth-child(even) { grid-column: 1; padding: 0 1.6rem var(--space-5) 0; text-align: right; }
+.style-floral .item { grid-column: 2; grid-row: var(--row) / span 2; padding: 0 0 var(--space-7) 2.1rem; }
+.style-floral .item:nth-child(even) { grid-column: 1; padding: 0 2.1rem var(--space-7) 0; text-align: right; }
 .style-floral .dot { left: -14px; top: 0; background: var(--c-bg); border-color: var(--c-text); color: var(--c-text); }
 .style-floral .item:nth-child(even) .dot { left: auto; right: -14px; }
 .style-floral .card { background: none; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
-.style-floral .card-body { padding: 0; gap: var(--space-1); }
+.style-floral .card-body { padding: 0; gap: var(--space-2); }
+.style-floral .day-title { margin-bottom: var(--space-3); }
 .style-floral .when { font-size: 0.75rem; letter-spacing: 0.06em; color: var(--c-text); }
 .style-floral .when > .icon { display: none; }
 .style-floral .item:nth-child(even) .when,
 .style-floral .item:nth-child(even) .actions { justify-content: flex-end; }
 .style-floral .event-title { display: block; font-size: 1.1rem; font-family: var(--font-serif); font-weight: 600; text-wrap: balance; }
 /* Icon on its own line above the title, on the side nearest the centre line */
-.style-floral .event-icon { display: block; margin-bottom: var(--space-1); font-size: 1.6rem; color: var(--c-secondary); }
+.style-floral .event-icon { display: block; margin-bottom: var(--space-2); font-size: 1.6rem; color: var(--c-secondary); }
 .style-floral .item:nth-child(even) .event-icon { margin-left: auto; }
 .style-floral .item:nth-child(even) .venue { flex-direction: row-reverse; }
-.style-floral .desc { font-size: 0.85rem; text-wrap: pretty; }
+.style-floral .desc { font-size: 0.85rem; line-height: 1.7; text-wrap: pretty; }
 .style-floral .venue { font-size: 0.85rem; }
 .style-floral .left { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
 </style>

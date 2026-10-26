@@ -49,7 +49,7 @@ const step = (i: number) => ({ '--i': i })
     :class="{ intro: introDelay !== null, 'petals-on': petalsActive }"
     :style="{ '--intro-delay': `${introDelay ?? 0}ms` }"
   >
-    <div v-if="w.theme.motif !== 'none'" class="petals" aria-hidden="true">
+    <div v-if="w.theme.motif !== 'none' || floral" class="petals" aria-hidden="true">
       <svg
         v-for="(p, i) in petals"
         :key="i"
@@ -63,7 +63,7 @@ const step = (i: number) => ({ '--i': i })
 
     <template v-if="floral">
       <WeddingFlorals class="corner corner-l" />
-      <WeddingFlorals class="corner corner-r" flip />
+      <WeddingFlorals class="corner corner-r" :seed="1" flip />
     </template>
     <div class="container hero-inner">
       <div class="text">
