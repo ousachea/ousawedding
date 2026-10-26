@@ -1,0 +1,17 @@
+{
+  "name": "ousawedding",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node node_modules/nuxt/bin/nuxt.mjs dev",
+    "build": "node node_modules/nuxt/bin/nuxt.mjs build",
+    "generate": "node node_modules/nuxt/bin/nuxt.mjs generate",
+    "preview": "node node_modules/nuxt/bin/nuxt.mjs preview",
+    "postinstall": "node node_modules/nuxt/bin/nuxt.mjs prepare"
+  },
+  "dependencies": {
+    "nuxt": "^4.6.2",
+    "vue": "latest",
+    "vue-router": "latest"
+  }
+}
