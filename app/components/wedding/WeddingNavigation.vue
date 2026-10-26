@@ -15,6 +15,7 @@ const { t } = useI18n()
         <WeddingLanguageSwitcher />
       </div>
     </div>
+    <span class="progress" aria-hidden="true" />
   </header>
 </template>
 
@@ -50,6 +51,14 @@ const { t } = useI18n()
   transition: color 0.2s, background-color 0.2s;
 }
 .links a:hover { color: var(--c-text); background: var(--c-line-soft); }
+/* Reading progress, driven by page scroll where supported */
+.progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--c-accent); transform: scaleX(0); transform-origin: left; }
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .progress { animation: progress linear both; animation-timeline: scroll(root); }
+  }
+}
+@keyframes progress { to { transform: scaleX(1); } }
 .tools { display: flex; align-items: center; gap: var(--space-2); }
 @media (min-width: 720px) { .links { justify-content: center; mask-image: none; } }
 </style>

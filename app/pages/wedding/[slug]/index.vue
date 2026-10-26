@@ -84,7 +84,6 @@ useSeoMeta({
       :monogram="w.monogram"
       :motif="w.theme.motif"
       :guest-name="invite?.guestName"
-      :storage-key="`envelope:${w.slug}`"
       @revealing="introDelay = $event"
     />
 

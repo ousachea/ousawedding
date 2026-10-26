@@ -64,7 +64,7 @@ describe('public invitation', () => {
   test('serves the sample wedding without any guest data', async () => {
     const res = await call('/api/public/weddings/our-wedding')
     assert.equal(res.status, 200)
-    assert.equal(res.json.wedding.names.en.partner1, 'Sokha')
+    assert.equal(res.json.wedding.names.en.partner1, 'Ousa Chea')
     assert.equal(res.json.events.length, 3)
     assert.equal(res.json.dateUtc, '2027-02-14T00:00:00.000Z')
     assert.ok(!res.text.includes('Sample Family Chan'), 'guest names must not appear')
@@ -80,7 +80,7 @@ describe('public invitation', () => {
     assert.equal(km.status, 200)
     assert.match(km.text, /<html[^>]*lang="km"/)
     assert.match(km.text, /name="robots" content="noindex, nofollow"/)
-    assert.match(km.text, /សុខា/)
+    assert.match(km.text, /Ousa Chea/)
     const en = await call('/en/wedding/our-wedding')
     assert.match(en.text, /<html[^>]*lang="en"/)
     assert.match(en.text, /Wedding schedule/)

@@ -73,9 +73,15 @@ const step = (i: number) => ({ '--i': i })
         </div>
       </div>
       <div v-if="w.coverImage" class="photo step-photo">
-        <img :src="w.coverImage" :alt="`${w.names[locale].partner1} & ${w.names[locale].partner2}`" width="800" height="1000" fetchpriority="high">
+        <span class="halo" aria-hidden="true" />
+        <span class="frame">
+          <img :src="w.coverImage" :alt="`${w.names[locale].partner1} & ${w.names[locale].partner2}`" width="800" height="1000" fetchpriority="high">
+        </span>
       </div>
     </div>
+    <a href="#schedule" class="scroll-cue" :aria-label="t('hero.details')">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+    </a>
   </section>
 </template>
 
@@ -101,6 +107,7 @@ const step = (i: number) => ({ '--i': i })
   border: 1px solid var(--c-line);
   border-radius: 999px 999px var(--radius) var(--radius);
 }
+.frame { display: block; overflow: hidden; border-radius: 999px 999px 6px 6px; }
 .photo img {
   width: 100%;
   aspect-ratio: 4 / 5;
@@ -135,6 +142,33 @@ const step = (i: number) => ({ '--i': i })
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
 @keyframes settle { from { opacity: 0; transform: scale(0.96); } }
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* Looping touches */
+.halo {
+  position: absolute; inset: -7px; pointer-events: none;
+  border: 1px solid var(--c-accent); border-radius: inherit; opacity: 0.25;
+}
+.scroll-cue {
+  position: absolute; left: 50%; bottom: var(--space-4); translate: -50% 0;
+  display: grid; place-items: center; width: 44px; height: 44px; color: var(--c-accent-ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .halo { animation: halo 4.5s ease-in-out infinite; }
+  .text > :deep(.flower g) { transform-box: fill-box; transform-origin: 50% 95%; animation: sway 6s ease-in-out infinite; }
+  .scroll-cue svg { animation: bob 2.2s ease-in-out infinite; }
+}
+@keyframes halo { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.015); } }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(6px); opacity: 1; } }
+
+/* Scroll-linked parallax where the browser supports scroll-driven animations; others stay static */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .photo img { animation: drift linear both; animation-timeline: view(); }
+  }
+}
+/* Zoomed slightly so the drift never shows an edge inside the frame */
+@keyframes drift { from { transform: scale(1.1) translateY(-4%); } to { transform: scale(1.1) translateY(4%); } }
 
 /* Petals */
 .petals { position: absolute; inset: 0; pointer-events: none; }

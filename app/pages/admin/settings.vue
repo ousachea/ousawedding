@@ -8,7 +8,7 @@ const { push } = useToasts()
 const { confirm } = useConfirm()
 const config = useRuntimeConfig().public
 
-const DEFAULT_THEME: ThemeConfig = { background: '#F7F1E7', accent: '#C8A45D', secondary: '#9E242E', tertiary: '#34483B', text: '#332B29', headingFont: 'serif', motif: 'lotus' }
+const DEFAULT_THEME: ThemeConfig = { background: '#F5F0F6', accent: '#C9A24A', secondary: '#5B2A86', tertiary: '#2D1640', text: '#2A1F33', headingFont: 'serif', motif: 'lotus' }
 const timezones = Intl.supportedValuesOf?.('timeZone') ?? ['Asia/Phnom_Penh']
 
 // Editable copy of the wedding; saved as one PATCH

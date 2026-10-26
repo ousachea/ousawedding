@@ -98,11 +98,20 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
   border-radius: 50%; background: var(--c-bg); border: 1px solid var(--c-accent);
   box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent);
 }
-.item.revealed .dot { animation: ring 1.2s var(--ease-out) 0.3s; }
-@keyframes ring {
-  0% { box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent), 0 0 0 0 color-mix(in srgb, var(--c-accent) 50%, transparent); }
-  100% { box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent), 0 0 0 12px transparent; }
+/* Each dot pulses softly; the gold line draws downward as the schedule scrolls by */
+.dot::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--c-accent); opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .dot::after { animation: ring 2.8s var(--ease-out) infinite; }
+  .item:nth-child(2) .dot::after { animation-delay: 0.9s; }
+  .item:nth-child(3n) .dot::after { animation-delay: 1.8s; }
 }
+@keyframes ring { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.4); opacity: 0; } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .timeline::before { transform-origin: top; animation: grow linear both; animation-timeline: view(); animation-range: entry 10% cover 70%; }
+  }
+}
+@keyframes grow { from { transform: scaleY(0); } }
 .calendar[open] .calendar-menu { animation: menu 0.18s var(--ease-out); }
 @keyframes menu { from { opacity: 0; transform: translateY(-4px); } }
 .card { background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ monogram: string, motif: Motif, guestName?: string, storageKey: string }>()
+defineProps<{ monogram: string, motif: Motif, guestName?: string }>()
 // `revealing` fires as the invitation starts to show, with how long until it is fully visible
 const emit = defineEmits<{ opened: [], revealing: [delayMs: number] }>()
 const { t } = useI18n()
@@ -12,10 +12,6 @@ useHead({ noscript: [{ innerHTML: '<style>.envelope-overlay{display:none!importa
 const state = ref<'closed' | 'opening' | 'gone'>('closed')
 const sealButton = ref<HTMLButtonElement>()
 
-function remember() {
-  try { sessionStorage.setItem(props.storageKey, '1') } catch {}
-}
-
 function finish() {
   if (state.value === 'closed') emit('revealing', 0)
   state.value = 'gone'
@@ -25,7 +21,6 @@ function finish() {
 
 function open() {
   if (state.value !== 'closed') return
-  remember()
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
   state.value = 'opening'
   emit('revealing', 1150)
@@ -33,14 +28,10 @@ function open() {
 }
 
 function skip() {
-  remember()
   finish()
 }
 
 onMounted(() => {
-  let seen = false
-  try { seen = sessionStorage.getItem(props.storageKey) === '1' } catch {}
-  if (seen) return finish()
   document.documentElement.style.overflow = 'hidden'
   sealButton.value?.focus({ preventScroll: true })
 })

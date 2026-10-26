@@ -72,8 +72,15 @@ function onTouchEnd(e: TouchEvent) {
 /* Small galleries stay at two columns so no column is left empty */
 @media (min-width: 760px) { .grid { columns: 3; column-gap: var(--space-4); } .grid.few { columns: 2; max-width: 44rem; margin-inline: auto; } }
 .thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); overflow: hidden; cursor: zoom-in; background: var(--c-line-soft); }
-.thumb img { width: 100%; transition: transform 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
-@media (hover: hover) { .thumb:hover img { transform: scale(1.03); } }
+.thumb img { width: 100%; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
+/* `scale` for hover and `transform` for the scroll zoom are separate properties, so both work */
+@media (hover: hover) { .thumb:hover img { scale: 1.04; } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .thumb img { animation: unzoom linear both; animation-timeline: view(); animation-range: entry 0% cover 45%; }
+  }
+}
+@keyframes unzoom { from { transform: scale(1.12); } }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-1); text-align: center; }
 
 .viewer {
