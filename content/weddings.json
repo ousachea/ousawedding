@@ -1,0 +1,84 @@
+{
+  "rgbke4AtHLhcB8ro": {
+    "id": "rgbke4AtHLhcB8ro",
+    "slug": "ousa-kanha",
+    "isSample": true,
+    "names": {
+      "km": {
+        "partner1": "Ousa Chea",
+        "partner2": "Kanha Neak",
+        "parents1": "",
+        "parents2": ""
+      },
+      "en": {
+        "partner1": "Ousa Chea",
+        "partner2": "Kanha Neak",
+        "parents1": "",
+        "parents2": ""
+      }
+    },
+    "monogram": "O & K",
+    "date": "2027-01-31T07:00",
+    "timezone": "Asia/Phnom_Penh",
+    "content": {
+      "km": {
+        "message": "សូមគោរពអញ្ជើញ\nយើងខ្ញុំជាមាតា បិតា មានកិត្តយសសូមគោរពអញ្ញើញ សម្តេច ឯកឧត្តម លោកជំទាវ អ្នកឧកញ៉ា ឧកញ៉ា លោក លោក​ស្រី អ្នកនាង កញ្ញា អញ្ជើញចូលរួមជាអធិបតី និងជាភ្ញៀវកិតិ្តយស ចម្រើនជោគជ័យ សិរីសួស្ដី ក្នុងពិធីរៀបអាពាហ៍ពិពាហ៍ កូនប្រុស-កូនស្រី របស់យើងខ្ញុំ!",
+        "dressCode": "សម្លៀកបំពាក់ប្រពៃណីខ្មែរ ឬសម្លៀកបំពាក់ផ្លូវការ",
+        "instructions": "សូមអញ្ជើញមកដល់មុនម៉ោង ១៥ នាទី។ មានចំណតរថយន្តនៅមុខទីតាំង។",
+        "story": "យើងបានជួបគ្នាដំបូងនៅភ្នំពេញ ហើយចាប់ពីពេលនោះមក ក្តីស្រលាញ់របស់យើងបានរីកលូតលាស់ដូចផ្កាឈូក។",
+        "thanks": "ខ្ញុំបាទ នាងខ្ញុំ ជាមាតាបិតា កូនប្រុស កូនស្រី សូមគោរពថ្លែងអំណរគុណយ៉ាងជ្រាលជ្រៅចំពោះវត្តមានដ៏ឧត្តុង្គឧត្តមរបស់ សម្តេច ឯកឧត្តម លោកជំទាវ អ្នកឧកញ៉ា ឧកញ៉ា លោក លោកស្រី អ្នកនាង កញ្ញា ក្នុងពិធីសិរីមង្គលអាពាហ៍ពិពាហ៍ កូនប្រុស កូនស្រីរបស់យើងខ្ញុំ។ សូមមេត្តាទទួលនូវសេចក្តីគោរពដ៏ខ្ពង់ខ្ពស់ពីយើងខ្ញុំ!",
+        "apology": "សូមមេត្តាខន្តី អភ័យទោស ពីសំណាក់ សម្តេច ឯកឧត្តម លោកជំទាវ អ្នកឧកញ៉ា ឧកញ៉ា លោក លោកស្រី អ្នកនាង កញ្ញា និងភ្ញៀវកិត្តិយសទាំងអស់ ដោយយើងខ្ញុំពុំបានជូនលិខិតអញ្ជើញដោយផ្ទាល់ដៃ ឬចំពោះកំហុសអក្ខរាវិរុទ្ធ ក្នុងការសរសេរឈ្មោះ។ សូមមេត្តាយោគយល់ និងសូមគោរពអរគុណទុកជាមុន!"
+      },
+      "en": {
+        "message": "We, the parents, have the honour to respectfully invite Samdech, Excellencies, Lok Chumteav, Neak Oknha, Oknha, Ladies and Gentlemen to join us as presiding guests and guests of honour, bringing success and blessings to the wedding ceremony of our son and daughter.",
+        "dressCode": "Traditional Khmer attire or formal wear",
+        "instructions": "Please arrive 15 minutes early. Parking is available in front of the venue.",
+        "story": "We first met in Phnom Penh, and our love has grown ever since, like a lotus rising from the water.",
+        "thanks": "We, the parents of the groom and the bride, express our deepest gratitude to Samdech, Excellencies, Lok Chumteav, Neak Oknha, Oknha, Ladies and Gentlemen for your honourable presence at the wedding ceremony of our son and daughter. Please accept our highest respect!",
+        "apology": "We humbly ask the forgiveness of Samdech, Excellencies, Lok Chumteav, Neak Oknha, Oknha, Ladies and Gentlemen and all our guests of honour for not delivering this invitation by hand, and for any misspelling of names. Thank you in advance for your understanding!"
+      }
+    },
+    "coverImage": "/sample/cover.svg",
+    "theme": {
+      "background": "#F7F5F2",
+      "accent": "#9F86C9",
+      "secondary": "#7D5BAA",
+      "tertiary": "#5A4675",
+      "text": "#3A3242",
+      "headingFont": "serif",
+      "motif": "none",
+      "style": "floral"
+    },
+    "defaultLocale": "km",
+    "rsvp": {
+      "deadline": "2027-01-25T23:59",
+      "formUrl": ""
+    },
+    "privacy": {
+      "allowIndexing": false
+    },
+    "textOrder": [
+      "story",
+      "thanks",
+      "apology"
+    ],
+    "musicUrl": "",
+    "contact": {
+      "name": "Sample contact",
+      "phone": "+855 12 345 678",
+      "email": ""
+    },
+    "share": {
+      "km": {
+        "title": "Ousa & Kanha | ពិធីអាពាហ៍ពិពាហ៍",
+        "description": "សូមគោរពអញ្ជើញចូលរួមពិធីអាពាហ៍ពិពាហ៍របស់យើង។"
+      },
+      "en": {
+        "title": "Ousa & Kanha | Wedding Invitation",
+        "description": "You are invited to celebrate our wedding."
+      }
+    },
+    "createdAt": "2026-10-26T23:31:19.332Z",
+    "updatedAt": "2026-10-26T23:34:23.710Z"
+  }
+}

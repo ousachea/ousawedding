@@ -50,19 +50,12 @@ onMounted(() => {
 })
 onBeforeUnmount(() => stopTilt())
 
-// Personal invitations are resolved in the browser only, so guest names never reach server HTML or caches
-const token = typeof route.query.invite === 'string' ? route.query.invite : undefined
-const invite = ref<ResolvedInvitation | null>(null)
-const inviteState = ref<'none' | 'loading' | 'valid' | 'invalid'>(token ? 'loading' : 'none')
-
-onMounted(async () => {
-  if (!token) return
-  try {
-    invite.value = await $fetch<ResolvedInvitation>('/api/public/invitation', { method: 'POST', body: { slug, token } })
-    inviteState.value = 'valid'
-  } catch {
-    inviteState.value = 'invalid'
-  }
+// Personal links carry the guest's name (?to=…). The page is the same static file for everyone,
+// so the name is read in the browser after it loads.
+const guestName = ref('')
+onMounted(() => {
+  const to = route.query.to
+  if (typeof to === 'string') guestName.value = to.trim().slice(0, 120)
 })
 
 const introDelay = ref<number | null>(null)
@@ -100,9 +93,6 @@ function onPreviewMessage(e: MessageEvent) {
 onMounted(() => { if (isPreview) addEventListener('message', onPreviewMessage) })
 onBeforeUnmount(() => removeEventListener('message', onPreviewMessage))
 
-function onSaved(rsvp: NonNullable<ResolvedInvitation['rsvp']>) {
-  if (invite.value) invite.value = { ...invite.value, rsvp, canEdit: w.value.rsvp.allowUpdates }
-}
 
 const themeStyle = computed(() => {
   const th = w.value.theme
@@ -150,7 +140,7 @@ useSeoMeta({
   ogImage: () => abs(w.value.coverImage),
   ogLocale: () => (loc.value === 'km' ? 'km_KH' : 'en_US'),
   twitterCard: 'summary_large_image',
-  robots: () => (w.value.privacy.allowIndexing && !data.value!.preview ? 'index, follow' : 'noindex, nofollow'),
+  robots: () => (w.value.privacy.allowIndexing ? 'index, follow' : 'noindex, nofollow'),
 })
 </script>
 
@@ -160,18 +150,17 @@ useSeoMeta({
       v-if="!isPreview"
       :monogram="w.monogram"
       :motif="w.theme.motif"
-      :guest-name="invite?.guestName"
+      :guest-name="guestName"
       @revealing="introDelay = $event"
     />
 
-    <p v-if="data!.preview" class="banner preview">{{ t('admin.invitations.unpublished') }}</p>
     <p v-if="w.isSample" class="banner">{{ t('common.sample') }}</p>
 
     <WeddingNavigation :sections="sections" :music-url="w.musicUrl" :monogram="w.monogram" />
 
     <main>
       <WeddingHero :data="data!" :intro-delay="introDelay" />
-      <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" :when="`${data!.display[loc].date} · ${data!.display[loc].time}`" :event-days="data!.events.map(e => e.startUtc)" :ics-url="`/api/public/weddings/${w.slug}/events/all.ics?lang=${loc}`" />
+      <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" :when="`${data!.display[loc].date} · ${data!.display[loc].time}`" :event-days="data!.events.map(e => e.startUtc)" :ics-url="`/api/public/weddings/${w.slug}/events/${loc === 'en' ? 'all-en' : 'all'}.ics`" />
       <WeddingFlorals v-if="floral" class="fl-sprig" variant="sprig" :seed="0" />
       <WeddingEventTimeline :data="data!" />
       <WeddingFlorals v-if="floral" class="fl-divider" :seed="1" flip />
@@ -189,7 +178,7 @@ useSeoMeta({
       <WeddingFlorals v-if="floral" class="fl-garland" variant="garland" />
       <WeddingGallery v-if="data!.gallery.length" :images="data!.gallery" :motif="w.theme.motif" />
       <WeddingFlorals v-if="floral" class="fl-sprig fl-right" variant="sprig" :seed="1" flip />
-      <WeddingRsvpForm :data="data!" :token="token" :invite="invite" :invite-state="inviteState" @saved="onSaved" />
+      <WeddingRsvpForm :data="data!" :guest-name="guestName" />
 
     </main>
 
@@ -207,7 +196,6 @@ useSeoMeta({
   padding: 0.5rem 1rem; text-align: center; font-size: 0.85rem;
   background: color-mix(in srgb, var(--c-accent) 22%, var(--c-bg)); color: var(--c-text);
 }
-.banner.preview { background: var(--c-tertiary); color: #fff; }
 .story { padding-block: var(--space-8); }
 .story-inner { max-width: 40rem; text-align: center; }
 .section-title { font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }

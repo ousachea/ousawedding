@@ -1,0 +1,4 @@
+# The site is static: `npm run build` generates every page from content/ into dist/
+[build]
+  command = "npm run build"
+  publish = "dist"

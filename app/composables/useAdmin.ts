@@ -63,7 +63,7 @@ export function useAdminSession() {
   return { me, load }
 }
 
-type WeddingSummary = Pick<Wedding, 'id' | 'slug' | 'names' | 'date' | 'published'>
+type WeddingSummary = Pick<Wedding, 'id' | 'slug' | 'names' | 'date'>
 
 /** The wedding the dashboard is managing, remembered per browser. */
 export function useCurrentWedding() {

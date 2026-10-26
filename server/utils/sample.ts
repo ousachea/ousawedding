@@ -46,10 +46,9 @@ export function sampleWedding(slug = 'our-wedding') {
       headingFont: 'serif', motif: 'lotus', style: 'classic',
     },
     defaultLocale: 'km',
-    rsvp: { deadline: '2027-01-25T23:59', allowUpdates: true, allowGeneral: false, generalMaxAttendees: 2, askDietary: true },
+    rsvp: { deadline: '2027-01-25T23:59', formUrl: '' },
     privacy: { allowIndexing: false },
     textOrder: ['story', 'thanks', 'apology'],
-    published: true,
     musicUrl: '',
     contact: { name: 'Sample contact', phone: '+855 12 345 678', email: '' },
     share: {

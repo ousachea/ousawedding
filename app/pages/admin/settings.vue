@@ -80,25 +80,6 @@ const shareDescription = shareField('description')
 
 // The section of the invitation the preview scrolls to, following what is being edited
 const previewSection = ref('home')
-
-// Admin access (Firebase only)
-const admins = ref<Admin[]>([])
-const newAdmin = reactive({ email: '', role: 'editor' as AdminRole })
-async function loadAdmins() {
-  if (me.value?.role === 'owner') admins.value = await api<Admin[]>(`${base.value}/admins`)
-}
-watch(base, loadAdmins, { immediate: true })
-async function addAdmin() {
-  await api(`${base.value}/admins`, { method: 'POST', body: newAdmin })
-  newAdmin.email = ''
-  push(t('common.saved'))
-  await loadAdmins()
-}
-async function removeAdmin(a: Admin) {
-  if (!await confirm(t('admin.settings.removeAdminConfirm', { email: a.email }), { action: t('admin.settings.removeAdmin') })) return
-  await api(`${base.value}/admins/${a.id}`, { method: 'DELETE' })
-  await loadAdmins()
-}
 </script>
 
 <template>
@@ -164,12 +145,10 @@ async function removeAdmin(a: Admin) {
           <label for="s-deadline">{{ t('admin.invitations.deadline') }}</label>
           <input id="s-deadline" v-model="draft.rsvp.deadline" type="datetime-local" required>
         </div>
-        <label class="check"><input v-model="draft.rsvp.allowUpdates" type="checkbox"> {{ t('admin.settings.allowUpdates') }}</label>
-        <label class="check"><input v-model="draft.rsvp.askDietary" type="checkbox"> {{ t('admin.settings.askDietary') }}</label>
-        <label class="check"><input v-model="draft.rsvp.allowGeneral" type="checkbox"> {{ t('admin.settings.allowGeneral') }}</label>
-        <div v-if="draft.rsvp.allowGeneral" class="field narrow">
-          <label for="s-gmax">{{ t('admin.settings.generalMax') }}</label>
-          <input id="s-gmax" v-model.number="draft.rsvp.generalMaxAttendees" type="number" min="1" max="20">
+        <div class="field">
+          <label for="s-form">{{ t('admin.settings.rsvpForm') }}</label>
+          <input id="s-form" v-model="draft.rsvp.formUrl" type="url" placeholder="https://forms.gle/…">
+          <p class="hint">{{ t('admin.settings.rsvpFormHint') }}</p>
         </div>
         <h2>{{ t('admin.settings.privacy') }}</h2>
         <label class="check"><input v-model="draft.privacy.allowIndexing" type="checkbox"> {{ t('admin.settings.allowIndexing') }}</label>
@@ -200,31 +179,8 @@ async function removeAdmin(a: Admin) {
     </form>
     </div>
 
-    <section v-if="me?.role === 'owner' && config.driver === 'firebase'" class="panel form-grid">
-      <h2>{{ t('admin.settings.admins') }}</h2>
-      <ul class="admins">
-        <li v-for="a in admins" :key="a.id">
-          <span>{{ a.email }} · {{ t(`admin.settings.roles.${a.role}`) }}<template v-if="a.weddingIds.includes('*')"> · *</template></span>
-          <button v-if="a.id !== me.id && !a.weddingIds.includes('*')" type="button" class="btn btn-danger btn-sm" @click="removeAdmin(a)">{{ t('admin.settings.removeAdmin') }}</button>
-        </li>
-      </ul>
-      <form class="add-admin" @submit.prevent="addAdmin">
-        <div class="field">
-          <label for="a-email">{{ t('admin.settings.adminEmail') }}</label>
-          <input id="a-email" v-model="newAdmin.email" type="email" required>
-        </div>
-        <div class="field">
-          <label for="a-role">{{ t('admin.settings.role') }}</label>
-          <select id="a-role" v-model="newAdmin.role">
-            <option value="editor">{{ t('admin.settings.roles.editor') }}</option>
-            <option value="owner">{{ t('admin.settings.roles.owner') }}</option>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-outline">{{ t('admin.settings.addAdmin') }}</button>
-      </form>
-    </section>
 
-    <section v-if="me?.role === 'owner'" class="panel form-grid">
+    <section class="panel form-grid">
       <h2>{{ t('admin.settings.backup') }}</h2>
       <p class="muted small">{{ t('admin.settings.backupHint') }}</p>
       <div><a :href="`${base}/backup`" class="btn btn-outline" download>{{ t('admin.settings.downloadBackup') }}</a></div>
@@ -244,8 +200,4 @@ async function removeAdmin(a: Admin) {
   .editor { grid-template-columns: minmax(0, 1fr) 380px; }
   .preview { grid-column: 2; grid-row: 1; }
 }
-.admins { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.admins li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
-.add-admin { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
-.add-admin .field { flex: 1 1 12rem; }
 </style>

@@ -1,17 +1,16 @@
 # ousawedding
 
-A Khmer and English wedding invitation website with personal invitation links, RSVPs and a private admin dashboard. Built with Nuxt 4. Data lives in Firebase (Firestore, Authentication, Storage), and the app runs on Vercel.
+A Khmer and English wedding invitation website, published as a **static site** (no server, no database). Built with Nuxt 4. You edit everything in an admin dashboard that runs only on your computer; pushing your changes rebuilds the site on Vercel or Netlify.
 
-- Guest invitation: `/<slug>` (Khmer) and `/en/<slug>` (English), e.g. `/ousa-kanha`. The site root redirects to the default wedding; old `/wedding/<slug>` links redirect.
-- Personal link: `/<slug>?invite=<token>`
-- Admin: `/admin`
-
-Everything shown when you first run the app is **sample data** (Sokha & Dara, placeholder venues and photos). Edit it in the admin dashboard before sending invitations; a banner says so until you do.
+- Invitation: `/<slug>` (Khmer) and `/en/<slug>` (English), e.g. `/ousa-kanha`. The site root opens the default wedding; old `/wedding/<slug>` links redirect.
+- Personal link: `/<slug>?to=<guest name>`: the envelope greets the guest by name.
+- RSVP: a "Reply now" button that opens your Google Form (or any form) until the deadline.
+- Admin (on your computer only): `http://localhost:8000/admin`
 
 ## Live site
 
-- **GitHub Pages:** https://ousachea.github.io/ousawedding/. This still shows the earlier one-page invitation and no longer updates: GitHub Pages only hosts static files, and this app needs a server for invitation links, RSVPs and the admin dashboard.
-- **Vercel:** the new app's address will be added here after the first deploy (see *Deploy to Vercel*).
+- **Vercel / Netlify:** both build the static site from this repository on every push (see *Publish*).
+- **GitHub Pages:** https://ousachea.github.io/ousawedding/ shows the earlier one-page invitation and no longer updates.
 
 ## Screenshots
 
@@ -54,115 +53,79 @@ Taken from the app running with sample data.
 
 </details>
 
-## Run locally
+## Run locally and edit
 
 ```sh
 npm install --no-bin-links   # --no-bin-links is only needed on Android shared storage
-cp .env.example .env         # local driver, no Firebase needed
-npm run dev
+cp .env.example .env         # set your admin password and the live site address
+npm run dev                  # http://localhost:8000/admin
 ```
 
-With `NUXT_DRIVER=local`, data is stored as JSON in `.data/local/` and the admin login uses `NUXT_LOCAL_ADMIN_PASSWORD`. The production build refuses to start with this driver unless `ALLOW_LOCAL_DRIVER=true` (used by the tests), because serverless file systems are wiped between requests.
+The admin saves to files in the project:
+
+| Where | What | Published? |
+|---|---|---|
+| `content/` | wedding, schedule, gallery (`weddings.json`, `events.json`, `gallery.json`) | yes, committed |
+| `public/uploads/` | uploaded photos | yes, committed |
+| `.data/local/guests.json` | guest list (names, phones, notes) | **no**: git ignores it, so it never reaches the public repository |
+
+When there is no content yet, the app starts with sample content.
+
+## Publish
+
+Commit and push the content; Vercel or Netlify rebuilds the static site (about a minute):
+
+```sh
+git add content public/uploads
+git commit -m "Update invitation"
+git push
+```
+
+`npm run build` generates every page into static files (Vercel detects this automatically; `netlify.toml` tells Netlify to publish `dist/`). Set `NUXT_PUBLIC_SITE_URL` on the host too, so share previews and calendar files use the live address. No other settings or secrets are needed.
+
+### RSVP replies
+
+Create a Google Form (name, attending, number of guests, message…), paste its link in **Settings → RSVP**, and replies collect in the form's Google Sheet. The invitation shows the button until the RSVP deadline.
+
+### Personal links
+
+**Invitations** lists a link and QR code per guest (Khmer or English), with printable cards. A link is just the invitation address plus the guest's name, so nothing is tracked and anyone with a link can see the name in it.
 
 ### Checks
 
 ```sh
-npm run typecheck   # vue-tsc
-npm run build
-npm test            # end-to-end API tests against the build, plus timezone unit tests
+npm run typecheck
+npm run build:server && npm test   # admin API + server-rendered pages, plus timezone unit tests
+npm run build                      # the static site, into .output/public (dist/ on Netlify)
 ```
-
-## Firebase setup (one time)
-
-Project: `ousa-wedding`.
-
-1. **Authentication** → Sign-in method → enable **Email/Password**. Then Users → **Add user** for each admin.
-2. **Firestore Database** → Create database (production mode, region near Cambodia such as `asia-southeast1`).
-3. **Storage** → Get started. Firebase now requires the pay-as-you-go **Blaze** plan for Storage; a wedding gallery stays well inside the free quota, but you must add a billing account. Set a budget alert to be safe.
-4. **Service account**: Project settings → Service accounts → **Generate new private key**. This JSON file is a full-access secret: don't commit it, don't paste it into chat, delete the download once its values are in your env settings.
-5. Deploy the security rules (they deny all direct browser access; see *Security*):
-   ```sh
-   npx firebase-tools login
-   npx firebase-tools deploy --only firestore:rules,storage
-   ```
-6. Make yourself an owner and optionally create the sample wedding:
-   ```sh
-   node --env-file=.env scripts/bootstrap.ts --email you@example.com --seed
-   ```
-   (`.env` must contain the `NUXT_FIREBASE_*` service account values for this step.)
-
-## Deploy to Vercel
-
-1. Import the GitHub repo at vercel.com → New Project. Framework: Nuxt (auto-detected). Defaults for build and install are fine.
-2. Environment variables (Project → Settings → Environment Variables):
-
-   | Name | Value |
-   |---|---|
-   | `NUXT_DRIVER` | `firebase` |
-   | `NUXT_INVITE_SECRET` | 32+ random characters. **Changing it breaks every link already sent.** |
-   | `NUXT_SESSION_SECRET` | 32+ random characters |
-   | `NUXT_FIREBASE_CLIENT_EMAIL` | `client_email` from the service account JSON |
-   | `NUXT_FIREBASE_PRIVATE_KEY` | `private_key` from the JSON, pasted as is |
-   | `NUXT_PUBLIC_SITE_URL` | Your site URL, e.g. `https://ousawedding.vercel.app` (used in invitation links and share previews) |
-   | `NUXT_PUBLIC_DEFAULT_WEDDING_SLUG` | `our-wedding` (or your slug) |
-
-   Generate secrets with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
-3. Deploy, open `/admin`, sign in with your Firebase user.
-
-The Firebase **web** config (API key, auth domain, project ID) is in `nuxt.config.ts`. It is public by design; it only lets the login page talk to Firebase Authentication.
 
 ## How it's built
 
 ```
 app/
   pages/[slug].vue                 Public invitation (one scrolling page)
-  pages/admin/*                    Dashboard, guests, invitations (+ print), schedule, gallery, settings
-  components/wedding/*             Envelope, hero, countdown, schedule, gallery, RSVP form, navigation…
-  components/admin/*               Stat card, RSVP chart, modal, QR code, bilingual field
-  assets/css/tokens.css            Design tokens (colours, fonts, spacing)
+  pages/admin/*                    Dashboard, guests, invitations (+ print), schedule, gallery, theme, settings
+  components/wedding/*             Envelope, hero, countdown, schedule, gallery, flowers, RSVP, navigation…
+  components/admin/*               Live preview, modal, QR code, bilingual field, stat card
 i18n/locales/{km,en}.json          Interface text
 server/
-  api/public/*                     Wedding content, invitation lookup, RSVP, calendar (.ics)
-  api/admin/*                      Everything the dashboard does (all require an admin session)
-  api/auth/*                       Login (Firebase session cookie or local password), logout
-  utils/db.ts                      Firestore driver + local JSON driver behind one interface
-  utils/storage.ts                 Firebase Storage + local file storage
-  utils/auth.ts, security.ts       Admin checks, tokens, encryption, rate limiting
-shared/                            Types and timezone helpers used by both sides
-firestore.rules, storage.rules     Deny-all rules
-scripts/bootstrap.ts               First admin + sample data
+  api/public/*                     Wedding content and calendar files (.ics), read when the site is built
+  api/admin/*, api/auth/*          The admin dashboard's API (on your computer only)
+  utils/db.ts                      JSON files: content/ (public) and .data/local/ (private)
+  utils/storage.ts                 Photo uploads into public/uploads/
+shared/                            Types, timezone and link helpers used by both sides
+content/                           The published wedding content
 tests/                             node:test suites
 ```
 
-Wedding content (names, messages, events, captions) is stored per wedding in both languages; interface text is in the locale files. Khmer is the default language, and English lives under `/en`. Invitation links carry the guest's language.
+Wedding content is stored in both languages; interface text is in the locale files. Khmer is the default language, and English lives under `/en`.
 
-### Data model (Firestore)
+### Privacy
 
-All collections are top level and every document has a `weddingId`, so one project can hold several weddings.
-
-| Collection | Contents |
-|---|---|
-| `weddings` | slug, names `{km,en}`, monogram, date + IANA timezone, content `{km,en}` (message, story, dress code, guest info), cover, theme, default language, RSVP settings (deadline, updates allowed, open form, dietary question), privacy, published, music, contact, share preview text |
-| `events` | title/description/venue/address `{km,en}`, start/end (local time in the wedding timezone), map URL, photo, order |
-| `guests` | name, side, group, household ID, seats allowed, phone, email, private notes, archived |
-| `invitations` | guest ID, `tokenHash` (HMAC-SHA256), `tokenEnc` (AES-256-GCM, so admins can copy the link again), language, status (draft, sent, viewed, responded, revoked), viewed/revoked timestamps |
-| `rsvps` | document ID = guest ID (one RSVP per guest, enforced by transaction); attending, count, attendee names, dietary, message, source (invitation, admin, general). Open-form replies use `general_<id>` |
-| `gallery` | storage paths and URLs (full + thumbnail), size, caption and alt text `{km,en}`, order, visible |
-| `admins` | document ID = Firebase Auth UID; role (`owner` or `editor`), `weddingIds` (`*` = all) |
-
-Queries are equality-only on one field (no composite indexes needed), with sorting done in memory, which suits wedding-sized lists.
-
-### Security
-
-- **No direct database or storage access from browsers.** `firestore.rules` and `storage.rules` deny everything; the Nuxt server uses the Admin SDK. Photos are served by unguessable download-token URLs.
-- **Admins** sign in with Firebase Authentication. The server checks a fresh ID token, confirms the user has an `admins` document, and sets an httpOnly, `SameSite=Strict` session cookie (5 days, revocable). Every admin API call re-checks the session and that the admin may manage that wedding; child records from another wedding return 404. Cross-site writes are blocked by an Origin check.
-- **Invitation tokens** are 192-bit random values. Only an HMAC hash (for lookup) and an encrypted copy (for the admin to re-copy) are stored. Revoked, expired, archived or unknown tokens all return the same generic error.
-- **RSVP rules are enforced on the server**: guest seat limits, deadline in the wedding's timezone, "allow updates" setting, published state, input validation (zod). Concurrent duplicate submissions update one record.
-- **Guest privacy**: guest names are fetched in the browser after the page loads, never put in server-rendered HTML or share previews. Pages are `noindex` unless you turn indexing on.
-- **Rate limits** on login, invitation lookup and RSVP. These are kept in memory per server instance, so on Vercel they are approximate; add Redis/KV if you see abuse.
-- **CSV exports** neutralise spreadsheet formulas in guest-entered text.
-- **Uploads** are checked by magic bytes, size-capped (4 MB full, 1 MB thumbnail) and resized in the browser before upload.
+- The repository is public, so only what the invitation shows is committed. The guest list stays on your computer.
+- Guest names in personal links are read in the browser; the pages themselves are the same files for everyone. Pages are `noindex` unless you turn indexing on in Settings.
+- Uploads are checked by their real file type, size-capped and resized in the browser.
 
 ### Backups
 
-Settings → Backup downloads a JSON file with the wedding, events, gallery records, guests, invitations (tokens stay encrypted) and RSVPs. For scheduled backups use Firestore's managed export (`gcloud firestore export`). There is no in-app restore; import a backup with a small Admin SDK script if you ever need one.
+Your content is in git. Settings → Backup also downloads one JSON file with the wedding, schedule, gallery and guest list (keep that file private).

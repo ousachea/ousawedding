@@ -6,13 +6,16 @@ const localePath = useLocalePath()
 const { base, id, wedding } = useCurrentWedding()
 const api = useAdminApi()
 
-type Row = Guest & { invitation: { status: InvitationStatus, locale: Locale, url: string } | null }
-const rows = ref<Row[]>([])
+const rows = ref<Guest[]>([])
 watch(id, async () => {
-  rows.value = (await api<{ guests: Row[] }>(`${base.value}/guests`)).guests
-    .filter(g => !g.archived && g.invitation?.url)
+  rows.value = (await api<{ guests: Guest[] }>(`${base.value}/guests`)).guests
+    .filter(g => !g.archived)
     .sort((a, b) => a.name.localeCompare(b.name))
 }, { immediate: true })
+// Language chosen on the Invitations page; links use the live site address
+const locale: Locale = useRoute().query.lang === 'en' ? 'en' : 'km'
+const siteUrl = useRuntimeConfig().public.siteUrl
+const linkFor = (g: Guest) => (wedding.value ? inviteLink(wedding.value, g.name, siteUrl || location.origin, locale) : '')
 const printPage = () => window.print()
 </script>
 
@@ -29,10 +32,10 @@ const printPage = () => window.print()
     <div class="cards">
       <article v-for="r in rows" :key="r.id" class="card">
         <WeddingOrnament :motif="wedding?.theme.motif" kind="flower" />
-        <p class="couple" :lang="r.invitation!.locale">{{ wedding?.names[r.invitation!.locale].partner1 }} &amp; {{ wedding?.names[r.invitation!.locale].partner2 }}</p>
+        <p class="couple" :lang="locale">{{ wedding?.names[locale].partner1 }} &amp; {{ wedding?.names[locale].partner2 }}</p>
         <p class="guest">{{ r.name }}</p>
-        <AdminQrCode :value="r.invitation!.url" :size="140" />
-        <p class="url">{{ r.invitation!.url }}</p>
+        <AdminQrCode :value="linkFor(r)" :size="140" />
+        <p class="url">{{ linkFor(r) }}</p>
       </article>
     </div>
   </div>

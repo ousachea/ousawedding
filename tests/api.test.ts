@@ -1,9 +1,9 @@
-// End-to-end checks against the production build using the local data driver.
-// Run `npm run build` first, then `npm test`.
+// End-to-end checks of the admin API and the server-rendered pages, with content in temporary folders.
+// Run `npm run build:server` first, then `npm test`.
 import { after, before, describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawn, type ChildProcess } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -11,6 +11,7 @@ const PORT = 4000 + Math.floor(Math.random() * 1000)
 const BASE = `http://127.0.0.1:${PORT}`
 const PASSWORD = 'test-password-123'
 const dataDir = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'wedding-test-'))
+const [contentDir, privateDir, uploadsDir] = ['content', 'private', 'uploads'].map(d => join(dataDir, d))
 let server: ChildProcess
 let cookie = ''
 let ipCounter = 0
@@ -31,9 +32,8 @@ before(async () => {
   server = spawn(process.execPath, ['.output/server/index.mjs'], {
     env: {
       ...process.env, PORT: String(PORT), HOST: '127.0.0.1',
-      NUXT_DRIVER: 'local', NUXT_PUBLIC_DRIVER: 'local', ALLOW_LOCAL_DRIVER: 'true',
-      NUXT_LOCAL_DATA_DIR: dataDir, NUXT_LOCAL_ADMIN_PASSWORD: PASSWORD,
-      NUXT_INVITE_SECRET: 'test-invite-secret-0123456789abcdef', NUXT_SESSION_SECRET: 'test-session-secret-0123456789abcdef',
+      NUXT_CONTENT_DIR: contentDir, NUXT_LOCAL_DATA_DIR: privateDir, NUXT_UPLOADS_DIR: uploadsDir,
+      NUXT_LOCAL_ADMIN_PASSWORD: PASSWORD, NUXT_SESSION_SECRET: 'test-session-secret-0123456789abcdef',
     },
     stdio: ['ignore', 'ignore', 'inherit'],
   })
@@ -57,8 +57,6 @@ after(() => {
 let weddingId = ''
 let api = ''
 let guestId = ''
-let token = ''
-let inviteUrl = ''
 
 describe('public invitation', () => {
   test('serves the sample wedding without any guest data', async () => {
@@ -68,7 +66,12 @@ describe('public invitation', () => {
     assert.equal(res.json.events.length, 12)
     assert.equal(res.json.dateUtc, '2027-01-31T00:00:00.000Z')
     assert.ok(!res.text.includes('Sample Family Chan'), 'guest names must not appear')
-    assert.ok(!('published' in res.json.wedding))
+  })
+
+  test('the guest list is kept apart from the published content', async () => {
+    assert.ok(existsSync(join(contentDir, 'weddings.json')))
+    assert.ok(!existsSync(join(contentDir, 'guests.json')), 'guests must never land in content/')
+    assert.ok(existsSync(join(privateDir, 'guests.json')))
   })
 
   test('unknown wedding is a 404', async () => {
@@ -87,43 +90,29 @@ describe('public invitation', () => {
   })
 
   test('root redirects to the default wedding', async () => {
+    // A server redirect, or (static site) a pre-built page that refreshes to it
     const res = await call('/')
-    assert.equal(res.status, 302)
-    assert.match(res.headers.get('location') ?? '', /\/our-wedding$/)
+    if (res.status === 302) assert.match(res.headers.get('location') ?? '', /\/our-wedding$/)
+    // (built with the default wedding address from the build's settings)
+    else assert.match(res.text, /http-equiv="refresh" content="0; url=\/[a-z0-9-]+"/)
   })
 
-  test('old /wedding/ links redirect and keep the invite token', async () => {
-    const res = await call('/wedding/our-wedding?invite=abc')
+  test('old /wedding/ links redirect and keep the query', async () => {
+    const res = await call('/wedding/our-wedding?to=Sok')
     assert.equal(res.status, 301)
-    assert.match(res.headers.get('location') ?? '', /\/our-wedding\?invite=abc$/)
+    assert.match(res.headers.get('location') ?? '', /\/our-wedding\?to=Sok$/)
     assert.match((await call('/en/wedding/our-wedding')).headers.get('location') ?? '', /\/en\/our-wedding$/)
   })
 
-  test('one calendar file holds the whole schedule, each item at its own time', async () => {
-    const ics = await call('/api/public/weddings/our-wedding/events/all.ics')
-    assert.equal(ics.status, 200)
-    assert.equal(ics.text.match(/BEGIN:VEVENT/g)?.length, 12)
-    assert.equal(new Set(ics.text.match(/DTSTART:\S+/g)).size, 12)
-  })
-
-  test('calendar file uses the wedding timezone', async () => {
-    const pub = await call('/api/public/weddings/our-wedding')
-    const ics = await call(`/api/public/weddings/our-wedding/events/${pub.json.events[0].id}.ics?lang=en`)
-    assert.equal(ics.status, 200)
-    assert.match(ics.text, /BEGIN:VCALENDAR/)
-    assert.match(ics.text, /DTSTART:20270130T070000Z/)
-  })
-
-  test('invalid invitation tokens get the same generic error', async () => {
-    const a = await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token: 'not-a-real-token' } })
-    const b = await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token: 'x'.repeat(32) } })
-    assert.equal(a.status, 404)
-    assert.equal(a.json.statusMessage, b.json.statusMessage)
-  })
-
-  test('RSVP without an invitation is refused when the open form is off', async () => {
-    const res = await call('/api/public/rsvp', { method: 'POST', body: { slug: 'our-wedding', name: 'Stranger', attending: true, count: 1 } })
-    assert.equal(res.status, 404)
+  test('calendar files hold the whole schedule in the wedding timezone, per language', async () => {
+    const km = await call('/api/public/weddings/our-wedding/events/all.ics')
+    assert.equal(km.status, 200)
+    assert.equal(km.text.match(/BEGIN:VEVENT/g)?.length, 12)
+    assert.equal(new Set(km.text.match(/DTSTART:\S+/g)).size, 12)
+    assert.match(km.text, /DTSTART:20270130T070000Z/)
+    const en = await call('/api/public/weddings/our-wedding/events/all-en.ics')
+    assert.match(en.text, /SUMMARY:Krong Pealy offering ceremony/)
+    assert.equal((await call('/api/public/weddings/our-wedding/events/other.ics')).status, 404)
   })
 })
 
@@ -155,7 +144,7 @@ describe('admin authentication', () => {
   })
 })
 
-describe('guests and invitations', () => {
+describe('guests', () => {
   test('creates a guest with validation', async () => {
     const bad = await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: '', side: 'both', group: '', maxAttendees: 0 } })
     assert.equal(bad.status, 400)
@@ -170,82 +159,20 @@ describe('guests and invitations', () => {
     assert.equal(res.json.name, 'Partial Renamed')
     assert.equal(res.json.phone, '012 345 678')
     assert.equal(res.json.notes, 'Keep me')
-    await call(`${api}/guests/${g.id}`, { method: 'PATCH', auth: true, body: { archived: true } })
     const w = (await call(api, { auth: true })).json
     await call(api, { method: 'PATCH', auth: true, body: { coverPosition: '40% 10%' } })
     await call(api, { method: 'PATCH', auth: true, body: { date: w.date } })
     assert.equal((await call(api, { auth: true })).json.coverPosition, '40% 10%')
   })
 
-  test('creates a personal link; token is stored only as hash + ciphertext', async () => {
-    const res = await call(`${api}/invitations`, { method: 'POST', auth: true, body: { guestIds: [guestId] } })
-    assert.equal(res.json.created.length, 1)
-    inviteUrl = res.json.created[0].url
-    token = new URL(inviteUrl).searchParams.get('invite')!
-    assert.ok(token.length >= 32)
-    const backup = await call(`${api}/backup`, { auth: true })
-    assert.ok(!backup.text.includes(token), 'raw token must not be stored')
-    // Creating again without regenerate keeps the same link
-    const again = await call(`${api}/invitations`, { method: 'POST', auth: true, body: { guestIds: [guestId] } })
-    assert.equal(again.json.created.length, 0)
-  })
-
-  test('resolving the link returns only that guest and marks it viewed', async () => {
-    const res = await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token } })
-    assert.equal(res.status, 200)
-    assert.deepEqual(Object.keys(res.json).sort(), ['canEdit', 'guestName', 'locale', 'maxAttendees', 'rsvp'])
-    assert.equal(res.json.guestName, 'Test Household')
-    assert.equal(res.json.maxAttendees, 2)
-    const guests = await call(`${api}/guests`, { auth: true })
-    assert.equal(guests.json.guests.find((g: any) => g.id === guestId).invitation.status, 'viewed')
-  })
-
-  test('the guest name never appears in server HTML, even with the token', async () => {
-    const page = await call(`/our-wedding?invite=${token}`)
-    assert.equal(page.status, 200)
-    assert.ok(!page.text.includes('Test Household'))
+  test('guests can only be deleted once archived', async () => {
+    assert.equal((await call(`${api}/guests/${guestId}`, { method: 'DELETE', auth: true })).status, 409)
+    await call(`${api}/guests/bulk`, { method: 'POST', auth: true, body: { ids: [guestId], action: 'archive' } })
+    assert.equal((await call(`${api}/guests/${guestId}`, { method: 'DELETE', auth: true })).status, 200)
   })
 })
 
-describe('RSVP rules', () => {
-  const rsvp = (body: object, ip?: string) => call('/api/public/rsvp', { method: 'POST', ip, body: { slug: 'our-wedding', token, ...body } })
-
-  test('enforces the guest limit on the server', async () => {
-    const res = await rsvp({ attending: true, count: 3 })
-    assert.equal(res.status, 400)
-    assert.equal(res.json.data.code, 'limit')
-    assert.equal((await rsvp({ attending: true, count: 0 })).status, 400)
-  })
-
-  test('validates input types', async () => {
-    assert.equal((await rsvp({ attending: 'yes', count: 1 })).status, 400)
-  })
-
-  test('saves, then updates the same record', async () => {
-    const first = await rsvp({ attending: true, count: 2, attendeeNames: ['A', 'B', 'C'], dietary: 'Vegetarian', message: 'Congrats' })
-    assert.equal(first.status, 200)
-    assert.equal(first.json.updated, false)
-    const second = await rsvp({ attending: true, count: 1 })
-    assert.equal(second.json.updated, true)
-    const res = await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token } })
-    assert.equal(res.json.rsvp.count, 1)
-  })
-
-  test('concurrent duplicate submissions leave exactly one RSVP', async () => {
-    const results = await Promise.all(Array.from({ length: 6 }, () => rsvp({ attending: true, count: 2 })))
-    assert.ok(results.every(r => r.status === 200))
-    const csv = await call(`${api}/rsvps/export.csv`, { auth: true })
-    assert.equal(csv.text.split('\r\n').filter(l => l.startsWith('Test Household')).length, 1)
-  })
-
-  test('stats reflect the stored responses', async () => {
-    const stats = await call(`${api}/stats`, { auth: true })
-    assert.equal(stats.json.guests, 4)
-    assert.equal(stats.json.attendingPeople, 2)
-    assert.equal(stats.json.pending, 3)
-    assert.equal(stats.json.responseRate, 25)
-  })
-
+describe('wedding content', () => {
   test('moving the wedding date moves the schedule by the same amount', async () => {
     const w = (await call(api, { auth: true })).json
     const before = (await call(`${api}/events`, { auth: true })).json
@@ -261,80 +188,19 @@ describe('RSVP rules', () => {
     assert.deepEqual((await call(`${api}/events`, { auth: true })).json.map((e: { start: string }) => e.start), before.map((e: { start: string }) => e.start))
   })
 
-  test('locks responses when updates are disabled', async () => {
+  test('the RSVP form link is saved and published; deadlines show as passed', async () => {
     const w = (await call(api, { auth: true })).json
-    await call(api, { method: 'PATCH', auth: true, body: { rsvp: { ...w.rsvp, allowUpdates: false } } })
-    const res = await rsvp({ attending: false, count: 0 })
-    assert.equal(res.status, 409)
-    assert.equal(res.json.data.code, 'locked')
-    await call(api, { method: 'PATCH', auth: true, body: { rsvp: { ...w.rsvp, allowUpdates: true } } })
-  })
-
-  test('rejects RSVPs after the deadline', async () => {
-    const w = (await call(api, { auth: true })).json
-    await call(api, { method: 'PATCH', auth: true, body: { rsvp: { ...w.rsvp, deadline: '2020-01-01T00:00' } } })
-    const res = await rsvp({ attending: true, count: 1 })
-    assert.equal(res.status, 409)
-    assert.equal(res.json.data.code, 'deadline')
-    const pub = await call('/api/public/weddings/our-wedding')
-    assert.equal(pub.json.deadlinePassed, true)
+    assert.equal((await call(api, { method: 'PATCH', auth: true, body: { rsvp: { ...w.rsvp, formUrl: 'javascript:alert(1)' } } })).status, 400)
+    await call(api, { method: 'PATCH', auth: true, body: { rsvp: { deadline: '2020-01-01T00:00', formUrl: 'https://forms.gle/abc' } } })
+    const pub = (await call('/api/public/weddings/our-wedding')).json
+    assert.equal(pub.wedding.rsvp.formUrl, 'https://forms.gle/abc')
+    assert.equal(pub.deadlinePassed, true)
     await call(api, { method: 'PATCH', auth: true, body: { rsvp: w.rsvp } })
-  })
-
-  test('rate limits repeated submissions from one client', async () => {
-    const statuses = []
-    for (let i = 0; i < 12; i++) statuses.push((await rsvp({ attending: true, count: 1 }, '203.0.113.9')).status)
-    assert.ok(statuses.includes(429))
-  })
-})
-
-describe('link lifecycle', () => {
-  test('regenerating invalidates the old link and keeps the RSVP', async () => {
-    const res = await call(`${api}/invitations`, { method: 'POST', auth: true, body: { guestIds: [guestId], regenerate: true } })
-    const newToken = new URL(res.json.created[0].url).searchParams.get('invite')!
-    assert.equal((await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token } })).status, 404)
-    const ok = await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token: newToken } })
-    assert.equal(ok.status, 200)
-    assert.ok(ok.json.rsvp, 'RSVP survives regeneration')
-    token = newToken
-  })
-
-  test('revoking stops the link', async () => {
-    const guests = await call(`${api}/guests`, { auth: true })
-    const inv = guests.json.guests.find((g: any) => g.id === guestId).invitation
-    await call(`${api}/invitations/${inv.id}`, { method: 'PATCH', auth: true, body: { status: 'revoked' } })
-    assert.equal((await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token } })).status, 404)
-    assert.equal((await call('/api/public/rsvp', { method: 'POST', body: { slug: 'our-wedding', token, attending: true, count: 1 } })).status, 404)
-  })
-
-  test('archived guests lose access and can only then be deleted', async () => {
-    const res = await call(`${api}/invitations`, { method: 'POST', auth: true, body: { guestIds: [guestId] } })
-    token = new URL(res.json.created[0].url).searchParams.get('invite')!
-    assert.equal((await call(`${api}/guests/${guestId}`, { method: 'DELETE', auth: true })).status, 409)
-    await call(`${api}/guests/bulk`, { method: 'POST', auth: true, body: { ids: [guestId], action: 'archive' } })
-    assert.equal((await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token } })).status, 404)
-    assert.equal((await call(`${api}/stats`, { auth: true })).json.guests, 3)
-    await call(`${api}/guests/bulk`, { method: 'POST', auth: true, body: { ids: [guestId], action: 'restore' } })
-    assert.equal((await call('/api/public/invitation', { method: 'POST', body: { slug: 'our-wedding', token } })).status, 200)
-  })
-})
-
-describe('open RSVP form', () => {
-  test('works when enabled, with its own limit and idempotent retries', async () => {
-    const w = (await call(api, { auth: true })).json
-    await call(api, { method: 'PATCH', auth: true, body: { rsvp: { ...w.rsvp, allowGeneral: true, generalMaxAttendees: 2 } } })
-    const body = { slug: 'our-wedding', name: 'Walk-in Guest', attending: true, count: 2, submissionId: 'retry-test-0001' }
-    assert.equal((await call('/api/public/rsvp', { method: 'POST', body: { ...body, count: 3 } })).status, 400)
-    assert.equal((await call('/api/public/rsvp', { method: 'POST', body: { ...body, name: '' } })).status, 400)
-    assert.equal((await call('/api/public/rsvp', { method: 'POST', body })).json.updated, false)
-    assert.equal((await call('/api/public/rsvp', { method: 'POST', body })).json.updated, true)
-    const g = await call(`${api}/guests`, { auth: true })
-    assert.equal(g.json.general.length, 1)
   })
 })
 
 describe('exports and isolation', () => {
-  test('CSV export is UTF-8 with BOM and neutralises formulas', async () => {
+  test('CSV export is UTF-8 with BOM, neutralises formulas and includes personal links', async () => {
     await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: '=HYPERLINK("http://x")', side: 'both', group: 'គ្រួសារ', maxAttendees: 1 } })
     const csv = await call(`${api}/guests/export.csv`, { auth: true })
     // fetch's text() drops the BOM, so check the raw bytes
@@ -343,21 +209,18 @@ describe('exports and isolation', () => {
     assert.ok(csv.text.startsWith('name,'))
     assert.match(csv.text, /"'=HYPERLINK\(""http:\/\/x""\)"/)
     assert.match(csv.text, /គ្រួសារ/)
+    assert.match(csv.text, /\/our-wedding\?to=Partial%20Renamed/)
   })
 
   test('records from one wedding cannot be edited through another', async () => {
+    const g = (await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: 'Mine', side: 'both', group: '', maxAttendees: 1 } })).json
     const other = await call('/api/admin/weddings', { method: 'POST', auth: true, body: { slug: 'second-wedding' } })
     assert.equal(other.status, 200)
-    const res = await call(`/api/admin/weddings/${other.json.id}/guests/${guestId}`, { method: 'PATCH', auth: true, body: { name: 'Hijack' } })
+    const res = await call(`/api/admin/weddings/${other.json.id}/guests/${g.id}`, { method: 'PATCH', auth: true, body: { name: 'Hijack' } })
     assert.equal(res.status, 404)
-    // New weddings start unpublished: hidden from the public, previewable by admins
-    assert.equal((await call('/api/public/weddings/second-wedding')).status, 404)
-    const preview = await call('/api/public/weddings/second-wedding', { auth: true })
-    assert.equal(preview.status, 200)
-    assert.equal(preview.json.preview, true)
   })
 
-  test('gallery upload checks the real file type', async () => {
+  test('gallery upload checks the real file type and stores a plain file', async () => {
     const png = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4b40000000049454e44ae426082', 'hex')
     const form = (img: Blob) => {
       const f = new FormData()
@@ -371,11 +234,11 @@ describe('exports and isolation', () => {
     assert.equal(fake.status, 400)
     const ok = await call(`${api}/gallery`, { method: 'POST', auth: true, raw: form(new Blob([png], { type: 'image/png' })) })
     assert.equal(ok.status, 200)
-    const file = await fetch(BASE + ok.json.url)
-    assert.equal(file.status, 200)
-    assert.equal(file.headers.get('content-type'), 'image/png')
+    assert.match(ok.json.url, /^\/uploads\//)
+    const file = join(uploadsDir, ok.json.url.slice('/uploads/'.length))
+    assert.ok(existsSync(file))
     assert.equal((await call(`${api}/gallery/${ok.json.id}`, { method: 'DELETE', auth: true })).status, 200)
-    assert.equal((await fetch(BASE + ok.json.url)).status, 404)
+    assert.ok(!existsSync(file))
   })
 
   test('sign out ends the session', async () => {

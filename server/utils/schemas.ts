@@ -7,19 +7,6 @@ const url = z.union([z.literal(''), z.string().trim().max(2000).refine(v => /^ht
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/)
 const locale = z.enum(['km', 'en'])
 
-export const rsvpSchema = z.object({
-  slug: text(100),
-  token: z.string().max(100).optional(),
-  // Lets a retried request overwrite its own general RSVP instead of creating a duplicate
-  submissionId: z.string().regex(/^[\w-]{8,64}$/).optional(),
-  name: text(120).optional(),
-  attending: z.boolean(),
-  count: z.number().int().min(0).max(50),
-  attendeeNames: z.array(text(120)).max(50).default([]),
-  dietary: text(500).default(''),
-  message: text(1000).default(''),
-})
-
 export const weddingSchema = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Lowercase letters, numbers and dashes').max(60)
     // The invitation lives at /<slug>, so it can't take a path the site already uses
@@ -44,16 +31,10 @@ export const weddingSchema = z.object({
     style: z.enum(['classic', 'floral']).default('classic'),
   }),
   defaultLocale: locale,
-  rsvp: z.object({
-    deadline: localDateTime,
-    allowUpdates: z.boolean(),
-    allowGeneral: z.boolean(),
-    generalMaxAttendees: z.number().int().min(1).max(20),
-    askDietary: z.boolean(),
-  }),
+  // Replies go to a Google Form (or any form): the invitation links to it until the deadline
+  rsvp: z.object({ deadline: localDateTime, formUrl: url }),
   privacy: z.object({ allowIndexing: z.boolean() }),
   textOrder: z.array(z.enum(TEXT_BLOCKS)).length(TEXT_BLOCKS.length).refine(o => new Set(o).size === o.length, 'Each block once').default([...TEXT_BLOCKS]),
-  published: z.boolean(),
   musicUrl: url,
   contact: z.object({ name: text(120), phone: text(40), email: z.union([z.literal(''), z.email()]) }),
   share: z.object({
@@ -85,14 +66,6 @@ export const guestSchema = z.object({
   notes: text(1000).default(''),
 })
 
-export const manualRsvpSchema = z.object({
-  attending: z.boolean(),
-  count: z.number().int().min(0).max(50),
-  attendeeNames: z.array(text(120)).max(50).default([]),
-  dietary: text(500).default(''),
-  message: text(1000).default(''),
-})
-
 export const galleryPatchSchema = z.object({
   caption: localized(300).optional(),
   alt: localized(300).optional(),
@@ -100,8 +73,6 @@ export const galleryPatchSchema = z.object({
 })
 
 export const reorderSchema = z.object({ ids: z.array(z.string().max(64)).max(1000) })
-
-export const adminInviteSchema = z.object({ email: z.email(), role: z.enum(['owner', 'editor']) })
 
 /** Validates the body with a schema, turning failures into a 400 with field paths. */
 export async function readBody$<T extends z.ZodType>(event: Parameters<typeof readBody>[0], schema: T): Promise<z.infer<T>> {

@@ -90,37 +90,9 @@
     "deadline": "Kindly reply by {date}",
     "closed": "RSVPs closed on {date}. Please contact the couple if your plans have changed.",
     "greeting": "Dear {name}",
-    "allowed": "We have reserved {n} seat for you | We have reserved {n} seats for you",
-    "name": "Your full name",
-    "attending": "Will you attend?",
-    "accept": "Joyfully accept",
-    "decline": "Regretfully decline",
-    "count": "Number of guests attending",
-    "attendeeNames": "Names of guests attending",
-    "attendeeName": "Guest {n}",
-    "dietary": "Dietary requirements (optional)",
-    "message": "Message for the couple (optional)",
-    "submit": "Send RSVP",
-    "update": "Update RSVP",
-    "sending": "Sending…",
-    "thanksYes": "Thank you! We look forward to celebrating with you.",
-    "thanksNo": "Thank you for letting us know. You will be missed.",
-    "change": "Change my response",
-    "current": "Your response: {status}",
-    "statusYes": "attending ({n})",
-    "statusNo": "not attending",
-    "locked": "Your response has been received. Please contact the couple to make changes.",
-    "invalidLink": "This invitation link is not valid. Please check the link or contact the couple.",
-    "needInvite": "Please use the personal invitation link you received to RSVP.",
-    "errors": {
-      "name": "Please enter your name.",
-      "attending": "Please choose whether you will attend.",
-      "count": "Please enter between 1 and {max} guests.",
-      "deadline": "The RSVP deadline has passed.",
-      "limit": "Your invitation allows up to {max} guests.",
-      "rate": "Too many attempts. Please wait a minute and try again.",
-      "failed": "Your RSVP could not be saved. Please check your connection and try again."
-    }
+    "intro": "Please let us know whether you can join us.",
+    "reply": "Reply now",
+    "noForm": "Please reply to the couple directly."
   },
   "footer": {
     "thanks": "With love and gratitude"
@@ -150,7 +122,8 @@
       "submit": "Sign in",
       "failed": "Sign-in failed. Check your email and password.",
       "notAdmin": "This account does not have admin access.",
-      "localHint": "Development mode: use the password from NUXT_LOCAL_ADMIN_PASSWORD."
+      "localHint": "Development mode: use the password from NUXT_LOCAL_ADMIN_PASSWORD.",
+      "rate": "Too many attempts. Please wait a minute and try again."
     },
     "wedding": {
       "select": "Wedding",
@@ -171,7 +144,14 @@
       "breakdown": "Responses",
       "recent": "Latest replies",
       "noReplies": "No replies yet. Share invitation links from the Invitations page.",
-      "general": "Open RSVP form"
+      "general": "Open RSVP form",
+      "daysLeft": "Days to go",
+      "publishTitle": "Publish your changes",
+      "publishHint": "Edits are saved on this computer (content/ and public/uploads/). To update the live invitation, commit and push them; Vercel or Netlify rebuilds the site in about a minute. The guest list stays on this computer and is never published.",
+      "repliesTitle": "RSVP replies",
+      "repliesHint": "Guests reply through your form; open its responses (or linked Google Sheet) to see who is coming.",
+      "openForm": "Open the form",
+      "addForm": "Add a form link in Settings"
     },
     "guests": {
       "add": "Add guest",
@@ -221,7 +201,8 @@
       "sortStatus": "RSVP status",
       "sortGroup": "Group",
       "sortUpdated": "Recently updated",
-      "people": "{n} people"
+      "people": "{n} people",
+      "copyLink": "Copy link"
     },
     "invitations": {
       "publish": "Publish invitation",
@@ -233,7 +214,7 @@
       "desktop": "Desktop",
       "openPreview": "Open in new tab",
       "links": "Personal invitation links",
-      "linksHint": "Each guest gets a private link. Anyone with the link can RSVP for that guest, so share it only with them.",
+      "linksHint": "Each link is the invitation with the guest's name on the envelope. Nothing is tracked, and anyone with a link can see the name in it.",
       "generate": "Create link",
       "generateMissing": "Create links for all guests without one",
       "regenerate": "Replace link",
@@ -253,7 +234,8 @@
         "revoked": "Revoked"
       },
       "deadline": "RSVP deadline",
-      "noGuests": "Add guests first, then create their invitation links."
+      "noGuests": "Add guests first, then create their invitation links.",
+      "noSiteUrl": "Set NUXT_PUBLIC_SITE_URL in .env to your live address (e.g. https://ousawedding.vercel.app) and restart; until then these links point at this computer."
     },
     "events": {
       "icon": "Icon",
@@ -365,7 +347,9 @@
       "backup": "Backup",
       "downloadBackup": "Download full backup (JSON)",
       "backupHint": "Includes guests, invitations, RSVPs, events and gallery records. Photos stay in Firebase Storage.",
-      "version": "Version"
+      "version": "Version",
+      "rsvpForm": "RSVP form link",
+      "rsvpFormHint": "Create a Google Form (or any form) and paste its link. The invitation shows a \"Reply now\" button until the deadline; replies collect in the form's Google Sheet."
     },
     "assets": {
       "title": "Assets",

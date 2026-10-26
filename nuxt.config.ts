@@ -1,3 +1,14 @@
+import { readFileSync } from 'node:fs'
+
+// Pages to build for each wedding in content/: the invitation in both languages and its calendar files
+function weddingRoutes() {
+  let slugs: string[] = []
+  try {
+    slugs = Object.values(JSON.parse(readFileSync('content/weddings.json', 'utf8')) as Record<string, { slug: string }>).map(w => w.slug)
+  } catch {}
+  return ['/', ...slugs.flatMap(s => [`/${s}`, `/en/${s}`, `/api/public/weddings/${s}/events/all.ics`, `/api/public/weddings/${s}/events/all-en.ics`])]
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   devtools: { enabled: false },
@@ -7,40 +18,21 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tokens.css', '~/assets/css/base.css'],
 
   runtimeConfig: {
-    // 'firebase' in production; 'local' stores data in .data/ for development and tests
-    driver: process.env.NUXT_DRIVER === 'local' ? 'local' : 'firebase',
+    // Published content (wedding, schedule, gallery): committed, read when the static site is built
+    contentDir: 'content',
+    // Private data (the guest list): stays on your computer, git ignores it
     localDataDir: '.data/local',
+    // Uploaded photos (public/ is served as-is by the site)
+    uploadsDir: 'public/uploads',
+    // Admin sign-in on your computer; see .env.example
     localAdminPassword: '',
-    // Long random strings; see .env.example
-    inviteSecret: '',
     sessionSecret: '',
-    firebase: {
-      projectId: 'ousa-wedding',
-      clientEmail: '',
-      privateKey: '',
-      storageBucket: 'ousa-wedding.firebasestorage.app',
-    },
-    // Photo storage in GitHub instead of Firebase Storage: set NUXT_GITHUB_TOKEN to turn it on
-    github: {
-      token: '',
-      repo: 'ousachea/ousawedding',
-      branch: 'main',
-      folder: 'public/uploads',
-    },
     public: {
-      // Defaults to NUXT_DRIVER at build time so one variable configures both
-      driver: process.env.NUXT_DRIVER === 'local' ? 'local' : 'firebase',
+      // The live address, used in personal invitation links, QR codes and share previews
       siteUrl: '',
       defaultWeddingSlug: 'our-wedding',
       version: process.env.npm_package_version ?? '',
-      commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7),
-      // Firebase web config is public by design; access is enforced on the server
-      firebase: {
-        apiKey: 'AIzaSyANE_wUFyGJERtYdqMNatJ0tORkW9T9NlU',
-        authDomain: 'ousa-wedding.firebaseapp.com',
-        projectId: 'ousa-wedding',
-        appId: '1:325189616262:web:97614c50246f44111a4707',
-      },
+      commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.COMMIT_REF ?? '').slice(0, 7),
     },
   },
 
@@ -63,7 +55,18 @@ export default defineNuxtConfig({
     // Old invitation links (query string, e.g. ?invite=, is kept)
     '/wedding/**': { redirect: { to: '/**', statusCode: 301 } },
     '/en/wedding/**': { redirect: { to: '/en/**', statusCode: 301 } },
-    '/api/**': { headers: { 'cache-control': 'no-store' } },
+  },
+
+  // The published site is static: every invitation page is built ahead of time from content/.
+  // The admin and its API exist only when you run `npm run dev` on your computer.
+  hooks: {
+    'pages:extend'(pages) {
+      if (process.env.NODE_ENV !== 'production') return
+      for (let i = pages.length - 1; i >= 0; i--) if (pages[i]!.path.startsWith('/admin')) pages.splice(i, 1)
+    },
+  },
+  nitro: {
+    prerender: { crawlLinks: true, routes: weddingRoutes() },
   },
 
   app: {

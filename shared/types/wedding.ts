@@ -1,7 +1,6 @@
 export type Locale = 'km' | 'en'
 export type Localized = Record<Locale, string>
 
-export type InvitationStatus = 'draft' | 'sent' | 'viewed' | 'responded' | 'revoked'
 export type GuestSide = 'bride' | 'groom' | 'both'
 export type AdminRole = 'owner' | 'editor'
 export type Motif = 'lotus' | 'kbach' | 'none'
@@ -38,17 +37,14 @@ export interface Wedding {
   theme: ThemeConfig
   defaultLocale: Locale
   rsvp: {
-    // Local date-time in `timezone`; RSVPs are accepted until this moment
+    // Local date-time in `timezone`; the RSVP button shows until this moment
     deadline: string
-    allowUpdates: boolean
-    allowGeneral: boolean
-    generalMaxAttendees: number
-    askDietary: boolean
+    // Where guests reply, e.g. a Google Form; empty hides the button
+    formUrl: string
   }
   privacy: { allowIndexing: boolean }
   // Page order of the text blocks; missing on weddings saved before it existed
   textOrder?: TextBlock[]
-  published: boolean
   musicUrl: string
   contact: { name: string, phone: string, email: string }
   share: Record<Locale, { title: string, description: string }>
@@ -91,39 +87,6 @@ export interface Guest {
   updatedAt: string
 }
 
-export interface Invitation {
-  id: string
-  weddingId: string
-  guestId: string
-  tokenHash: string
-  // Token encrypted with the server secret so admins can copy the link again later
-  tokenEnc: string
-  locale: Locale
-  status: InvitationStatus
-  expiresAt: string
-  viewedAt: string
-  revokedAt: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface Rsvp {
-  // Equals the guest ID for invited guests, so each guest has at most one RSVP
-  id: string
-  weddingId: string
-  guestId: string
-  invitationId: string
-  source: 'invitation' | 'general' | 'admin'
-  name: string
-  attending: boolean
-  count: number
-  attendeeNames: string[]
-  dietary: string
-  message: string
-  submittedAt: string
-  updatedAt: string
-}
-
 export interface GalleryImage {
   id: string
   weddingId: string
@@ -150,22 +113,9 @@ export interface Admin {
   weddingIds: string[]
 }
 
-export interface WeddingStats {
-  guests: number
-  households: number
-  invitations: number
-  invitedPeople: number
-  attendingPeople: number
-  attendingResponses: number
-  declined: number
-  pending: number
-  viewed: number
-  responseRate: number
-}
-
 /** What the public invitation page receives: no guest data. */
 export interface PublicWedding {
-  wedding: Omit<Wedding, 'createdAt' | 'updatedAt' | 'published' | 'contact'> & {
+  wedding: Omit<Wedding, 'createdAt' | 'updatedAt' | 'contact'> & {
     contact: Wedding['contact']
   }
   dateUtc: string
@@ -178,13 +128,4 @@ export interface PublicWedding {
     display: Record<Locale, { date: string, time: string }>
   }>
   gallery: Array<Pick<GalleryImage, 'id' | 'url' | 'thumbUrl' | 'width' | 'height' | 'caption' | 'alt'>>
-  preview: boolean
-}
-
-export interface ResolvedInvitation {
-  guestName: string
-  maxAttendees: number
-  locale: Locale
-  rsvp: Pick<Rsvp, 'attending' | 'count' | 'attendeeNames' | 'dietary' | 'message' | 'updatedAt'> | null
-  canEdit: boolean
 }

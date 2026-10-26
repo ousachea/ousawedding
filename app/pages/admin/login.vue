@@ -4,9 +4,6 @@ import type { FetchError } from 'ofetch'
 definePageMeta({ layout: false })
 const { t } = useI18n()
 const localePath = useLocalePath()
-const config = useRuntimeConfig().public
-const isLocal = config.driver === 'local'
-const email = ref('')
 const password = ref('')
 const busy = ref(false)
 const error = ref('')
@@ -15,28 +12,11 @@ async function submit() {
   error.value = ''
   busy.value = true
   try {
-    if (isLocal) {
-      await $fetch('/api/auth/local', { method: 'POST', body: { password: password.value } })
-    } else {
-      // Loaded only on this page, so guests never download the Firebase SDK
-      const { initializeApp, getApps } = await import('firebase/app')
-      const { getAuth, signInWithEmailAndPassword, signOut, inMemoryPersistence, setPersistence } = await import('firebase/auth')
-      const app = getApps()[0] ?? initializeApp(config.firebase)
-      const auth = getAuth(app)
-      // The httpOnly session cookie is the only credential kept
-      await setPersistence(auth, inMemoryPersistence)
-      const cred = await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
-      const idToken = await cred.user.getIdToken()
-      try {
-        await $fetch('/api/auth/session', { method: 'POST', body: { idToken } })
-      } finally {
-        await signOut(auth)
-      }
-    }
+    await $fetch('/api/auth/local', { method: 'POST', body: { password: password.value } })
     await useAdminSession().load()
     await navigateTo(localePath('/admin'))
   } catch (e) {
-    error.value = (e as FetchError).statusCode === 403 ? t('admin.login.notAdmin') : t('admin.login.failed')
+    error.value = (e as FetchError).statusCode === 429 ? t('admin.login.rate') : t('admin.login.failed')
   } finally {
     busy.value = false
   }
@@ -50,11 +30,7 @@ useHead({ title: () => `${t('admin.login.title')} · ${t('admin.title')}`, meta:
     <form class="card" @submit.prevent="submit">
       <WeddingOrnament kind="flower" />
       <h1>{{ t('admin.login.title') }}</h1>
-      <p v-if="isLocal" class="hint">{{ t('admin.login.localHint') }}</p>
-      <div v-if="!isLocal" class="field">
-        <label for="email">{{ t('admin.login.email') }}</label>
-        <input id="email" v-model="email" type="email" autocomplete="username" required>
-      </div>
+      <p class="hint">{{ t('admin.login.localHint') }}</p>
       <div class="field">
         <label for="password">{{ t('admin.login.password') }}</label>
         <input id="password" v-model="password" type="password" autocomplete="current-password" required>
