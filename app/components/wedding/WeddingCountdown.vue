@@ -36,6 +36,7 @@ const units = computed(() => {
 <template>
   <section class="countdown" aria-labelledby="countdown-title">
     <div class="container">
+      <span v-reveal class="section-icon"><WeddingIcon name="hourglass" /></span>
       <h2 id="countdown-title" v-reveal class="title">{{ t('countdown.title') }}</h2>
       <p v-if="status === 'today' || status === 'passed'" class="done" role="status">
         {{ status === 'today' ? t('countdown.today') : t('countdown.passed') }}
@@ -57,6 +58,7 @@ const units = computed(() => {
 
 <style scoped>
 .countdown { padding-block: var(--space-7); background: var(--c-tertiary); color: var(--c-bg); }
+.section-icon { color: color-mix(in srgb, var(--c-accent) 70%, #fff); }
 .title { text-align: center; font-size: 1.5rem; margin-bottom: var(--space-5); color: color-mix(in srgb, var(--c-accent) 55%, #fff); }
 .units { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); max-width: 30rem; margin-inline: auto; }
 .unit {

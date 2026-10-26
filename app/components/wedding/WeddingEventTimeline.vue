@@ -25,6 +25,7 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 <template>
   <section id="schedule" class="schedule" aria-labelledby="schedule-title">
     <div class="container">
+      <span v-reveal class="section-icon"><WeddingIcon name="calendar" /></span>
       <h2 v-reveal id="schedule-title" class="section-title">{{ t('events.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
 
@@ -36,14 +37,18 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
             <img v-if="e.imageUrl" :src="e.imageUrl" alt="" class="card-img" loading="lazy" decoding="async" width="640" height="360">
             <div class="card-body">
               <p class="when tabular">
+                <WeddingIcon name="clock" />
                 <span>{{ e.display[locale].date }}</span>
                 <span class="time">{{ e.display[locale].time }}</span>
               </p>
               <h3 class="event-title">{{ L(e.title) }}</h3>
               <p v-if="L(e.description)" class="desc">{{ L(e.description) }}</p>
               <address v-if="L(e.venue) || L(e.address)" class="venue">
-                <strong>{{ L(e.venue) }}</strong>
-                <span v-if="L(e.address)">{{ L(e.address) }}</span>
+                <WeddingIcon name="pin" class="venue-icon" />
+                <span class="venue-text">
+                  <strong>{{ L(e.venue) }}</strong>
+                  <span v-if="L(e.address)">{{ L(e.address) }}</span>
+                </span>
               </address>
               <div class="actions">
                 <a v-if="e.mapUrl" :href="e.mapUrl" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
@@ -64,14 +69,17 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 
       <div v-if="w.content[locale].dressCode || w.content[locale].instructions || w.contact.phone || w.contact.email" class="info">
         <div v-if="w.content[locale].dressCode" v-reveal class="info-card">
+          <WeddingIcon name="dress" class="info-icon" />
           <h3>{{ t('events.dressCode') }}</h3>
           <p>{{ w.content[locale].dressCode }}</p>
         </div>
         <div v-if="w.content[locale].instructions" v-reveal="100" class="info-card">
+          <WeddingIcon name="info" class="info-icon" />
           <h3>{{ t('events.instructions') }}</h3>
           <p>{{ w.content[locale].instructions }}</p>
         </div>
         <div v-if="w.contact.phone || w.contact.email" v-reveal="200" class="info-card">
+          <WeddingIcon name="phone" class="info-icon" />
           <h3>{{ t('events.contact', { name: w.contact.name }) }}</h3>
           <p>
             <a v-if="w.contact.phone" :href="`tel:${w.contact.phone.replace(/\s/g, '')}`" class="tabular">{{ w.contact.phone }}</a>
@@ -117,12 +125,14 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 .card { background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
 .card-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .card-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
-.when { display: flex; flex-wrap: wrap; gap: 0 var(--space-3); font-size: 0.9rem; color: var(--c-accent-ink); font-weight: 500; }
+.when { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); font-size: 0.9rem; color: var(--c-accent-ink); font-weight: 500; }
 .event-title { font-size: 1.5rem; }
 .desc { color: var(--c-muted); }
-.venue { font-style: normal; display: flex; flex-direction: column; font-size: 0.95rem; }
+.venue { font-style: normal; display: flex; gap: var(--space-2); font-size: 0.95rem; }
+.venue-icon { color: var(--c-accent-ink); margin-top: 0.3em; }
+.venue-text { display: flex; flex-direction: column; }
 .venue strong { font-weight: 500; }
-.venue span { color: var(--c-muted); }
+.venue-text span { color: var(--c-muted); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); align-items: flex-start; }
 .calendar { position: relative; }
 .calendar summary { list-style: none; border: 1px solid var(--c-line-soft); }
@@ -137,6 +147,7 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 
 .info { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); max-width: 52rem; margin: var(--space-6) auto 0; }
 .info-card { padding: var(--space-5); border: 1px solid var(--c-line); border-radius: var(--radius-lg); text-align: center; }
+.info-icon { font-size: 30px; color: var(--c-accent-ink); margin: 0 auto var(--space-2); display: block; }
 .info-card h3 { font-size: 1.25rem; margin-bottom: var(--space-2); color: var(--c-secondary); }
 .info-card a { color: var(--c-secondary); }
 </style>

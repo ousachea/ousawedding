@@ -118,6 +118,7 @@ watch(() => form.count, (n) => {
 <template>
   <section id="rsvp" class="rsvp" aria-labelledby="rsvp-title">
     <div class="container narrow">
+      <span v-reveal class="section-icon"><WeddingIcon name="envelope" /></span>
       <h2 v-reveal id="rsvp-title" class="section-title">{{ t('rsvp.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
       <p class="deadline">

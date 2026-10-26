@@ -145,14 +145,37 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .reveal-init.revealed { opacity: 1; transform: none; }
 
-/* Gold ornaments draw their lines when revealed */
-.reveal-init.ornament path, .reveal-init .ornament path {
+/* Gold ornaments and icons draw their lines when revealed */
+.reveal-init.ornament path, .reveal-init .ornament path, .reveal-init .icon path {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   transition: stroke-dashoffset 1.8s var(--ease-out);
   transition-delay: calc(var(--reveal-delay, 0ms) + 150ms);
 }
-.reveal-init.revealed.ornament path, .reveal-init.revealed .ornament path { stroke-dashoffset: 0; }
+.reveal-init.revealed.ornament path, .reveal-init.revealed .ornament path, .reveal-init.revealed .icon path { stroke-dashoffset: 0; }
+
+/* Icon badge above section titles, with a slowly turning dotted ring */
+.section-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-3);
+  font-size: 26px;
+  color: var(--c-accent-ink);
+}
+.section-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px dashed var(--c-accent);
+  border-radius: 50%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .section-icon::before { animation: turn 24s linear infinite; }
+}
+@keyframes turn { to { transform: rotate(360deg); } }
 
 @media (hover: hover) {
   .btn:hover:not(:disabled) { transform: translateY(-1px); }

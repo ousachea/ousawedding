@@ -99,6 +99,7 @@ useSeoMeta({
 
       <section v-if="sections.some(s => s.id === 'story')" id="story" class="story" aria-labelledby="story-title">
         <div class="container story-inner">
+          <span v-reveal class="section-icon"><WeddingIcon name="heart" /></span>
           <h2 v-reveal id="story-title" class="section-title">{{ t('story.title') }}</h2>
           <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
           <p v-reveal="200" class="story-text">{{ L({ km: w.content.km.story, en: w.content.en.story }) }}</p>

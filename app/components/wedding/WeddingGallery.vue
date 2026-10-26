@@ -33,6 +33,7 @@ function onTouchEnd(e: TouchEvent) {
 <template>
   <section id="gallery" class="gallery" aria-labelledby="gallery-title">
     <div class="container">
+      <span v-reveal class="section-icon"><WeddingIcon name="camera" /></span>
       <h2 v-reveal id="gallery-title" class="section-title">{{ t('gallery.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="motif" />
       <ul class="grid" :class="{ few: images.length <= 4 }">
