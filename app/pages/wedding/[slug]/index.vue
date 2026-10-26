@@ -28,6 +28,8 @@ onMounted(async () => {
   }
 })
 
+const introDelay = ref<number | null>(null)
+
 function onSaved(rsvp: NonNullable<ResolvedInvitation['rsvp']>) {
   if (invite.value) invite.value = { ...invite.value, rsvp, canEdit: w.value.rsvp.allowUpdates }
 }
@@ -83,6 +85,7 @@ useSeoMeta({
       :motif="w.theme.motif"
       :guest-name="invite?.guestName"
       :storage-key="`envelope:${w.slug}`"
+      @revealing="introDelay = $event"
     />
 
     <p v-if="data!.preview" class="banner preview">{{ t('admin.invitations.unpublished') }}</p>
@@ -91,15 +94,15 @@ useSeoMeta({
     <WeddingNavigation :sections="sections" :music-url="w.musicUrl" :monogram="w.monogram" />
 
     <main>
-      <WeddingHero :data="data!" />
+      <WeddingHero :data="data!" :intro-delay="introDelay" />
       <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" />
       <WeddingEventTimeline :data="data!" />
 
       <section v-if="sections.some(s => s.id === 'story')" id="story" class="story" aria-labelledby="story-title">
         <div class="container story-inner">
-          <h2 id="story-title" class="section-title">{{ t('story.title') }}</h2>
-          <WeddingOrnament :motif="w.theme.motif" />
-          <p class="story-text">{{ L({ km: w.content.km.story, en: w.content.en.story }) }}</p>
+          <h2 v-reveal id="story-title" class="section-title">{{ t('story.title') }}</h2>
+          <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
+          <p v-reveal="200" class="story-text">{{ L({ km: w.content.km.story, en: w.content.en.story }) }}</p>
         </div>
       </section>
 

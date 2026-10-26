@@ -33,10 +33,10 @@ function onTouchEnd(e: TouchEvent) {
 <template>
   <section id="gallery" class="gallery" aria-labelledby="gallery-title">
     <div class="container">
-      <h2 id="gallery-title" class="section-title">{{ t('gallery.title') }}</h2>
-      <WeddingOrnament :motif="motif" />
-      <ul class="grid">
-        <li v-for="(img, i) in images" :key="img.id">
+      <h2 v-reveal id="gallery-title" class="section-title">{{ t('gallery.title') }}</h2>
+      <WeddingOrnament v-reveal="100" :motif="motif" />
+      <ul class="grid" :class="{ few: images.length <= 4 }">
+        <li v-for="(img, i) in images" :key="img.id" v-reveal="(i % 3) * 90">
           <button type="button" class="thumb" :aria-label="t('gallery.open', { n: i + 1 })" @click="open(i)">
             <img :src="img.thumbUrl || img.url" :alt="L(img.alt) || L(img.caption)" :width="img.width" :height="img.height" loading="lazy" decoding="async">
           </button>
@@ -47,7 +47,9 @@ function onTouchEnd(e: TouchEvent) {
 
     <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @click.self="dialog?.close()">
       <div v-if="current" class="viewer-inner" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
-        <img :src="current.url" :alt="L(current.alt) || L(current.caption)" :width="current.width" :height="current.height">
+        <Transition name="photo" mode="out-in">
+          <img :key="current.id" :src="current.url" :alt="L(current.alt) || L(current.caption)" :width="current.width" :height="current.height">
+        </Transition>
         <p class="viewer-caption">
           <span class="tabular">{{ t('gallery.counter', { n: index + 1, total: images.length }) }}</span>
           <span v-if="L(current.caption)"> · {{ L(current.caption) }}</span>
@@ -67,7 +69,8 @@ function onTouchEnd(e: TouchEvent) {
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
 .grid { list-style: none; padding: 0; margin: var(--space-6) 0 0; columns: 2; column-gap: var(--space-3); }
 .grid li { break-inside: avoid; margin-bottom: var(--space-3); }
-@media (min-width: 800px) { .grid { columns: 3; column-gap: var(--space-4); } }
+/* Small galleries stay at two columns so no column is left empty */
+@media (min-width: 760px) { .grid { columns: 3; column-gap: var(--space-4); } .grid.few { columns: 2; max-width: 44rem; margin-inline: auto; } }
 .thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); overflow: hidden; cursor: zoom-in; background: var(--c-line-soft); }
 .thumb img { width: 100%; transition: transform 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
 @media (hover: hover) { .thumb:hover img { transform: scale(1.03); } }
@@ -82,6 +85,9 @@ function onTouchEnd(e: TouchEvent) {
 @keyframes fade { from { opacity: 0; } }
 .viewer-inner { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 3.5rem 1rem 2rem; max-width: 100%; }
 .viewer-inner img { max-height: 78dvh; width: auto; max-width: min(100%, 1200px); object-fit: contain; border-radius: var(--radius-sm); }
+.photo-enter-active, .photo-leave-active { transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out); }
+.photo-enter-from { opacity: 0; transform: scale(0.98); }
+.photo-leave-to { opacity: 0; }
 .viewer-caption { font-size: 0.9rem; opacity: 0.85; text-align: center; }
 .nav-btn {
   position: fixed; width: 48px; height: 48px; display: grid; place-items: center;

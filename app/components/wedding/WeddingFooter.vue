@@ -6,9 +6,9 @@ const locale = useLocaleCode()
 
 <template>
   <footer class="footer">
-    <WeddingOrnament :motif="data.wedding.theme.motif" kind="flower" />
-    <p class="thanks">{{ t('footer.thanks') }}</p>
-    <p class="names">{{ data.wedding.names[locale].partner1 }} &amp; {{ data.wedding.names[locale].partner2 }}</p>
+    <WeddingOrnament v-reveal :motif="data.wedding.theme.motif" kind="flower" />
+    <p v-reveal="100" class="thanks">{{ t('footer.thanks') }}</p>
+    <p v-reveal="200" class="names">{{ data.wedding.names[locale].partner1 }} &amp; {{ data.wedding.names[locale].partner2 }}</p>
     <p class="date">{{ data.display[locale].date }}</p>
   </footer>
 </template>

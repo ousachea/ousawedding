@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{ monogram: string, motif: Motif, guestName?: string, storageKey: string }>()
-const emit = defineEmits<{ opened: [] }>()
+// `revealing` fires as the invitation starts to show, with how long until it is fully visible
+const emit = defineEmits<{ opened: [], revealing: [delayMs: number] }>()
 const { t } = useI18n()
 
 // Without JavaScript the envelope can't open, so never show it. Rendered in <head> so the
@@ -16,6 +17,7 @@ function remember() {
 }
 
 function finish() {
+  if (state.value === 'closed') emit('revealing', 0)
   state.value = 'gone'
   document.documentElement.style.removeProperty('overflow')
   emit('opened')
@@ -26,6 +28,7 @@ function open() {
   remember()
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
   state.value = 'opening'
+  emit('revealing', 1150)
   setTimeout(finish, 1700)
 }
 
@@ -105,6 +108,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 .envelope {
   --w: min(86vw, 420px);
   position: relative;
+  animation: float 5s ease-in-out infinite;
   width: var(--w);
   aspect-ratio: 7 / 5;
   perspective: 1200px;
@@ -132,6 +136,11 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 }
 .letter-mono { font-family: var(--font-serif); font-size: 1.6rem; color: var(--c-accent-ink); letter-spacing: 0.08em; }
 .opening .letter { transform: translateY(-46%); }
+.opening .envelope { animation: none; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
 
 .pocket {
   z-index: 3;
@@ -170,7 +179,22 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   cursor: pointer;
   background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c-secondary) 70%, #fff), var(--c-secondary) 60%);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 35%, transparent), 0 6px 14px -4px rgb(80 10 15 / 0.45);
+  overflow: hidden;
   transition: transform 0.2s var(--ease-out), opacity 0.3s;
+}
+/* A slow light sweep across the wax */
+.seal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.28) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: shine 4.5s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+@keyframes shine {
+  0%, 60% { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
 }
 .seal:hover { transform: scale(1.05); }
 .seal:active { transform: scale(0.96); }
@@ -186,6 +210,14 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 .opening .seal { opacity: 0; transform: scale(0.8); }
 
 .for-guest { font-family: var(--font-serif); font-size: 1.25rem; font-style: italic; color: var(--c-accent-ink); min-height: 1.9em; text-align: center; }
+
+@media (min-width: 700px) {
+  .envelope { --w: min(72vw, 560px); }
+  .seal { width: 96px; height: 96px; }
+  .seal-mono { font-size: 1.25rem; }
+  .letter-mono { font-size: 2.1rem; }
+  .for-guest { font-size: 1.5rem; }
+}
 
 .actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
 .skip { font-size: 0.85rem; color: var(--c-muted); }

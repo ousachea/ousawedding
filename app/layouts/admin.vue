@@ -101,12 +101,18 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 <style src="~/assets/css/admin.css"></style>
 
 <style scoped>
-.admin { min-height: 100dvh; display: grid; grid-template-columns: 1fr; }
+.admin { min-height: 100dvh; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; }
 .side { background: var(--c-surface); border-bottom: 1px solid var(--c-line-soft); }
 .side-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); padding-top: max(var(--space-3), env(safe-area-inset-top)); }
 .brand { font-family: var(--font-serif); font-size: 1.3rem; color: var(--c-secondary); }
 .side-body { display: none; flex-direction: column; gap: var(--space-5); padding: var(--space-2) var(--space-4) var(--space-5); }
-.side.open .side-body { display: flex; }
+.side.open .side-body { display: flex; animation: drop 0.2s var(--ease-out); }
+@keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
+/* Tablet portrait: the menu opens as two columns to use the width */
+@media (min-width: 640px) and (max-width: 959px) {
+  .side.open .side-body { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  .side-foot { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; }
+}
 .wedding-select { gap: var(--space-2); }
 .links { display: flex; flex-direction: column; gap: 2px; }
 .link { padding: 0.55rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--c-text); }
@@ -116,7 +122,7 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 .content { padding: var(--space-5) max(1rem, env(safe-area-inset-right)) var(--space-7) max(1rem, env(safe-area-inset-left)); min-width: 0; }
 
 @media (min-width: 960px) {
-  .admin { grid-template-columns: 16rem 1fr; }
+  .admin { grid-template-columns: 16rem 1fr; grid-template-rows: 1fr; }
   .side { border-bottom: 0; border-right: 1px solid var(--c-line-soft); position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
   .menu-btn { display: none; }
   .side-body { display: flex; }

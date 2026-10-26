@@ -36,14 +36,18 @@ const units = computed(() => {
 <template>
   <section class="countdown" aria-labelledby="countdown-title">
     <div class="container">
-      <h2 id="countdown-title" class="title">{{ t('countdown.title') }}</h2>
+      <h2 id="countdown-title" v-reveal class="title">{{ t('countdown.title') }}</h2>
       <p v-if="status === 'today' || status === 'passed'" class="done" role="status">
         {{ status === 'today' ? t('countdown.today') : t('countdown.passed') }}
       </p>
       <!-- aria-hidden: a ticking clock would be read aloud every second -->
-      <div v-else class="units" aria-hidden="true">
+      <div v-else v-reveal="120" class="units" aria-hidden="true">
         <div v-for="u in units" :key="u.key" class="unit">
-          <span class="num tabular">{{ u.value }}</span>
+          <span class="num-wrap">
+            <Transition name="tick" mode="out-in">
+              <span :key="u.value" class="num tabular">{{ u.value }}</span>
+            </Transition>
+          </span>
           <span class="lbl">{{ t(`countdown.${u.key}`) }}</span>
         </div>
       </div>
@@ -61,7 +65,16 @@ const units = computed(() => {
   border: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent);
   border-radius: var(--radius);
 }
-.num { font-family: var(--font-serif); font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; }
+.num-wrap { display: block; overflow: hidden; }
+.num { display: block; font-family: var(--font-serif); font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; }
 .lbl { font-size: 0.75rem; letter-spacing: 0.08em; opacity: 0.85; }
+.tick-enter-active, .tick-leave-active { transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out); }
+.tick-enter-from { transform: translateY(40%); opacity: 0; }
+.tick-leave-to { transform: translateY(-40%); opacity: 0; }
+@media (min-width: 760px) {
+  .units { max-width: 38rem; gap: var(--space-3); }
+  .unit { padding: var(--space-4) var(--space-2); }
+  .lbl { font-size: 0.85rem; }
+}
 .done { text-align: center; font-family: var(--font-serif); font-size: 1.4rem; }
 </style>

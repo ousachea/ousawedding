@@ -118,13 +118,13 @@ watch(() => form.count, (n) => {
 <template>
   <section id="rsvp" class="rsvp" aria-labelledby="rsvp-title">
     <div class="container narrow">
-      <h2 id="rsvp-title" class="section-title">{{ t('rsvp.title') }}</h2>
-      <WeddingOrnament :motif="w.theme.motif" />
+      <h2 v-reveal id="rsvp-title" class="section-title">{{ t('rsvp.title') }}</h2>
+      <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
       <p class="deadline">
         {{ data.deadlinePassed ? t('rsvp.closed', { date: data.display[locale].deadline }) : t('rsvp.deadline', { date: data.display[locale].deadline }) }}
       </p>
 
-      <div class="panel" aria-live="polite">
+      <div v-reveal="150" class="panel" aria-live="polite">
         <p v-if="inviteState === 'loading'" class="muted center">{{ t('common.loading') }}</p>
 
         <p v-else-if="inviteState === 'invalid'" class="notice">{{ t('rsvp.invalidLink') }}</p>
@@ -217,6 +217,7 @@ watch(() => form.count, (n) => {
             <p v-if="serverError" class="server-error" role="alert">{{ serverError }}</p>
 
             <button type="submit" class="btn btn-primary submit" :disabled="sending" :aria-busy="sending">
+              <span v-if="sending" class="spinner" aria-hidden="true" />
               {{ sending ? t('rsvp.sending') : invite?.rsvp ? t('rsvp.update') : t('rsvp.submit') }}
             </button>
           </form>
@@ -229,6 +230,7 @@ watch(() => form.count, (n) => {
 <style scoped>
 .rsvp { padding-block: var(--space-8); }
 .narrow { max-width: 36rem; }
+@media (min-width: 760px) { .narrow { max-width: 40rem; } .panel { padding: var(--space-7) var(--space-6); } }
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
 .deadline { text-align: center; color: var(--c-muted); margin-top: var(--space-3); }
 .panel {
@@ -260,6 +262,11 @@ legend { padding: 0; margin-bottom: var(--space-1); }
 .names { display: grid; gap: var(--space-2); }
 .server-error { color: var(--c-danger); text-align: center; }
 .submit { align-self: center; min-width: 12rem; }
+.success { animation: pop 0.6s var(--ease-out); }
+.success :deep(.ornament) { animation: bloom 0.9s var(--ease-out) 0.1s both; }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@keyframes bloom { from { opacity: 0; transform: scale(0.6); } }
+.field-error { animation: pop 0.25s var(--ease-out); }
 .success, .summary { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; margin-top: var(--space-4); }
 .success p { font-family: var(--font-serif); font-size: 1.35rem; }
 </style>

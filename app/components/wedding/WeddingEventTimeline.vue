@@ -25,12 +25,12 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 <template>
   <section id="schedule" class="schedule" aria-labelledby="schedule-title">
     <div class="container">
-      <h2 id="schedule-title" class="section-title">{{ t('events.title') }}</h2>
-      <WeddingOrnament :motif="w.theme.motif" />
+      <h2 v-reveal id="schedule-title" class="section-title">{{ t('events.title') }}</h2>
+      <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
 
       <p v-if="!data.events.length" class="empty">{{ t('events.empty') }}</p>
       <ol v-else class="timeline">
-        <li v-for="e in data.events" :key="e.id" class="item">
+        <li v-for="e in data.events" :key="e.id" v-reveal class="item">
           <span class="dot" aria-hidden="true" />
           <article class="card">
             <img v-if="e.imageUrl" :src="e.imageUrl" alt="" class="card-img" loading="lazy" decoding="async" width="640" height="360">
@@ -63,15 +63,15 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
       </ol>
 
       <div v-if="w.content[locale].dressCode || w.content[locale].instructions || w.contact.phone || w.contact.email" class="info">
-        <div v-if="w.content[locale].dressCode" class="info-card">
+        <div v-if="w.content[locale].dressCode" v-reveal class="info-card">
           <h3>{{ t('events.dressCode') }}</h3>
           <p>{{ w.content[locale].dressCode }}</p>
         </div>
-        <div v-if="w.content[locale].instructions" class="info-card">
+        <div v-if="w.content[locale].instructions" v-reveal="100" class="info-card">
           <h3>{{ t('events.instructions') }}</h3>
           <p>{{ w.content[locale].instructions }}</p>
         </div>
-        <div v-if="w.contact.phone || w.contact.email" class="info-card">
+        <div v-if="w.contact.phone || w.contact.email" v-reveal="200" class="info-card">
           <h3>{{ t('events.contact', { name: w.contact.name }) }}</h3>
           <p>
             <a v-if="w.contact.phone" :href="`tel:${w.contact.phone.replace(/\s/g, '')}`" class="tabular">{{ w.contact.phone }}</a>
@@ -90,6 +90,7 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 .empty { text-align: center; color: var(--c-muted); margin-top: var(--space-5); }
 
 .timeline { list-style: none; padding: 0; margin: var(--space-6) auto 0; max-width: 40rem; position: relative; }
+@media (min-width: 760px) { .timeline { max-width: 44rem; } .event-title { font-size: 1.7rem; } }
 .timeline::before { content: ''; position: absolute; left: 11px; top: 8px; bottom: 8px; width: 1px; background: var(--c-line); }
 .item { position: relative; padding-left: 2.5rem; padding-bottom: var(--space-5); }
 .dot {
@@ -97,6 +98,13 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
   border-radius: 50%; background: var(--c-bg); border: 1px solid var(--c-accent);
   box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent);
 }
+.item.revealed .dot { animation: ring 1.2s var(--ease-out) 0.3s; }
+@keyframes ring {
+  0% { box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent), 0 0 0 0 color-mix(in srgb, var(--c-accent) 50%, transparent); }
+  100% { box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent), 0 0 0 12px transparent; }
+}
+.calendar[open] .calendar-menu { animation: menu 0.18s var(--ease-out); }
+@keyframes menu { from { opacity: 0; transform: translateY(-4px); } }
 .card { background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
 .card-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .card-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
@@ -118,7 +126,7 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 .calendar-menu a { padding: 0.55rem 0.8rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem; }
 .calendar-menu a:hover { background: var(--c-line-soft); }
 
-.info { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); max-width: 52rem; margin: var(--space-6) auto 0; }
+.info { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); max-width: 52rem; margin: var(--space-6) auto 0; }
 .info-card { padding: var(--space-5); border: 1px solid var(--c-line); border-radius: var(--radius-lg); text-align: center; }
 .info-card h3 { font-size: 1.25rem; margin-bottom: var(--space-2); color: var(--c-secondary); }
 .info-card a { color: var(--c-secondary); }

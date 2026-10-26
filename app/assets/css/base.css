@@ -135,3 +135,33 @@ button, input, select, textarea { font: inherit; color: inherit; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Scroll reveal (see plugins/reveal.ts) */
+.reveal-init {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal-init.revealed { opacity: 1; transform: none; }
+
+/* Gold ornaments draw their lines when revealed */
+.reveal-init.ornament path, .reveal-init .ornament path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.8s var(--ease-out);
+  transition-delay: calc(var(--reveal-delay, 0ms) + 150ms);
+}
+.reveal-init.revealed.ornament path, .reveal-init.revealed .ornament path { stroke-dashoffset: 0; }
+
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+}
+
+.spinner {
+  width: 1em; height: 1em;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
