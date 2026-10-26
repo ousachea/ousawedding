@@ -18,7 +18,7 @@ const wedding = {
   rsvpEndpoint: '',
 }
 
-useHead({ title: `${wedding.groom} & ${wedding.bride} — Wedding Invitation` })
+useHead({ title: `${wedding.groom} & ${wedding.bride} | Wedding Invitation` })
 
 const now = ref<number | null>(null)
 let timer: ReturnType<typeof setInterval> | undefined

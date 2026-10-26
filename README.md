@@ -12,7 +12,7 @@ npm install --no-bin-links   # --no-bin-links is only needed on Android shared s
 npm run dev
 ```
 
-## RSVP → Google Sheet
+## RSVPs in a Google Sheet
 
 RSVPs are sent to a Google Apps Script web app that appends each reply to a Google Sheet.
 
