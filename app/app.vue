@@ -14,6 +14,8 @@ const wedding = {
   ],
   mapUrl: 'https://maps.google.com/?q=Phnom+Penh',
   rsvpBy: 'January 15, 2027',
+  // Google Apps Script web app URL (ends in /exec) — see README for setup
+  rsvpEndpoint: '',
 }
 
 useHead({ title: `${wedding.groom} & ${wedding.bride} — Wedding Invitation` })
@@ -40,11 +42,30 @@ const countdown = computed(() => {
 
 const rsvp = reactive({ name: '', guests: 1, attending: 'yes', note: '' })
 const submitted = ref(false)
+const sending = ref(false)
+const error = ref('')
 
-function submitRsvp() {
-  // Hook this up to a form service or API endpoint to actually collect responses.
-  console.log('RSVP', { ...rsvp })
-  submitted.value = true
+async function submitRsvp() {
+  if (!wedding.rsvpEndpoint) {
+    error.value = 'RSVPs are not open yet. Please check back soon.'
+    return
+  }
+  sending.value = true
+  error.value = ''
+  try {
+    // No custom headers: a text/plain body avoids a CORS preflight, which Apps Script can't answer
+    const res = await fetch(wedding.rsvpEndpoint, {
+      method: 'POST',
+      body: JSON.stringify(rsvp),
+    })
+    const result = await res.json()
+    if (!result.ok) throw new Error(result.error)
+    submitted.value = true
+  } catch {
+    error.value = 'Sorry, something went wrong sending your RSVP. Please try again.'
+  } finally {
+    sending.value = false
+  }
 }
 </script>
 
@@ -117,7 +138,10 @@ function submitRsvp() {
           Message for the couple (optional)
           <textarea v-model="rsvp.note" rows="3" />
         </label>
-        <button type="submit" class="button">Send RSVP</button>
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
+        <button type="submit" class="button" :disabled="sending">
+          {{ sending ? 'Sending…' : 'Send RSVP' }}
+        </button>
       </form>
     </section>
 
@@ -309,6 +333,7 @@ h2 {
 }
 
 .button:hover { opacity: 0.85; }
+.button:disabled { opacity: 0.6; cursor: wait; }
 .button.outline { background: transparent; color: var(--accent); }
 
 /* RSVP */
@@ -357,6 +382,13 @@ legend { font-size: 0.9rem; margin-bottom: 0.4rem; }
 .radio input { accent-color: var(--accent); }
 
 form .button { align-self: center; margin-top: 0.5rem; }
+
+.error {
+  margin: 0;
+  color: #a94442;
+  text-align: center;
+  font-size: 0.9rem;
+}
 
 .thanks {
   font-family: 'Cormorant Garamond', serif;
