@@ -1,6 +1,8 @@
 <script setup lang="ts">
-const props = defineProps<{ dateUtc: string, timezone: string }>()
+// `when`: the wedding date and time as shown; `eventDays`: start times of the schedule, marked on the calendar
+const props = defineProps<{ dateUtc: string, timezone: string, when: string, eventDays: string[], icsUrl: string }>()
 const { t } = useI18n()
+const locale = useLocaleCode()
 
 const now = ref<number | null>(null)
 let timer: ReturnType<typeof setInterval> | undefined
@@ -21,6 +23,30 @@ const status = computed(() => {
   return dayKey(now.value) === dayKey(target.value) ? 'today' : 'passed'
 })
 
+// Month calendar of the wedding, in the wedding's timezone. Depends only on data, so it renders on the server too.
+const intlLocale = computed(() => (locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US'))
+const calendar = computed(() => {
+  const [y, m, d] = dayKey(target.value).split('-').map(Number) as [number, number, number]
+  const eventDays = new Set(props.eventDays.map(iso => dayKey(Date.parse(iso))))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const num = new Intl.NumberFormat(intlLocale.value)
+  const days = Array.from({ length: new Date(Date.UTC(y, m, 0)).getUTCDate() }, (_, i) => ({
+    n: num.format(i + 1),
+    wedding: i + 1 === d,
+    event: eventDays.has(`${y}-${pad(m)}-${pad(i + 1)}`),
+  }))
+  // Leading blanks so the 1st falls under its weekday (weeks start on Monday)
+  const cells = [...Array<null>((new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7).fill(null), ...days]
+  // Khmer one-letter weekdays repeat (អ, ព, ស), so Khmer uses the short names
+  const weekday = new Intl.DateTimeFormat(intlLocale.value, { weekday: locale.value === 'km' ? 'short' : 'narrow', timeZone: 'UTC' })
+  return {
+    title: new Intl.DateTimeFormat(intlLocale.value, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(y, m - 1, 1)),
+    // 2023-01-02 was a Monday
+    weekdays: Array.from({ length: 7 }, (_, i) => weekday.format(Date.UTC(2023, 0, 2 + i))),
+    weeks: Array.from({ length: Math.ceil(cells.length / 7) }, (_, i) => cells.slice(i * 7, i * 7 + 7)),
+  }
+})
+
 const units = computed(() => {
   const diff = now.value === null ? null : Math.max(0, target.value - now.value)
   const v = (fn: (d: number) => number) => (diff === null ? '–' : String(fn(diff)).padStart(2, '0'))
@@ -38,20 +64,50 @@ const units = computed(() => {
     <div class="container">
       <span v-reveal class="section-icon"><WeddingIcon name="hourglass" /></span>
       <h2 id="countdown-title" v-reveal class="title">{{ t('countdown.title') }}</h2>
+      <p v-reveal="60" class="when">{{ when }}</p>
       <p v-if="status === 'today' || status === 'passed'" class="done" role="status">
         {{ status === 'today' ? t('countdown.today') : t('countdown.passed') }}
       </p>
       <!-- aria-hidden: a ticking clock would be read aloud every second -->
       <div v-else v-reveal="120" class="units" aria-hidden="true">
         <div v-for="u in units" :key="u.key" class="unit">
-          <span class="num-wrap">
-            <Transition name="tick" mode="out-in">
-              <span :key="u.value" class="num tabular">{{ u.value }}</span>
-            </Transition>
+          <!-- One flip per digit, so only the digit that changes moves (52 → 51 flips just the 2) -->
+          <span class="num tabular">
+            <span v-for="(c, i) in u.value" :key="`${u.value.length}-${i}`" class="digit">
+              <Transition name="flip" mode="out-in">
+                <span :key="c" class="digit-face">{{ c }}</span>
+              </Transition>
+            </span>
           </span>
           <span class="lbl">{{ t(`countdown.${u.key}`) }}</span>
         </div>
       </div>
+
+      <table v-reveal="200" class="calendar">
+        <caption>{{ calendar.title }}</caption>
+        <thead>
+          <tr><th v-for="(w, i) in calendar.weekdays" :key="i" scope="col">{{ w }}</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="(week, i) in calendar.weeks" :key="i">
+            <td v-for="(day, j) in week" :key="j">
+              <span v-if="day" class="day tabular" :class="{ wedding: day.wedding, event: day.event && !day.wedding }">
+                {{ day.n }}<WeddingIcon v-if="day.wedding" name="heart" class="heart" />
+                <span v-if="day.wedding" class="visually-hidden">({{ t('countdown.weddingDay') }})</span>
+                <span v-else-if="day.event" class="visually-hidden">({{ t('countdown.ceremonyDay') }})</span>
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-reveal="240" class="legend" aria-hidden="true">
+        <span><span class="key wedding" />{{ t('countdown.weddingDay') }}</span>
+        <span v-if="calendar.weeks.flat().some(d => d?.event && !d.wedding)"><span class="key event" />{{ t('countdown.ceremonyDay') }}</span>
+      </p>
+      <!-- One calendar file with every schedule item at its own time (works with phone, Outlook and Google calendars) -->
+      <p v-reveal="280" class="add-cal">
+        <a :href="icsUrl" class="btn btn-sm"><WeddingIcon name="calendar" />{{ t('events.calendar') }}</a>
+      </p>
     </div>
   </section>
 </template>
@@ -67,16 +123,38 @@ const units = computed(() => {
   border: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent);
   border-radius: var(--radius);
 }
-.num-wrap { display: block; overflow: hidden; }
-.num { display: block; font-family: var(--font-serif); font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; }
+.num { display: flex; justify-content: center; font-family: var(--font-serif); font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; perspective: 300px; }
+.digit { display: inline-block; min-width: 0.6em; text-align: center; }
+.digit-face { display: inline-block; transform-origin: 50% 50%; backface-visibility: hidden; }
 .lbl { font-size: 0.75rem; letter-spacing: 0.08em; opacity: 0.85; }
-.tick-enter-active, .tick-leave-active { transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out); }
-.tick-enter-from { transform: translateY(40%); opacity: 0; }
-.tick-leave-to { transform: translateY(-40%); opacity: 0; }
+.flip-leave-active { transition: transform 0.18s ease-in, opacity 0.18s ease-in; }
+.flip-enter-active { transition: transform 0.22s var(--ease-out), opacity 0.22s var(--ease-out); }
+.flip-leave-to { transform: rotateX(90deg); opacity: 0.3; }
+.flip-enter-from { transform: rotateX(-90deg); opacity: 0.3; }
+@media (prefers-reduced-motion: reduce) { .flip-enter-active, .flip-leave-active { transition: none; } }
 @media (min-width: 760px) {
   .units { max-width: 38rem; gap: var(--space-3); }
   .unit { padding: var(--space-4) var(--space-2); }
   .lbl { font-size: 0.85rem; }
 }
 .done { text-align: center; font-family: var(--font-serif); font-size: 1.4rem; }
+.when { text-align: center; margin: calc(-1 * var(--space-3)) 0 var(--space-5); font-family: var(--font-serif); font-size: 1.15rem; }
+
+.calendar { margin: var(--space-6) auto 0; border-collapse: separate; border-spacing: 4px; text-align: center; }
+.calendar caption { margin-bottom: var(--space-2); font-family: var(--font-serif); font-size: 1.3rem; color: color-mix(in srgb, var(--c-accent) 55%, #fff); }
+.calendar th { font-size: 0.7rem; white-space: nowrap; font-weight: 500; opacity: 0.7; padding-bottom: var(--space-1); }
+.calendar td { width: 2.6rem; height: 2.6rem; padding: 0; }
+.day { position: relative; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin: auto; border-radius: 50%; font-size: 0.95rem; }
+.day.event { border: 1px solid color-mix(in srgb, var(--c-accent) 75%, transparent); }
+.day.wedding { background: var(--c-accent); color: var(--c-tertiary); font-weight: 700; box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-accent) 30%, transparent); }
+.heart { position: absolute; top: -0.45rem; right: -0.45rem; width: 1rem; height: 1rem; color: #fff; fill: var(--c-secondary); }
+.legend { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-3); font-size: 0.8rem; opacity: 0.85; }
+.legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.key { width: 0.8rem; height: 0.8rem; border-radius: 50%; }
+.key.wedding { background: var(--c-accent); }
+.key.event { border: 1px solid var(--c-accent); }
+.add-cal { margin-top: var(--space-5); text-align: center; }
+.add-cal .btn { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--c-accent); color: color-mix(in srgb, var(--c-accent) 55%, #fff); background: transparent; }
+.add-cal .btn:hover { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
+@media (min-width: 760px) { .calendar td { width: 3.2rem; height: 3rem; } .day { width: 2.8rem; height: 2.8rem; } }
 </style>

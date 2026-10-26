@@ -212,7 +212,7 @@ watch(() => form.count, (n) => {
 
             <div class="field">
               <label for="rsvp-message">{{ t('rsvp.message') }}</label>
-              <textarea id="rsvp-message" v-model="form.message" rows="3" maxlength="1000" />
+              <textarea id="rsvp-message" v-autosize rows="1" v-model="form.message" maxlength="1000" />
             </div>
 
             <p v-if="serverError" class="server-error" role="alert">{{ serverError }}</p>

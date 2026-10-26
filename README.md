@@ -2,8 +2,8 @@
 
 A Khmer and English wedding invitation website with personal invitation links, RSVPs and a private admin dashboard. Built with Nuxt 4. Data lives in Firebase (Firestore, Authentication, Storage), and the app runs on Vercel.
 
-- Guest invitation: `/wedding/<slug>` (Khmer) and `/en/wedding/<slug>` (English). The site root redirects to the default wedding.
-- Personal link: `/wedding/<slug>?invite=<token>`
+- Guest invitation: `/<slug>` (Khmer) and `/en/<slug>` (English), e.g. `/ousa-kanha`. The site root redirects to the default wedding; old `/wedding/<slug>` links redirect.
+- Personal link: `/<slug>?invite=<token>`
 - Admin: `/admin`
 
 Everything shown when you first run the app is **sample data** (Sokha & Dara, placeholder venues and photos). Edit it in the admin dashboard before sending invitations; a banner says so until you do.
@@ -115,7 +115,7 @@ The Firebase **web** config (API key, auth domain, project ID) is in `nuxt.confi
 
 ```
 app/
-  pages/wedding/[slug]/index.vue   Public invitation (one scrolling page)
+  pages/[slug].vue                 Public invitation (one scrolling page)
   pages/admin/*                    Dashboard, guests, invitations (+ print), schedule, gallery, settings
   components/wedding/*             Envelope, hero, countdown, schedule, gallery, RSVP form, navigation…
   components/admin/*               Stat card, RSVP chart, modal, QR code, bilingual field

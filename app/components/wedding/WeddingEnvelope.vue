@@ -85,7 +85,9 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   inset: 0;
   z-index: var(--z-overlay);
   display: grid;
-  place-items: center;
+  /* `safe` + scroll: on very short screens start at the top instead of clipping it */
+  place-items: safe center;
+  overflow-y: auto;
   padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 60%),
@@ -94,10 +96,19 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 }
 .envelope-overlay.opening { opacity: 0; pointer-events: none; }
 
-.stage { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
+.stage {
+  /* Also fit the height: envelope (w × 5/7) plus room for the rising letter, the text and the buttons */
+  --fit-h: max(240px, (100dvh - 13rem) * 1.07);
+  --w: min(86vw, 420px, var(--fit-h));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  /* The letter rises ~30% of the envelope's height above it when opening */
+  padding-top: calc(var(--w) * 5 / 7 * 0.3);
+}
 
 .envelope {
-  --w: min(86vw, 420px);
   position: relative;
   animation: float 5s ease-in-out infinite;
   width: var(--w);
@@ -107,7 +118,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 
 .back, .pocket, .flap { position: absolute; inset: 0; border-radius: 6px; }
 .back {
-  background: color-mix(in srgb, var(--c-accent) 14%, var(--c-bg));
+  background: color-mix(in srgb, var(--c-secondary) 80%, #000);
   box-shadow: var(--shadow);
 }
 
@@ -135,9 +146,9 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 
 .pocket {
   z-index: 3;
-  background: color-mix(in srgb, #fff 30%, var(--c-bg));
+  background: var(--c-secondary);
   clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%);
-  border: 1px solid var(--c-line);
+  border: 1px solid var(--c-accent);
 }
 .corner-l, .corner-r { position: absolute; bottom: 8px; }
 .corner-l { left: 8px; transform: rotate(-90deg); }
@@ -146,7 +157,8 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 .flap {
   z-index: 4;
   height: 60%;
-  background: color-mix(in srgb, var(--c-accent) 8%, var(--c-bg));
+  /* A shade lighter than the pocket so the flap's edges read */
+  background: color-mix(in srgb, var(--c-secondary) 85%, #fff);
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   transform-origin: top center;
   /* Drop behind the letter halfway through the turn */
@@ -168,8 +180,8 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   border: 0;
   border-radius: 50%;
   cursor: pointer;
-  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c-secondary) 70%, #fff), var(--c-secondary) 60%);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 35%, transparent), 0 6px 14px -4px rgb(80 10 15 / 0.45);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c-accent) 60%, #fff), var(--c-accent) 60%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 40%, transparent), 0 6px 14px -4px rgb(0 0 0 / 0.45);
   overflow: hidden;
   transition: transform 0.2s var(--ease-out), opacity 0.3s;
 }
@@ -192,7 +204,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 .seal-mono {
   font-family: var(--font-serif);
   font-size: 1rem;
-  color: color-mix(in srgb, var(--c-accent) 60%, #fff);
+  color: var(--c-tertiary);
   letter-spacing: 0.04em;
   padding: 0 6px;
   text-align: center;
@@ -203,7 +215,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 .for-guest { font-family: var(--font-serif); font-size: 1.25rem; font-style: italic; color: var(--c-accent-ink); min-height: 1.9em; text-align: center; }
 
 @media (min-width: 700px) {
-  .envelope { --w: min(72vw, 560px); }
+  .stage { --w: min(72vw, 560px, var(--fit-h)); }
   .seal { width: 96px; height: 96px; }
   .seal-mono { font-size: 1.25rem; }
   .letter-mono { font-size: 2.1rem; }

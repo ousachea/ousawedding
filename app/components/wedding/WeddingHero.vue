@@ -63,6 +63,12 @@ const step = (i: number) => ({ '--i': i })
         <p class="names-alt step" :lang="other" :style="step(5)">
           {{ w.names[other].partner1 }} &amp; {{ w.names[other].partner2 }}
         </p>
+        <div v-if="w.names[locale].parents1 || w.names[locale].parents2" class="parents step" :style="step(5)">
+          <p v-for="n in ([1, 2] as const)" :key="n">
+            <span class="parents-label">{{ t('hero.parentsOf', { name: w.names[locale][`partner${n}`] }) }}</span>
+            {{ w.names[locale][`parents${n}`] }}
+          </p>
+        </div>
         <WeddingOrnament :motif="w.theme.motif" class="step draw" :style="step(6)" />
         <p class="date step" :style="step(7)">{{ data.display[locale].date }}</p>
         <p class="time tabular step" :style="step(7)">{{ data.display[locale].time }}</p>
@@ -95,9 +101,11 @@ const step = (i: number) => ({ '--i': i })
 :lang(km) .names { font-size: clamp(2.1rem, 8.5vw, 3.6rem); }
 .and { font-size: 0.45em; font-style: italic; color: var(--c-accent-ink); }
 .names-alt { font-family: var(--font-serif); font-size: 1.2rem; color: var(--c-muted); }
+.parents { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); width: min(100%, 30rem); margin-top: var(--space-2); text-align: center; white-space: pre-line; }
+.parents-label { display: block; font-size: 0.8rem; letter-spacing: 0.04em; color: var(--c-accent-ink); }
 .date { font-family: var(--font-serif); font-size: 1.4rem; color: var(--c-text); }
 .time { font-size: 1rem; color: var(--c-muted); margin-top: calc(-1 * var(--space-2)); }
-.message { max-width: 34rem; margin-top: var(--space-3); color: var(--c-text); }
+.message { max-width: 34rem; margin-top: var(--space-3); color: var(--c-text); white-space: pre-line; }
 .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin-top: var(--space-4); }
 .photo {
   position: relative;

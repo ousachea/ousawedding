@@ -45,3 +45,27 @@ export function formatDate(date: Date, locale: 'km' | 'en', timeZone: string): s
 export function formatTime(date: Date, locale: 'km' | 'en', timeZone: string): string {
   return new Intl.DateTimeFormat(intlLocale[locale], { timeZone, hour: 'numeric', minute: '2-digit' }).format(date)
 }
+
+/** The wedding's date fields as shown on the invitation. Shared so the admin preview matches the server. */
+export function weddingDates(date: string, deadline: string, timeZone: string, now = new Date()) {
+  const d = zonedTimeToUtc(date, timeZone)
+  const dl = zonedTimeToUtc(deadline, timeZone)
+  const show = (locale: 'km' | 'en') => ({ date: formatDate(d, locale, timeZone), time: formatTime(d, locale, timeZone), deadline: formatDate(dl, locale, timeZone) })
+  return { dateUtc: d.toISOString(), deadlineUtc: dl.toISOString(), deadlinePassed: now > dl, display: { km: show('km'), en: show('en') } }
+}
+
+/** A schedule item's day and time range as shown on the invitation. */
+export function eventDisplay(start: Date, end: Date, timeZone: string) {
+  const show = (locale: 'km' | 'en') => ({ date: formatDate(start, locale, timeZone), time: `${formatTime(start, locale, timeZone)} – ${formatTime(end, locale, timeZone)}` })
+  return { km: show('km'), en: show('en') }
+}
+
+/** Wall-clock minutes from one local date-time ("2027-01-31T07:00") to another. */
+export function minutesBetween(from: string, to: string): number {
+  return (Date.parse(`${to}:00Z`) - Date.parse(`${from}:00Z`)) / 60_000
+}
+
+/** Moves a local date-time by some minutes of wall-clock time, keeping the "YYYY-MM-DDTHH:mm" form. */
+export function shiftLocal(local: string, minutes: number): string {
+  return new Date(Date.parse(`${local}:00Z`) + minutes * 60_000).toISOString().slice(0, 16)
+}

@@ -5,7 +5,7 @@ const locale = useLocaleCode()
 </script>
 
 <template>
-  <footer class="footer">
+  <footer id="contact" class="footer">
     <WeddingOrnament v-reveal :motif="data.wedding.theme.motif" kind="flower" />
     <WeddingIcon v-reveal="100" name="rings" class="rings" />
     <p v-reveal="100" class="thanks">{{ t('footer.thanks') }}</p>

@@ -44,12 +44,15 @@
     "pause": "Pause music"
   },
   "hero": {
+    "parentsOf": "Parents of {name}",
     "invite": "Wedding invitation",
     "rsvp": "RSVP now",
     "details": "View details",
     "and": "&"
   },
   "countdown": {
+    "weddingDay": "Wedding day",
+    "ceremonyDay": "Ceremony day",
     "title": "Counting down to our day",
     "days": "Days",
     "hours": "Hours",
@@ -59,15 +62,19 @@
     "passed": "Thank you for celebrating with us."
   },
   "events": {
+    "done": "Finished",
+    "happening": "Happening now",
     "title": "Wedding schedule",
     "directions": "Get directions",
     "calendar": "Add to calendar",
-    "googleCalendar": "Google Calendar",
-    "icsCalendar": "Apple / Outlook (.ics)",
     "dressCode": "Dress code",
     "instructions": "Guest information",
     "contact": "Questions? Contact {name}",
     "empty": "The schedule will be announced soon."
+  },
+  "thanks": {
+    "title": "With gratitude",
+    "apologyTitle": "Our apologies"
   },
   "story": {
     "title": "Our story"
@@ -233,6 +240,7 @@
       "noGuests": "Add guests first, then create their invitation links."
     },
     "events": {
+      "icon": "Icon",
       "add": "Add event",
       "editTitle": "Edit event",
       "addTitle": "Add event",
@@ -266,6 +274,13 @@
       "moveDown": "Move later"
     },
     "settings": {
+      "dateHint": "The big day. The schedule and RSVP deadline move with it.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "parentsOf": "Parents of {name}",
+      "thanks": "Thank-you note",
+      "apology": "Apology note",
+      "preview": "Preview",
       "couple": "Couple",
       "partner1": "First name shown",
       "partner2": "Second name shown",

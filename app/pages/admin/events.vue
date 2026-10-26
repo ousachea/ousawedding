@@ -18,10 +18,12 @@ async function load() {
   }
 }
 watch(id, load, { immediate: true })
+// Saving a new wedding date (sidebar) moves every item
+watch(() => wedding.value?.date, (d, old) => { if (old && d !== old) load() })
 
 const blank = () => ({
   title: { km: '', en: '' }, description: { km: '', en: '' }, venue: { km: '', en: '' }, address: { km: '', en: '' },
-  start: wedding.value?.date ?? '', end: wedding.value?.date ?? '', mapUrl: '', imageUrl: '',
+  start: wedding.value?.date ?? '', end: wedding.value?.date ?? '', mapUrl: '', imageUrl: '', icon: 'calendar' as EventIcon,
 })
 type Draft = ReturnType<typeof blank>
 const editing = ref<{ id: string | null, data: Draft } | null>(null)
@@ -29,10 +31,11 @@ const saving = ref(false)
 const endError = computed(() => !!editing.value && editing.value.data.end < editing.value.data.start)
 
 const openNew = () => (editing.value = { id: null, data: blank() })
-const openEdit = (e: WeddingEvent) => (editing.value = {
-  id: e.id,
-  data: structuredClone({ title: e.title, description: e.description, venue: e.venue, address: e.address, start: e.start, end: e.end, mapUrl: e.mapUrl, imageUrl: e.imageUrl }),
-})
+const openEdit = (item: WeddingEvent) => {
+  // structuredClone can't copy Vue's reactive proxies
+  const e = toRaw(item)
+  editing.value = { id: e.id, data: structuredClone({ title: e.title, description: e.description, venue: e.venue, address: e.address, start: e.start, end: e.end, mapUrl: e.mapUrl, imageUrl: e.imageUrl, icon: e.icon ?? 'calendar' }) }
+}
 
 async function save() {
   if (!editing.value || saving.value || endError.value) return
@@ -90,7 +93,7 @@ const L = useLocalized()
     <div class="page-head">
       <h1>{{ t('admin.nav.events') }}</h1>
       <div class="page-actions">
-        <a v-if="wedding" :href="`${localePath(`/wedding/${wedding.slug}`)}#schedule`" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
+        <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
         <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
       </div>
     </div>
@@ -109,7 +112,7 @@ const L = useLocalized()
         </div>
         <div class="body">
           <p class="when tabular">{{ e.start.replace('T', ' ') }} – {{ e.end.slice(11) }}</p>
-          <h2>{{ L(e.title) }}</h2>
+          <h2 class="title"><WeddingIcon :name="e.icon ?? 'calendar'" />{{ i + 1 }}. {{ L(e.title) }}</h2>
           <p class="muted small">{{ L(e.venue) }}<template v-if="L(e.address)"> · {{ L(e.address) }}</template></p>
         </div>
         <div class="row-actions">
@@ -128,6 +131,13 @@ const L = useLocalized()
 
     <AdminModal :open="!!editing" wide :title="editing?.id ? t('admin.events.editTitle') : t('admin.events.addTitle')" @close="editing = null">
       <form v-if="editing" id="event-form" class="form-grid" @submit.prevent="save">
+        <fieldset class="icons">
+          <legend>{{ t('admin.events.icon') }}</legend>
+          <label v-for="ic in EVENT_ICONS" :key="ic" class="icon-choice" :title="ic">
+            <input v-model="editing.data.icon" type="radio" name="e-icon" :value="ic" class="visually-hidden" :aria-label="ic">
+            <WeddingIcon :name="ic" />
+          </label>
+        </fieldset>
         <AdminLocalizedField v-model="editing.data.title" :label="t('admin.events.titleField')" required />
         <div class="form-grid cols-2">
           <div class="field">
@@ -170,4 +180,11 @@ const L = useLocalized()
 .order { display: flex; flex-direction: column; }
 .when { font-size: 0.85rem; color: var(--c-accent-ink); }
 .body h2 { font-size: 1.25rem; }
+.title { display: flex; align-items: center; gap: var(--space-2); }
+.title .icon { color: var(--c-accent-ink); }
+.icons { display: flex; flex-wrap: wrap; gap: var(--space-1); border: 0; padding: 0; margin: 0; }
+.icons legend { font-size: 0.9rem; font-weight: 500; padding: 0; margin-bottom: var(--space-1); }
+.icon-choice { display: grid; place-items: center; width: 3rem; height: 3rem; border: 1px solid var(--c-line); border-radius: var(--radius-sm); cursor: pointer; color: var(--c-accent-ink); font-size: 1.2rem; }
+.icon-choice:has(input:checked) { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 10%, transparent); color: var(--c-secondary); }
+.icon-choice:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 </style>

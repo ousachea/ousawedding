@@ -289,7 +289,7 @@ async function copy(url: string) {
         </div>
         <div class="field">
           <label for="g-notes">{{ t('admin.guests.notes') }}</label>
-          <textarea id="g-notes" v-model="editing.data.notes" maxlength="1000" />
+          <textarea id="g-notes" v-autosize rows="1" v-model="editing.data.notes" maxlength="1000" />
         </div>
       </form>
       <template #footer>
@@ -312,7 +312,7 @@ async function copy(url: string) {
         </div>
         <div class="field">
           <label for="r-msg">{{ t('rsvp.message') }}</label>
-          <textarea id="r-msg" v-model="recording.message" maxlength="1000" />
+          <textarea id="r-msg" v-autosize rows="1" v-model="recording.message" maxlength="1000" />
         </div>
       </form>
       <template #footer>

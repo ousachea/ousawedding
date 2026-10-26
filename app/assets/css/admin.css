@@ -1,4 +1,11 @@
 /* Shared admin page styles (loaded by the admin layout only) */
+/* Plain system font for readability; printed cards still use --font-serif */
+.admin {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Khmer', sans-serif;
+  --font-heading: var(--font-sans);
+  font-family: var(--font-sans);
+}
+.admin h1, .admin h2, .admin h3 { font-weight: 600; }
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
 .page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .page-head h1 { font-size: 1.9rem; }

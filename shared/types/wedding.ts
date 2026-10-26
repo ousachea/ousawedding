@@ -5,6 +5,8 @@ export type InvitationStatus = 'draft' | 'sent' | 'viewed' | 'responded' | 'revo
 export type GuestSide = 'bride' | 'groom' | 'both'
 export type AdminRole = 'owner' | 'editor'
 export type Motif = 'lotus' | 'kbach' | 'none'
+export type TextBlock = 'story' | 'thanks' | 'apology'
+export type EventIcon = 'calendar' | 'rings' | 'lotus' | 'incense' | 'knot' | 'scissors' | 'gift' | 'food' | 'guests' | 'music' | 'heart' | 'camera' | 'dress' | 'clock'
 
 export interface ThemeConfig {
   background: string
@@ -20,12 +22,13 @@ export interface Wedding {
   id: string
   slug: string
   isSample?: boolean
-  names: Record<Locale, { partner1: string, partner2: string }>
+  // parents1/parents2: each partner's parents, one per line, e.g. "Mr ... & Mrs ..."
+  names: Record<Locale, { partner1: string, partner2: string, parents1: string, parents2: string }>
   monogram: string
   // Local date-time in `timezone`, e.g. "2027-02-14T16:00"
   date: string
   timezone: string
-  content: Record<Locale, { message: string, dressCode: string, instructions: string, story: string }>
+  content: Record<Locale, { message: string, dressCode: string, instructions: string, story: string, thanks: string, apology: string }>
   coverImage: string
   theme: ThemeConfig
   defaultLocale: Locale
@@ -38,6 +41,8 @@ export interface Wedding {
     askDietary: boolean
   }
   privacy: { allowIndexing: boolean }
+  // Page order of the text blocks; missing on weddings saved before it existed
+  textOrder?: TextBlock[]
   published: boolean
   musicUrl: string
   contact: { name: string, phone: string, email: string }
@@ -58,6 +63,8 @@ export interface WeddingEvent {
   end: string
   mapUrl: string
   imageUrl: string
+  // Missing on events saved before icons existed
+  icon?: EventIcon
   order: number
   createdAt: string
   updatedAt: string

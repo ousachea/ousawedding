@@ -61,15 +61,13 @@ useHead({ title: () => `${t('admin.login.title')} · ${t('admin.title')}`, meta:
       </div>
       <p v-if="error" class="field-error" role="alert">{{ error }}</p>
       <button type="submit" class="btn btn-primary" :disabled="busy">{{ busy ? t('common.loading') : t('admin.login.submit') }}</button>
-      <WeddingLanguageSwitcher class="lang" />
     </form>
   </main>
 </template>
 
 <style scoped>
-.login { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
+.login { --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Khmer', sans-serif; --font-heading: var(--font-sans); font-family: var(--font-sans); min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
 .card { width: min(100%, 24rem); display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
-h1 { text-align: center; font-size: 1.8rem; }
+h1 { text-align: center; font-size: 1.6rem; font-weight: 600; }
 .hint { font-size: 0.85rem; color: var(--c-muted); text-align: center; }
-.lang { align-self: center; }
 </style>

@@ -5,21 +5,27 @@ const locale = useLocaleCode()
 const L = useLocalized()
 const w = computed(() => props.data.wedding)
 
-function googleCalendarUrl(e: PublicWedding['events'][number]) {
-  const fmt = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '')
-  const names = w.value.names[locale.value]
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: `${L(e.title)} · ${names.partner1} & ${names.partner2}`,
-    dates: `${fmt(e.startUtc)}/${fmt(e.endUtc)}`,
-    details: [L(e.description), e.mapUrl].filter(Boolean).join('\n'),
-    location: [L(e.venue), L(e.address)].filter(Boolean).join(', '),
-  })
-  return `https://calendar.google.com/calendar/render?${params}`
-}
+// Khmer digits on the Khmer page
+const intlLocale = computed(() => (locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US'))
+const num = (n: number) => new Intl.NumberFormat(intlLocale.value).format(n)
 
-const icsUrl = (e: PublicWedding['events'][number]) =>
-  `/api/public/weddings/${w.value.slug}/events/${e.id}.ics?lang=${locale.value}`
+// Time left until each item. Set only after mount (then every minute) so server and client HTML match.
+const now = ref<number | null>(null)
+let timer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  now.value = Date.now()
+  timer = setInterval(() => (now.value = Date.now()), 60_000)
+})
+onBeforeUnmount(() => clearInterval(timer))
+function remaining(e: PublicWedding['events'][number]) {
+  if (now.value === null) return ''
+  const start = Date.parse(e.startUtc)
+  if (now.value >= Date.parse(e.endUtc)) return t('events.done')
+  if (now.value >= start) return t('events.happening')
+  const mins = Math.floor((start - now.value) / 60_000)
+  const [value, unit] = mins >= 1440 ? [Math.floor(mins / 1440), 'day' as const] : mins >= 60 ? [Math.floor(mins / 60), 'hour' as const] : [Math.max(mins, 1), 'minute' as const]
+  return new Intl.RelativeTimeFormat(intlLocale.value).format(value, unit)
+}
 </script>
 
 <template>
@@ -31,8 +37,8 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 
       <p v-if="!data.events.length" class="empty">{{ t('events.empty') }}</p>
       <ol v-else class="timeline">
-        <li v-for="e in data.events" :key="e.id" v-reveal class="item">
-          <span class="dot" aria-hidden="true" />
+        <li v-for="(e, i) in data.events" :key="e.id" v-reveal class="item">
+          <span class="dot" aria-hidden="true">{{ num(i + 1) }}</span>
           <article class="card">
             <img v-if="e.imageUrl" :src="e.imageUrl" alt="" class="card-img" loading="lazy" decoding="async" width="640" height="360">
             <div class="card-body">
@@ -40,8 +46,9 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
                 <WeddingIcon name="clock" />
                 <span>{{ e.display[locale].date }}</span>
                 <span class="time">{{ e.display[locale].time }}</span>
+                <span v-if="remaining(e)" class="left">{{ remaining(e) }}</span>
               </p>
-              <h3 class="event-title">{{ L(e.title) }}</h3>
+              <h3 class="event-title"><WeddingIcon :name="e.icon ?? 'calendar'" class="event-icon" />{{ L(e.title) }}</h3>
               <p v-if="L(e.description)" class="desc">{{ L(e.description) }}</p>
               <address v-if="L(e.venue) || L(e.address)" class="venue">
                 <WeddingIcon name="pin" class="venue-icon" />
@@ -50,17 +57,10 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
                   <span v-if="L(e.address)">{{ L(e.address) }}</span>
                 </span>
               </address>
-              <div class="actions">
-                <a v-if="e.mapUrl" :href="e.mapUrl" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+              <div v-if="e.mapUrl" class="actions">
+                <a :href="e.mapUrl" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
                   {{ t('events.directions') }}
                 </a>
-                <details class="calendar">
-                  <summary class="btn btn-ghost btn-sm">{{ t('events.calendar') }}</summary>
-                  <div class="calendar-menu">
-                    <a :href="googleCalendarUrl(e)" target="_blank" rel="noopener">{{ t('events.googleCalendar') }}</a>
-                    <a :href="icsUrl(e)">{{ t('events.icsCalendar') }}</a>
-                  </div>
-                </details>
               </div>
             </div>
           </article>
@@ -102,9 +102,9 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 .timeline::before { content: ''; position: absolute; left: 11px; top: 8px; bottom: 8px; width: 1px; background: var(--c-line); }
 .item { position: relative; padding-left: 2.5rem; padding-bottom: var(--space-5); }
 .dot {
-  position: absolute; left: 4px; top: 1.4rem; width: 15px; height: 15px;
+  position: absolute; left: -2px; top: 1.2rem; width: 27px; height: 27px; display: grid; place-items: center;
   border-radius: 50%; background: var(--c-bg); border: 1px solid var(--c-accent);
-  box-shadow: inset 0 0 0 3px var(--c-bg), inset 0 0 0 8px var(--c-accent);
+  color: var(--c-accent-ink); font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums;
 }
 /* Each dot pulses softly; the gold line draws downward as the schedule scrolls by */
 .dot::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--c-accent); opacity: 0; }
@@ -120,13 +120,13 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
   }
 }
 @keyframes grow { from { transform: scaleY(0); } }
-.calendar[open] .calendar-menu { animation: menu 0.18s var(--ease-out); }
-@keyframes menu { from { opacity: 0; transform: translateY(-4px); } }
 .card { background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
 .card-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .card-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
 .when { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); font-size: 0.9rem; color: var(--c-accent-ink); font-weight: 500; }
-.event-title { font-size: 1.5rem; }
+.event-title { font-size: 1.5rem; display: flex; align-items: center; gap: var(--space-2); }
+.event-icon { color: var(--c-accent); }
+.left { padding: 0 0.6em; border-radius: 999px; background: color-mix(in srgb, var(--c-accent) 14%, transparent); font-weight: 500; }
 .desc { color: var(--c-muted); }
 .venue { font-style: normal; display: flex; gap: var(--space-2); font-size: 0.95rem; }
 .venue-icon { color: var(--c-accent-ink); margin-top: 0.3em; }
@@ -134,16 +134,6 @@ const icsUrl = (e: PublicWedding['events'][number]) =>
 .venue strong { font-weight: 500; }
 .venue-text span { color: var(--c-muted); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); align-items: flex-start; }
-.calendar { position: relative; }
-.calendar summary { list-style: none; border: 1px solid var(--c-line-soft); }
-.calendar summary::-webkit-details-marker { display: none; }
-.calendar-menu {
-  position: absolute; z-index: 2; top: calc(100% + 4px); left: 0; min-width: 13rem;
-  display: flex; flex-direction: column; padding: var(--space-1);
-  background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius); box-shadow: var(--shadow);
-}
-.calendar-menu a { padding: 0.55rem 0.8rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem; }
-.calendar-menu a:hover { background: var(--c-line-soft); }
 
 .info { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); max-width: 52rem; margin: var(--space-6) auto 0; }
 .info-card { padding: var(--space-5); border: 1px solid var(--c-line); border-radius: var(--radius-lg); text-align: center; }

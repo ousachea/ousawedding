@@ -48,10 +48,14 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/admin': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    // The admin is English only
+    '/admin': { redirect: '/en/admin' },
     '/en/admin': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
-    '/admin/**': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/admin/**': { redirect: '/en/admin/**' },
     '/en/admin/**': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    // Old invitation links (query string, e.g. ?invite=, is kept)
+    '/wedding/**': { redirect: { to: '/**', statusCode: 301 } },
+    '/en/wedding/**': { redirect: { to: '/en/**', statusCode: 301 } },
     '/api/**': { headers: { 'cache-control': 'no-store' } },
   },
 

@@ -103,7 +103,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--c-surface);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.field textarea { min-height: 6rem; resize: vertical; }
+.input, .field input:not([type='checkbox'], [type='radio']), .field select { height: 3rem; }
+/* Grows with its text (v-autosize covers browsers without field-sizing); empty it matches an input */
+.field textarea { field-sizing: content; min-height: 3rem; padding-block: 0.45rem; resize: none; overflow: hidden; }
 .field input:focus, .field select:focus, .field textarea:focus, .input:focus {
   outline: none;
   border-color: var(--c-accent);

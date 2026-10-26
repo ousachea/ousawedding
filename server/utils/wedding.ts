@@ -16,39 +16,16 @@ export async function buildPublicWedding(wedding: Wedding, preview: boolean): Pr
     db.where<GalleryImage>('gallery', 'weddingId', wedding.id),
   ])
   const tz = wedding.timezone
-  const date = zonedTimeToUtc(wedding.date, tz)
-  const deadline = zonedTimeToUtc(wedding.rsvp.deadline, tz)
   const { createdAt, updatedAt, published, ...publicFields } = wedding
 
   // Dates are formatted here so server and client render identical text (no hydration mismatch)
-  const display = (d: Date) => ({
-    km: { date: formatDate(d, 'km', tz), time: formatTime(d, 'km', tz) },
-    en: { date: formatDate(d, 'en', tz), time: formatTime(d, 'en', tz) },
-  })
-
   return {
     wedding: publicFields,
-    dateUtc: date.toISOString(),
-    deadlineUtc: deadline.toISOString(),
-    deadlinePassed: new Date() > deadline,
-    display: {
-      km: { ...display(date).km, deadline: formatDate(deadline, 'km', tz) },
-      en: { ...display(date).en, deadline: formatDate(deadline, 'en', tz) },
-    },
+    ...weddingDates(wedding.date, wedding.rsvp.deadline, tz),
     events: events.sort(byOrder).map((e) => {
       const start = zonedTimeToUtc(e.start, tz)
       const end = zonedTimeToUtc(e.end, tz)
-      const s = display(start)
-      const en = display(end)
-      return {
-        ...e,
-        startUtc: start.toISOString(),
-        endUtc: end.toISOString(),
-        display: {
-          km: { date: s.km.date, time: `${s.km.time} – ${en.km.time}` },
-          en: { date: s.en.date, time: `${s.en.time} – ${en.en.time}` },
-        },
-      }
+      return { ...e, startUtc: start.toISOString(), endUtc: end.toISOString(), display: eventDisplay(start, end, tz) }
     }),
     gallery: gallery.filter(g => g.visible).sort(byOrder)
       .map(({ id, url, thumbUrl, width, height, caption, alt }) => ({ id, url, thumbUrl, width, height, caption, alt })),
@@ -72,7 +49,7 @@ export const invalidInvitation = () => createError({ statusCode: 404, statusMess
 export function inviteUrl(event: Parameters<typeof getRequestURL>[0], wedding: Wedding, token: string, locale: Locale) {
   const base = useRuntimeConfig().public.siteUrl || getRequestURL(event, { xForwardedHost: true, xForwardedProto: true }).origin
   const prefix = locale === 'km' ? '' : `/${locale}`
-  return `${base.replace(/\/$/, '')}${prefix}/wedding/${wedding.slug}?invite=${token}`
+  return `${base.replace(/\/$/, '')}${prefix}/${wedding.slug}?invite=${token}`
 }
 
 export async function loadWeddingData(weddingId: string) {

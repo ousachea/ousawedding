@@ -33,7 +33,7 @@ const saveDeadline = () => patchWedding({ rsvp: { ...wedding.value!.rsvp, deadli
 
 // Preview
 const device = ref<'mobile' | 'desktop'>('mobile')
-const previewUrl = computed(() => (wedding.value ? localePath(`/wedding/${wedding.value.slug}`) : ''))
+const previewUrl = computed(() => (wedding.value ? localePath(`/${wedding.value.slug}`) : ''))
 
 // Links
 async function generate(guestIds: string[], regenerate = false) {

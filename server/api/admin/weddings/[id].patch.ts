@@ -8,6 +8,18 @@ export default defineEventHandler(async (event) => {
   const updated: Wedding = { ...wedding, ...patch, updatedAt: nowIso() }
   // Editing real details means the content is no longer sample data
   if (patch.names || patch.date || patch.content) updated.isSample = false
-  await useDb().set('weddings', wedding.id, updated)
+  // The wedding date is the big day: moving it moves the RSVP deadline (unless set in the same save)
+  // and the whole schedule by the same amount
+  const minutes = patch.date && patch.date !== wedding.date ? minutesBetween(wedding.date, patch.date) : 0
+  if (minutes && !patch.rsvp) updated.rsvp = { ...wedding.rsvp, deadline: shiftLocal(wedding.rsvp.deadline, minutes) }
+  const db = useDb()
+  await db.set('weddings', wedding.id, updated)
+  if (minutes) {
+    const events = await db.where<WeddingEvent>('events', 'weddingId', wedding.id)
+    await db.setMany('events', events.map(e => ({
+      id: e.id,
+      data: { ...e, start: shiftLocal(e.start, minutes), end: shiftLocal(e.end, minutes), updatedAt: updated.updatedAt },
+    })))
+  }
   return updated
 })

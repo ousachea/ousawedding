@@ -21,17 +21,19 @@ export const rsvpSchema = z.object({
 })
 
 export const weddingSchema = z.object({
-  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Lowercase letters, numbers and dashes').max(60),
+  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Lowercase letters, numbers and dashes').max(60)
+    // The invitation lives at /<slug>, so it can't take a path the site already uses
+    .refine(s => !['admin', 'api', 'en', 'km', 'wedding'].includes(s), 'This web address is reserved'),
   names: z.object({
-    km: z.object({ partner1: text(80), partner2: text(80) }),
-    en: z.object({ partner1: text(80), partner2: text(80) }),
+    km: z.object({ partner1: text(80), partner2: text(80), parents1: text(300).default(''), parents2: text(300).default('') }),
+    en: z.object({ partner1: text(80), partner2: text(80), parents1: text(300).default(''), parents2: text(300).default('') }),
   }),
   monogram: text(12),
   date: localDateTime,
   timezone: z.string().refine(isValidTimeZone, 'Unknown timezone'),
   content: z.object({
-    km: z.object({ message: text(2000), dressCode: text(500), instructions: text(2000), story: text(4000) }),
-    en: z.object({ message: text(2000), dressCode: text(500), instructions: text(2000), story: text(4000) }),
+    km: z.object({ message: text(2000), dressCode: text(500), instructions: text(2000), story: text(4000), thanks: text(3000).default(''), apology: text(3000).default('') }),
+    en: z.object({ message: text(2000), dressCode: text(500), instructions: text(2000), story: text(4000), thanks: text(3000).default(''), apology: text(3000).default('') }),
   }),
   coverImage: url,
   theme: z.object({
@@ -48,6 +50,7 @@ export const weddingSchema = z.object({
     askDietary: z.boolean(),
   }),
   privacy: z.object({ allowIndexing: z.boolean() }),
+  textOrder: z.array(z.enum(TEXT_BLOCKS)).length(TEXT_BLOCKS.length).refine(o => new Set(o).size === o.length, 'Each block once').default([...TEXT_BLOCKS]),
   published: z.boolean(),
   musicUrl: url,
   contact: z.object({ name: text(120), phone: text(40), email: z.union([z.literal(''), z.email()]) }),
@@ -66,6 +69,7 @@ export const eventSchema = z.object({
   end: localDateTime,
   mapUrl: url,
   imageUrl: url,
+  icon: z.enum(EVENT_ICONS).default('calendar'),
 }).refine(e => e.end >= e.start, { message: 'End must be after start', path: ['end'] })
 
 export const guestSchema = z.object({

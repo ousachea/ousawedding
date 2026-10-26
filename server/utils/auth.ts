@@ -9,7 +9,7 @@ const LOCAL_ADMIN: Admin = { id: 'local-admin', email: 'admin@localhost', name: 
 export const useFirebaseAuth = () => getAuth(useFirebaseApp())
 
 function localSession(event: H3Event) {
-  return useSession<{ uid?: string }>(event, { name: `${ADMIN_COOKIE}_local`, password: sessionSecret(), maxAge: SESSION_MAX_AGE_S, cookie: { sameSite: 'strict' } })
+  return useSession<{ uid?: string }>(event, { name: `${ADMIN_COOKIE}_local`, password: sessionSecret(), maxAge: SESSION_MAX_AGE_S, cookie: { sameSite: 'strict', secure: !import.meta.dev } })
 }
 
 export async function startLocalSession(event: H3Event) {

@@ -3,12 +3,30 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const { me } = useAdminSession()
-const { list, id, wedding, select, loadList } = useCurrentWedding()
+const { list, id, wedding, select, loadList, loadWedding } = useCurrentWedding()
 const { toasts } = useToasts()
 const { state: confirmState } = useConfirm()
 const { push } = useToasts()
 const api = useAdminApi()
 const menuOpen = ref(false)
+
+// The big day: every date of the wedding (schedule, RSVP deadline, countdown) follows it
+const bigDay = ref('')
+watch(wedding, w => (bigDay.value = w?.date ?? ''), { immediate: true })
+const savingDate = ref(false)
+async function saveDate() {
+  if (!wedding.value || savingDate.value) return
+  savingDate.value = true
+  try {
+    // Times are entered in the admin's own timezone, taken from the browser
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || wedding.value.timezone
+    await api(`/api/admin/weddings/${wedding.value.id}`, { method: 'PATCH', body: { date: bigDay.value, timezone } })
+    await Promise.all([loadWedding(), loadList()])
+    push(t('common.saved'))
+  } finally {
+    savingDate.value = false
+  }
+}
 
 const links = computed(() => [
   { to: '/admin', label: t('admin.nav.dashboard') },
@@ -63,14 +81,21 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
           <p v-else class="muted small">{{ t('admin.wedding.none') }}</p>
           <button v-if="me?.role === 'owner'" type="button" class="btn btn-ghost btn-sm" @click="createWedding">+ {{ t('admin.wedding.create') }}</button>
         </div>
+        <form v-if="wedding" class="field big-day" @submit.prevent="saveDate">
+          <label for="big-day">{{ t('admin.settings.date') }}</label>
+          <input id="big-day" v-model="bigDay" type="datetime-local" required>
+          <p class="hint">{{ t('admin.settings.dateHint') }}</p>
+          <button v-if="bigDay !== wedding.date" type="submit" class="btn btn-primary btn-sm" :disabled="savingDate">
+            {{ savingDate ? t('common.saving') : t('common.save') }}
+          </button>
+        </form>
         <nav class="links" :aria-label="t('admin.nav.menu')">
           <NuxtLink v-for="l in links" :key="l.to" :to="localePath(l.to)" class="link" :class="{ active: route.path === localePath(l.to) }">
             {{ l.label }}
           </NuxtLink>
         </nav>
         <div class="side-foot">
-          <a v-if="wedding" :href="localePath(`/wedding/${wedding.slug}`)" target="_blank" rel="noopener" class="link">{{ t('admin.nav.viewSite') }} ↗</a>
-          <WeddingLanguageSwitcher />
+          <a v-if="wedding" :href="localePath(`/${wedding.slug}`)" target="_blank" rel="noopener" class="link">{{ t('admin.nav.viewSite') }} ↗</a>
           <p v-if="me" class="muted small">{{ me.email }}</p>
           <button type="button" class="btn btn-outline btn-sm" @click="logout">{{ t('admin.nav.logout') }}</button>
         </div>
@@ -104,7 +129,7 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 .admin { min-height: 100dvh; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; }
 .side { background: var(--c-surface); border-bottom: 1px solid var(--c-line-soft); }
 .side-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); padding-top: max(var(--space-3), env(safe-area-inset-top)); }
-.brand { font-family: var(--font-serif); font-size: 1.3rem; color: var(--c-secondary); }
+.brand { font-family: var(--font-heading); font-weight: 600; font-size: 1.3rem; color: var(--c-secondary); }
 .side-body { display: none; flex-direction: column; gap: var(--space-5); padding: var(--space-2) var(--space-4) var(--space-5); }
 .side.open .side-body { display: flex; animation: drop 0.2s var(--ease-out); }
 @keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
@@ -114,6 +139,8 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
   .side-foot { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; }
 }
 .wedding-select { gap: var(--space-2); }
+.big-day { gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--c-line); border-radius: var(--radius); background: color-mix(in srgb, var(--c-accent) 8%, var(--c-surface)); }
+.big-day label { font-weight: 600; }
 .links { display: flex; flex-direction: column; gap: 2px; }
 .link { padding: 0.55rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--c-text); }
 .link:hover { background: var(--c-line-soft); }

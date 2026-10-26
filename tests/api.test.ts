@@ -65,8 +65,8 @@ describe('public invitation', () => {
     const res = await call('/api/public/weddings/our-wedding')
     assert.equal(res.status, 200)
     assert.equal(res.json.wedding.names.en.partner1, 'Ousa Chea')
-    assert.equal(res.json.events.length, 3)
-    assert.equal(res.json.dateUtc, '2027-02-14T00:00:00.000Z')
+    assert.equal(res.json.events.length, 12)
+    assert.equal(res.json.dateUtc, '2027-01-31T00:00:00.000Z')
     assert.ok(!res.text.includes('Sample Family Chan'), 'guest names must not appear')
     assert.ok(!('published' in res.json.wedding))
   })
@@ -76,12 +76,12 @@ describe('public invitation', () => {
   })
 
   test('server HTML is noindex, Khmer by default, English under /en', async () => {
-    const km = await call('/wedding/our-wedding')
+    const km = await call('/our-wedding')
     assert.equal(km.status, 200)
     assert.match(km.text, /<html[^>]*lang="km"/)
     assert.match(km.text, /name="robots" content="noindex, nofollow"/)
     assert.match(km.text, /Ousa Chea/)
-    const en = await call('/en/wedding/our-wedding')
+    const en = await call('/en/our-wedding')
     assert.match(en.text, /<html[^>]*lang="en"/)
     assert.match(en.text, /Wedding schedule/)
   })
@@ -89,7 +89,21 @@ describe('public invitation', () => {
   test('root redirects to the default wedding', async () => {
     const res = await call('/')
     assert.equal(res.status, 302)
-    assert.match(res.headers.get('location') ?? '', /\/wedding\/our-wedding$/)
+    assert.match(res.headers.get('location') ?? '', /\/our-wedding$/)
+  })
+
+  test('old /wedding/ links redirect and keep the invite token', async () => {
+    const res = await call('/wedding/our-wedding?invite=abc')
+    assert.equal(res.status, 301)
+    assert.match(res.headers.get('location') ?? '', /\/our-wedding\?invite=abc$/)
+    assert.match((await call('/en/wedding/our-wedding')).headers.get('location') ?? '', /\/en\/our-wedding$/)
+  })
+
+  test('one calendar file holds the whole schedule, each item at its own time', async () => {
+    const ics = await call('/api/public/weddings/our-wedding/events/all.ics')
+    assert.equal(ics.status, 200)
+    assert.equal(ics.text.match(/BEGIN:VEVENT/g)?.length, 12)
+    assert.equal(new Set(ics.text.match(/DTSTART:\S+/g)).size, 12)
   })
 
   test('calendar file uses the wedding timezone', async () => {
@@ -97,7 +111,7 @@ describe('public invitation', () => {
     const ics = await call(`/api/public/weddings/our-wedding/events/${pub.json.events[0].id}.ics?lang=en`)
     assert.equal(ics.status, 200)
     assert.match(ics.text, /BEGIN:VCALENDAR/)
-    assert.match(ics.text, /DTSTART:20270214T000000Z/)
+    assert.match(ics.text, /DTSTART:20270130T070000Z/)
   })
 
   test('invalid invitation tokens get the same generic error', async () => {
@@ -174,7 +188,7 @@ describe('guests and invitations', () => {
   })
 
   test('the guest name never appears in server HTML, even with the token', async () => {
-    const page = await call(`/wedding/our-wedding?invite=${token}`)
+    const page = await call(`/our-wedding?invite=${token}`)
     assert.equal(page.status, 200)
     assert.ok(!page.text.includes('Test Household'))
   })
@@ -217,6 +231,21 @@ describe('RSVP rules', () => {
     assert.equal(stats.json.attendingPeople, 2)
     assert.equal(stats.json.pending, 3)
     assert.equal(stats.json.responseRate, 25)
+  })
+
+  test('moving the wedding date moves the schedule by the same amount', async () => {
+    const w = (await call(api, { auth: true })).json
+    const before = (await call(`${api}/events`, { auth: true })).json
+    const dayLater = new Date(Date.parse(`${w.date}:00Z`) + 86_400_000).toISOString().slice(0, 16)
+    assert.equal((await call(api, { method: 'PATCH', auth: true, body: { date: dayLater } })).status, 200)
+    const after = (await call(`${api}/events`, { auth: true })).json
+    assert.equal(after[0].start, new Date(Date.parse(`${before[0].start}:00Z`) + 86_400_000).toISOString().slice(0, 16))
+    const moved = (await call(api, { auth: true })).json
+    assert.equal(moved.rsvp.deadline, new Date(Date.parse(`${w.rsvp.deadline}:00Z`) + 86_400_000).toISOString().slice(0, 16))
+    // A date-only save leaves everything else as it was
+    assert.deepEqual({ ...moved, date: w.date, rsvp: w.rsvp, updatedAt: w.updatedAt, isSample: w.isSample }, w)
+    await call(api, { method: 'PATCH', auth: true, body: { date: w.date } })
+    assert.deepEqual((await call(`${api}/events`, { auth: true })).json.map((e: { start: string }) => e.start), before.map((e: { start: string }) => e.start))
   })
 
   test('locks responses when updates are disabled', async () => {

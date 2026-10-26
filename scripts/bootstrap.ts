@@ -31,7 +31,7 @@ console.log(`✓ ${values.email} is now an owner with access to all weddings`)
 if (values.seed) {
   const existing = await db.collection('weddings').where('slug', '==', values.slug).get()
   if (!existing.empty) {
-    console.log(`• A wedding at /wedding/${values.slug} already exists, skipping seed`)
+    console.log(`• A wedding at /${values.slug} already exists, skipping seed`)
   } else {
     const { wedding, events, gallery, guests } = sampleWedding(values.slug)
     const batch = db.batch()
@@ -40,6 +40,6 @@ if (values.seed) {
     for (const g of gallery) batch.set(db.collection('gallery').doc(g.id), g)
     for (const g of guests) batch.set(db.collection('guests').doc(g.id), g)
     await batch.commit()
-    console.log(`✓ Sample wedding created at /wedding/${values.slug}`)
+    console.log(`✓ Sample wedding created at /${values.slug}`)
   }
 }
