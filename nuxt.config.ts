@@ -1,7 +1,8 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   devtools: { enabled: false },
-  devServer: { port: 8000 },
+  // Reachable from other devices on the same network (e.g. a tablet)
+  devServer: { port: 8000, host: '0.0.0.0' },
   modules: ['@nuxtjs/i18n'],
   css: ['~/assets/css/tokens.css', '~/assets/css/base.css'],
 
