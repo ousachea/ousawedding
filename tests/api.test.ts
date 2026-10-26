@@ -164,6 +164,19 @@ describe('guests and invitations', () => {
     guestId = res.json.id
   })
 
+  test('a partial edit keeps the fields it did not send', async () => {
+    const g = (await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: 'Partial', side: 'both', group: 'Family', maxAttendees: 1, phone: '012 345 678', notes: 'Keep me' } })).json
+    const res = await call(`${api}/guests/${g.id}`, { method: 'PATCH', auth: true, body: { name: 'Partial Renamed' } })
+    assert.equal(res.json.name, 'Partial Renamed')
+    assert.equal(res.json.phone, '012 345 678')
+    assert.equal(res.json.notes, 'Keep me')
+    await call(`${api}/guests/${g.id}`, { method: 'PATCH', auth: true, body: { archived: true } })
+    const w = (await call(api, { auth: true })).json
+    await call(api, { method: 'PATCH', auth: true, body: { coverPosition: '40% 10%' } })
+    await call(api, { method: 'PATCH', auth: true, body: { date: w.date } })
+    assert.equal((await call(api, { auth: true })).json.coverPosition, '40% 10%')
+  })
+
   test('creates a personal link; token is stored only as hash + ciphertext', async () => {
     const res = await call(`${api}/invitations`, { method: 'POST', auth: true, body: { guestIds: [guestId] } })
     assert.equal(res.json.created.length, 1)

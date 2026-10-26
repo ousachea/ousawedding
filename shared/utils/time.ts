@@ -34,7 +34,8 @@ export function isValidTimeZone(timeZone: string): boolean {
   }
 }
 
-const intlLocale = { km: 'km-KH', en: 'en-US' } as const
+// Khmer uses Khmer digits: Latin digits look much smaller than Khmer letters beside them
+const intlLocale = { km: 'km-KH-u-nu-khmr', en: 'en-US' } as const
 
 export function formatDate(date: Date, locale: 'km' | 'en', timeZone: string): string {
   return new Intl.DateTimeFormat(intlLocale[locale], {
@@ -43,7 +44,19 @@ export function formatDate(date: Date, locale: 'km' | 'en', timeZone: string): s
 }
 
 export function formatTime(date: Date, locale: 'km' | 'en', timeZone: string): string {
+  if (locale === 'km') return `${khmerClock(date, timeZone)} ${khmerPeriod(date, timeZone)}`
   return new Intl.DateTimeFormat(intlLocale[locale], { timeZone, hour: 'numeric', minute: '2-digit' }).format(date)
+}
+
+// Khmer times read like a printed invitation: "៧:០០ ព្រឹក", with the time of day as a word instead of AM/PM
+function khmerClock(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat(intlLocale.km, { timeZone, hour: 'numeric', minute: '2-digit', hour12: true })
+    .formatToParts(date).filter(p => p.type === 'hour' || p.type === 'minute' || (p.type === 'literal' && p.value.trim() === ':'))
+    .map(p => p.value).join('')
+}
+function khmerPeriod(date: Date, timeZone: string) {
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(date))
+  return hour < 12 ? 'ព្រឹក' : hour < 13 ? 'ថ្ងៃត្រង់' : hour < 17 ? 'រសៀល' : hour < 19 ? 'ល្ងាច' : 'យប់'
 }
 
 /** The wedding's date fields as shown on the invitation. Shared so the admin preview matches the server. */
@@ -54,9 +67,15 @@ export function weddingDates(date: string, deadline: string, timeZone: string, n
   return { dateUtc: d.toISOString(), deadlineUtc: dl.toISOString(), deadlinePassed: now > dl, display: { km: show('km'), en: show('en') } }
 }
 
-/** A schedule item's day and time range as shown on the invitation. */
+/** A schedule item's day and time range as shown on the invitation; the range is shortened ("2:00 – 3:00 PM"). */
 export function eventDisplay(start: Date, end: Date, timeZone: string) {
-  const show = (locale: 'km' | 'en') => ({ date: formatDate(start, locale, timeZone), time: `${formatTime(start, locale, timeZone)} – ${formatTime(end, locale, timeZone)}` })
+  const range = (locale: 'km' | 'en') => {
+    if (locale === 'en') return new Intl.DateTimeFormat(intlLocale.en, { timeZone, hour: 'numeric', minute: '2-digit' }).formatRange(start, end)
+    // "២:០០ – ៣:០០ រសៀល", or both words when the period changes ("១០:០០ ព្រឹក – ១២:០០ ថ្ងៃត្រង់")
+    const [p1, p2] = [khmerPeriod(start, timeZone), khmerPeriod(end, timeZone)]
+    return p1 === p2 ? `${khmerClock(start, timeZone)} – ${khmerClock(end, timeZone)} ${p1}` : `${formatTime(start, 'km', timeZone)} – ${formatTime(end, 'km', timeZone)}`
+  }
+  const show = (locale: 'km' | 'en') => ({ date: formatDate(start, locale, timeZone), time: range(locale) })
   return { km: show('km'), en: show('en') }
 }
 

@@ -91,6 +91,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 60%),
+    var(--paper),
     var(--c-bg);
   transition: opacity 0.5s var(--ease-out) 1.15s;
 }

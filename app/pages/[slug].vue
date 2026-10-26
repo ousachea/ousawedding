@@ -12,6 +12,7 @@ if (error.value || !data.value) {
 }
 const w = computed(() => data.value!.wedding)
 const loc = computed(() => locale.value as Locale)
+const floral = computed(() => w.value.theme.style === 'floral')
 
 // Personal invitations are resolved in the browser only, so guest names never reach server HTML or caches
 const token = typeof route.query.invite === 'string' ? route.query.invite : undefined
@@ -118,7 +119,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="wedding themed" :style="themeStyle">
+  <div class="wedding themed" :class="`style-${w.theme.style ?? 'classic'}`" :style="themeStyle">
     <WeddingEnvelope
       v-if="!isPreview"
       :monogram="w.monogram"
@@ -136,6 +137,7 @@ useSeoMeta({
       <WeddingHero :data="data!" :intro-delay="introDelay" />
       <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" :when="`${data!.display[loc].date} · ${data!.display[loc].time}`" :event-days="data!.events.map(e => e.startUtc)" :ics-url="`/api/public/weddings/${w.slug}/events/all.ics?lang=${loc}`" />
       <WeddingEventTimeline :data="data!" />
+      <WeddingFlorals v-if="floral" class="fl-divider" flip />
 
       <section v-for="b in textBlocks" :id="b.key" :key="b.key" class="story" :aria-labelledby="`${b.key}-title`">
         <div class="container story-inner">
@@ -151,12 +153,16 @@ useSeoMeta({
 
     </main>
 
+    <div v-if="floral" class="fl-bottom" aria-hidden="true">
+      <WeddingFlorals />
+      <WeddingFlorals flip />
+    </div>
     <WeddingFooter :data="data!" />
   </div>
 </template>
 
 <style scoped>
-.wedding { background: var(--c-bg); color: var(--c-text); min-height: 100dvh; }
+.wedding { background: var(--paper), var(--c-bg); color: var(--c-text); min-height: 100dvh; }
 .banner {
   padding: 0.5rem 1rem; text-align: center; font-size: 0.85rem;
   background: color-mix(in srgb, var(--c-accent) 22%, var(--c-bg)); color: var(--c-text);
@@ -168,4 +174,7 @@ useSeoMeta({
 .story-text { margin-top: var(--space-5); font-family: var(--font-serif); font-size: 1.3rem; white-space: pre-line; }
 :lang(km) .story-text { font-size: 1.1rem; }
 .story + .story { padding-top: 0; }
+.fl-divider { width: min(58%, 320px); margin: calc(-1 * var(--space-6)) 0 0 auto; }
+.fl-bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: 20%; margin-bottom: calc(-1 * var(--space-6)); }
+.fl-bottom > * { width: min(40%, 260px); }
 </style>

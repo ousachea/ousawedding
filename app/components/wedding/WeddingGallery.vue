@@ -39,7 +39,7 @@ function onTouchEnd(e: TouchEvent) {
       <ul class="grid" :class="{ few: images.length <= 4 }">
         <li v-for="(img, i) in images" :key="img.id" v-reveal="(i % 3) * 90">
           <button type="button" class="thumb" :aria-label="t('gallery.open', { n: i + 1 })" @click="open(i)">
-            <img :src="img.thumbUrl || img.url" :alt="L(img.alt) || L(img.caption)" :width="img.width" :height="img.height" loading="lazy" decoding="async">
+            <span class="pic"><img :src="img.thumbUrl || img.url" :alt="L(img.alt) || L(img.caption)" :width="img.width" :height="img.height" loading="lazy" decoding="async"></span>
           </button>
           <p v-if="L(img.caption)" class="caption">{{ L(img.caption) }}</p>
         </li>
@@ -72,7 +72,38 @@ function onTouchEnd(e: TouchEvent) {
 .grid li { break-inside: avoid; margin-bottom: var(--space-3); }
 /* Small galleries stay at two columns so no column is left empty */
 @media (min-width: 760px) { .grid { columns: 3; column-gap: var(--space-4); } .grid.few { columns: 2; max-width: 44rem; margin-inline: auto; } }
-.thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); overflow: hidden; cursor: zoom-in; background: var(--c-line-soft); }
+.thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); cursor: zoom-in; background: none; }
+/* The photo is clipped inside its frame, so the hover zoom stays within it */
+.pic { display: block; overflow: hidden; border-radius: calc(var(--radius) - 4px); background: var(--c-line-soft); }
+
+/* Classic frame: a light mat with a gold edge, an inner gold line and gold corner brackets */
+.style-classic .thumb {
+  position: relative; padding: 7px;
+  background: var(--c-surface); border: 1px solid color-mix(in srgb, var(--c-accent) 60%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+.style-classic .pic { outline: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent); outline-offset: 2px; }
+.style-classic .thumb::after {
+  --c: var(--c-accent); --l: 16px; --w: 2px;
+  content: ''; position: absolute; inset: -4px; pointer-events: none;
+  background:
+    linear-gradient(var(--c) 0 0) top left / var(--l) var(--w), linear-gradient(var(--c) 0 0) top left / var(--w) var(--l),
+    linear-gradient(var(--c) 0 0) top right / var(--l) var(--w), linear-gradient(var(--c) 0 0) top right / var(--w) var(--l),
+    linear-gradient(var(--c) 0 0) bottom left / var(--l) var(--w), linear-gradient(var(--c) 0 0) bottom left / var(--w) var(--l),
+    linear-gradient(var(--c) 0 0) bottom right / var(--l) var(--w), linear-gradient(var(--c) 0 0) bottom right / var(--w) var(--l);
+  background-repeat: no-repeat;
+}
+
+/* Floral frame: printed photos on white paper, gently tilted left and right */
+.style-floral .thumb {
+  padding: 8px 8px 24px; border-radius: 2px; background: #fffdf9;
+  box-shadow: 0 10px 22px -12px rgb(60 40 80 / 0.45), 0 1px 2px rgb(60 40 80 / 0.12);
+  rotate: -1.6deg; transition: rotate 0.35s var(--ease-out);
+}
+.style-floral .grid li:nth-child(even) .thumb { rotate: 1.4deg; }
+.style-floral .grid li:nth-child(3n) .thumb { rotate: -0.6deg; }
+.style-floral .pic { border-radius: 0; }
+@media (hover: hover) { .style-floral .thumb:hover { rotate: 0deg; } }
 .thumb img { width: 100%; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
 /* `scale` for hover and `transform` for the scroll zoom are separate properties, so both work */
 @media (hover: hover) { .thumb:hover img { scale: 1.04; } }

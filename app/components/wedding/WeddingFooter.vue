@@ -29,4 +29,9 @@ const locale = useLocaleCode()
 .thanks { font-size: 0.95rem; opacity: 0.85; }
 .names { font-family: var(--font-heading); font-size: 2rem; }
 .date { font-size: 0.9rem; opacity: 0.85; }
+
+/* Floral style: on the paper, with the couple's names handwritten */
+.style-floral .footer { background: transparent; color: var(--c-text); }
+.style-floral .rings { color: var(--c-secondary); }
+.style-floral .names { font-family: var(--font-script); font-size: clamp(2.6rem, 11vw, 3.6rem); }
 </style>

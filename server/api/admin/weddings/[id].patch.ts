@@ -1,7 +1,7 @@
 // Saves wedding content, theme and settings.
 export default defineEventHandler(async (event) => {
   const { wedding } = await requireWedding(event)
-  const patch = await readBody$(event, weddingSchema.partial())
+  const patch = await readPatch$(event, weddingSchema)
   if (patch.slug && patch.slug !== wedding.slug && await findWeddingBySlug(patch.slug)) {
     throw createError({ statusCode: 409, statusMessage: 'That address is already used' })
   }

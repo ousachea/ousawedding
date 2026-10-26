@@ -49,9 +49,11 @@ const calendar = computed(() => {
 
 const units = computed(() => {
   const diff = now.value === null ? null : Math.max(0, target.value - now.value)
-  const v = (fn: (d: number) => number) => (diff === null ? '–' : String(fn(diff)).padStart(2, '0'))
+  // Khmer digits on the Khmer page, matching the size of the Khmer letters
+  const digits = (str: string) => (locale.value === 'km' ? str.replace(/\d/g, d => '០១២៣៤៥៦៧៨៩'[Number(d)]!) : str)
+  const v = (fn: (d: number) => number) => (diff === null ? '–' : digits(String(fn(diff)).padStart(2, '0')))
   return [
-    { key: 'days', value: diff === null ? '–' : String(Math.floor(diff / 86_400_000)) },
+    { key: 'days', value: diff === null ? '–' : digits(String(Math.floor(diff / 86_400_000))) },
     { key: 'hours', value: v(d => Math.floor(d / 3_600_000) % 24) },
     { key: 'minutes', value: v(d => Math.floor(d / 60_000) % 60) },
     { key: 'seconds', value: v(d => Math.floor(d / 1000) % 60) },
@@ -123,7 +125,7 @@ const units = computed(() => {
   border: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent);
   border-radius: var(--radius);
 }
-.num { display: flex; justify-content: center; font-family: var(--font-serif); font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; perspective: 300px; }
+.num { display: flex; justify-content: center; font-family: var(--font-serif); font-variant-numeric: lining-nums tabular-nums; font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; perspective: 300px; }
 .digit { display: inline-block; min-width: 0.6em; text-align: center; }
 .digit-face { display: inline-block; transform-origin: 50% 50%; backface-visibility: hidden; }
 .lbl { font-size: 0.75rem; letter-spacing: 0.08em; opacity: 0.85; }
@@ -147,6 +149,16 @@ const units = computed(() => {
 .day { position: relative; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin: auto; border-radius: 50%; font-size: 0.95rem; }
 .day.event { border: 1px solid color-mix(in srgb, var(--c-accent) 75%, transparent); }
 .day.wedding { background: var(--c-accent); color: var(--c-tertiary); font-weight: 700; box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-accent) 30%, transparent); }
+/* The big day beats twice like a heart, then rests */
+@media (prefers-reduced-motion: no-preference) {
+  .day.wedding { animation: heartbeat 2.8s ease-in-out infinite; }
+}
+@keyframes heartbeat {
+  0%, 30%, 100% { transform: scale(1); }
+  8% { transform: scale(1.16); }
+  16% { transform: scale(1); }
+  23% { transform: scale(1.1); }
+}
 .heart { position: absolute; top: -0.45rem; right: -0.45rem; width: 1rem; height: 1rem; color: #fff; fill: var(--c-secondary); }
 .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-3); font-size: 0.8rem; opacity: 0.85; }
 .legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
@@ -157,4 +169,25 @@ const units = computed(() => {
 .add-cal .btn { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--c-accent); color: color-mix(in srgb, var(--c-accent) 55%, #fff); background: transparent; }
 .add-cal .btn:hover { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
 @media (min-width: 760px) { .calendar td { width: 3.2rem; height: 3rem; } .day { width: 2.8rem; height: 2.8rem; } }
+
+/* Floral style: on the paper, large lavender digits separated by colons */
+.style-floral .countdown { background: transparent; color: var(--c-text); }
+.style-floral .section-icon { color: var(--c-secondary); }
+.style-floral .title { color: var(--c-text); font-family: var(--font-serif); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.22em; text-transform: uppercase; }
+.style-floral .title:lang(km) { font-size: 1.4rem; letter-spacing: 0.02em; text-transform: none; }
+.style-floral .units { gap: 1rem; }
+.style-floral .unit { position: relative; border: 0; padding-inline: 0; }
+/* Colon centred in the gap and on the digits' line */
+.style-floral .unit:not(:last-child)::after {
+  content: ':'; position: absolute; right: -0.5rem; top: var(--space-3); translate: 50% 0;
+  font-family: var(--font-serif); font-size: clamp(2.2rem, 10vw, 3.2rem); line-height: 1.1; color: var(--c-accent);
+}
+.style-floral .num { color: var(--c-accent); font-size: clamp(2.2rem, 10vw, 3.2rem); }
+.style-floral .lbl { color: var(--c-text); opacity: 0.75; }
+.style-floral .calendar caption { color: var(--c-secondary); }
+.style-floral .day.wedding { background: var(--c-secondary); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-secondary) 20%, transparent); }
+.style-floral .heart { fill: var(--c-accent); }
+.style-floral .key.wedding { background: var(--c-secondary); }
+.style-floral .add-cal .btn { border-color: var(--c-secondary); color: var(--c-secondary); }
+.style-floral .add-cal .btn:hover { background: color-mix(in srgb, var(--c-secondary) 10%, transparent); }
 </style>

@@ -4,7 +4,7 @@ import { z } from 'zod'
 export default defineEventHandler(async (event) => {
   const { wedding } = await requireWedding(event)
   const guest = await requireChild<Guest>('guests', getRouterParam(event, 'guestId')!, wedding.id)
-  const body = await readBody$(event, guestSchema.partial().extend({ archived: z.boolean().optional() }))
+  const body = await readPatch$(event, guestSchema.extend({ archived: z.boolean() }))
   const patch = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
   const updated: Guest = { ...guest, ...patch, updatedAt: nowIso() }
   await useDb().set('guests', guest.id, updated)

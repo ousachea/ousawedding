@@ -20,6 +20,13 @@ export default defineNuxtConfig({
       privateKey: '',
       storageBucket: 'ousa-wedding.firebasestorage.app',
     },
+    // Photo storage in GitHub instead of Firebase Storage: set NUXT_GITHUB_TOKEN to turn it on
+    github: {
+      token: '',
+      repo: 'ousachea/ousawedding',
+      branch: 'main',
+      folder: 'public/uploads',
+    },
     public: {
       // Defaults to NUXT_DRIVER at build time so one variable configures both
       driver: process.env.NUXT_DRIVER === 'local' ? 'local' : 'firebase',
@@ -69,7 +76,7 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&family=Noto+Sans+Khmer:wght@300;400;500&family=Noto+Serif+Khmer:wght@400;600&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&family=Jost:wght@300;400;500&family=Noto+Sans+Khmer:wght@300;400;500&family=Noto+Serif+Khmer:wght@400;600&display=swap',
         },
       ],
     },

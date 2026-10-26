@@ -93,3 +93,64 @@ export function useCurrentWedding() {
   const base = computed(() => `/api/admin/weddings/${id.value}`)
   return { list, id, wedding, base, loadList, loadWedding, select }
 }
+
+/**
+ * Uploads photos: each is resized in the browser (a 2000px image and a 640px thumbnail) and stored as a gallery item.
+ * `visible: false` keeps them out of the public gallery (e.g. a cover photo uploaded from Assets).
+ */
+export function useImageUpload() {
+  const { t } = useI18n()
+  const { base } = useCurrentWedding()
+  const api = useAdminApi()
+  const { push } = useToasts()
+  const progress = ref<{ n: number, total: number } | null>(null)
+
+  async function resize(file: File, maxSide: number): Promise<{ blob: Blob, width: number, height: number }> {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
+    const width = Math.round(bitmap.width * scale)
+    const height = Math.round(bitmap.height * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, width, height)
+    bitmap.close()
+    const encode = (type: string, quality: number) => new Promise<Blob | null>(r => canvas.toBlob(r, type, quality))
+    // Browsers without WebP encoding return PNG; use JPEG instead to keep files small
+    let blob = await encode('image/webp', 0.82)
+    if (!blob || blob.type !== 'image/webp') blob = await encode('image/jpeg', 0.85)
+    if (!blob) throw new Error('encode failed')
+    return { blob, width, height }
+  }
+
+  /** Uploads the image files picked in an <input type="file">, then clears it. Returns how many succeeded. */
+  async function upload(event: Event, opts: { visible?: boolean } = {}) {
+    const input = event.target as HTMLInputElement
+    const files = [...(input.files ?? [])].filter(f => f.type.startsWith('image/'))
+    input.value = ''
+    if (!files.length) return 0
+    progress.value = { n: 0, total: files.length }
+    let ok = 0
+    for (const file of files) {
+      progress.value.n++
+      try {
+        const [full, thumb] = await Promise.all([resize(file, 2000), resize(file, 640)])
+        const form = new FormData()
+        form.append('image', full.blob, 'image')
+        form.append('thumb', thumb.blob, 'thumb')
+        form.append('width', String(full.width))
+        form.append('height', String(full.height))
+        if (opts.visible === false) form.append('visible', 'false')
+        await api(`${base.value}/gallery`, { method: 'POST', body: form })
+        ok++
+      } catch {
+        push(`${file.name}: ${t('common.error')}`, 'error')
+      }
+    }
+    progress.value = null
+    if (ok) push(`${t('common.saved')} (${ok})`)
+    return ok
+  }
+
+  return { progress, upload }
+}

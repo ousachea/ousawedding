@@ -36,10 +36,12 @@ export const weddingSchema = z.object({
     en: z.object({ message: text(2000), dressCode: text(500), instructions: text(2000), story: text(4000), thanks: text(3000).default(''), apology: text(3000).default('') }),
   }),
   coverImage: url,
+  coverPosition: z.string().regex(/^\d{1,3}(\.\d)?% \d{1,3}(\.\d)?%$/).default('50% 50%'),
   theme: z.object({
     background: color, accent: color, secondary: color, tertiary: color, text: color,
     headingFont: z.enum(['serif', 'sans']),
     motif: z.enum(['lotus', 'kbach', 'none']),
+    style: z.enum(['classic', 'floral']).default('classic'),
   }),
   defaultLocale: locale,
   rsvp: z.object({
@@ -112,4 +114,22 @@ export async function readBody$<T extends z.ZodType>(event: Parameters<typeof re
     })
   }
   return result.data
+}
+
+/**
+ * Like readBody$ for partial updates: keeps only the top-level fields the client sent.
+ * Zod 4 fills `.default()`s even under `.partial()`, which would overwrite stored values the client never touched.
+ */
+export async function readPatch$<T extends z.ZodObject>(event: Parameters<typeof readBody>[0], schema: T): Promise<Partial<z.infer<T>>> {
+  const raw = await readBody(event)
+  const result = schema.partial().safeParse(raw)
+  if (!result.success) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid input',
+      data: { issues: result.error.issues.map(i => ({ path: i.path.join('.'), message: i.message })) },
+    })
+  }
+  const sent = new Set(raw && typeof raw === 'object' ? Object.keys(raw) : [])
+  return Object.fromEntries(Object.entries(result.data).filter(([k]) => sent.has(k))) as Partial<z.infer<T>>
 }

@@ -132,6 +132,7 @@
   "admin": {
     "title": "Wedding admin",
     "nav": {
+      "theme": "Theme",
       "dashboard": "Dashboard",
       "guests": "Guests",
       "invitations": "Invitations",
@@ -178,7 +179,11 @@
       "addTitle": "Add guest",
       "name": "Guest or household name",
       "side": "Side",
-      "sides": { "bride": "Bride's side", "groom": "Groom's side", "both": "Both" },
+      "sides": {
+        "bride": "Bride's side",
+        "groom": "Groom's side",
+        "both": "Both"
+      },
       "group": "Group",
       "groupHint": "e.g. Family, Friends, Colleagues",
       "household": "Household ID (optional)",
@@ -187,7 +192,11 @@
       "email": "Email",
       "notes": "Private notes",
       "status": "RSVP",
-      "statuses": { "attending": "Attending", "declined": "Declined", "pending": "Pending" },
+      "statuses": {
+        "attending": "Attending",
+        "declined": "Declined",
+        "pending": "Pending"
+      },
       "invitation": "Invitation",
       "archived": "Archived",
       "showArchived": "Show archived",
@@ -235,7 +244,14 @@
       "qr": "QR code",
       "print": "Print cards",
       "share": "Share",
-      "statuses": { "none": "No link", "draft": "Not sent", "sent": "Sent", "viewed": "Opened", "responded": "Replied", "revoked": "Revoked" },
+      "statuses": {
+        "none": "No link",
+        "draft": "Not sent",
+        "sent": "Sent",
+        "viewed": "Opened",
+        "responded": "Replied",
+        "revoked": "Revoked"
+      },
       "deadline": "RSVP deadline",
       "noGuests": "Add guests first, then create their invitation links."
     },
@@ -271,9 +287,16 @@
       "deleteConfirm": "Delete this photo permanently?",
       "empty": "No photos yet.",
       "moveUp": "Move earlier",
-      "moveDown": "Move later"
+      "moveDown": "Move later",
+      "coverPositionHint": "This is the cover. Click the photo on the spot that must stay in view (e.g. the faces)."
     },
     "settings": {
+      "style": "Style",
+      "styles": {
+        "classic": "Classic (gold & lotus)",
+        "floral": "Floral watercolour (lavender & paper)"
+      },
+      "styleHint": "Choosing a style also sets its colours; you can change them below.",
       "dateHint": "The big day. The schedule and RSVP deadline move with it.",
       "moveUp": "Move up",
       "moveDown": "Move down",
@@ -297,14 +320,21 @@
       "coverHint": "Or choose one on the Gallery page.",
       "theme": "Theme",
       "background": "Background",
-      "accent": "Accent (gold)",
-      "secondary": "Secondary (red)",
-      "tertiary": "Tertiary (green)",
+      "accent": "Accent (ornaments, flowers, digits)",
+      "secondary": "Main (buttons, seal, highlights)",
+      "tertiary": "Deep (countdown band, envelope)",
       "text": "Text",
       "headingFont": "Heading style",
-      "fonts": { "serif": "Classic serif", "sans": "Modern sans" },
+      "fonts": {
+        "serif": "Classic serif",
+        "sans": "Modern sans"
+      },
       "motif": "Ornament",
-      "motifs": { "lotus": "Lotus", "kbach": "Kbach scroll", "none": "None" },
+      "motifs": {
+        "lotus": "Lotus",
+        "kbach": "Kbach scroll",
+        "none": "None"
+      },
       "resetTheme": "Reset to default colours",
       "rsvp": "RSVP",
       "allowUpdates": "Guests can change their reply until the deadline",
@@ -326,13 +356,37 @@
       "addAdmin": "Give access",
       "adminEmail": "Email of an existing Firebase user",
       "role": "Role",
-      "roles": { "owner": "Owner", "editor": "Editor" },
+      "roles": {
+        "owner": "Owner",
+        "editor": "Editor"
+      },
       "removeAdmin": "Remove",
       "removeAdminConfirm": "Remove {email} from this wedding?",
       "backup": "Backup",
       "downloadBackup": "Download full backup (JSON)",
       "backupHint": "Includes guests, invitations, RSVPs, events and gallery records. Photos stay in Firebase Storage.",
       "version": "Version"
+    },
+    "assets": {
+      "title": "Assets",
+      "hint": "Every image the invitation uses, and where. Uploads here stay out of the gallery until you show them.",
+      "upload": "Upload images",
+      "filterAll": "All",
+      "filterUsed": "In use",
+      "filterUnused": "Not used",
+      "usedCover": "Cover photo & share preview",
+      "usedGallery": "Gallery",
+      "usedEvent": "Schedule: {name}",
+      "unused": "Not used",
+      "external": "Link, not uploaded",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "setCover": "Set as cover",
+      "showInGallery": "Show in gallery",
+      "hideFromGallery": "Hide from gallery",
+      "deleteConfirm": "Delete this image? It is used in: {places}. Those places will show no image.",
+      "deleteConfirmUnused": "Delete this image?",
+      "empty": "No images yet."
     }
   }
 }

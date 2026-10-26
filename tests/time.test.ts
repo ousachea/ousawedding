@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { zonedTimeToUtc, formatDate, weddingDates, shiftLocal, minutesBetween } from '../shared/utils/time.ts'
+import { zonedTimeToUtc, formatDate, formatTime, eventDisplay, weddingDates, shiftLocal, minutesBetween } from '../shared/utils/time.ts'
 
 test('Phnom Penh (UTC+7, no DST) converts to UTC', () => {
   assert.equal(zonedTimeToUtc('2027-02-14T07:00', 'Asia/Phnom_Penh').toISOString(), '2027-02-14T00:00:00.000Z')
@@ -34,4 +34,13 @@ test('shiftLocal and minutesBetween move wall-clock times across days and months
   assert.equal(minutesBetween('2027-01-31T07:00', '2027-01-01T07:00'), -30 * 24 * 60)
   assert.equal(shiftLocal('2027-01-30T14:00', -30 * 24 * 60), '2026-12-31T14:00')
   assert.equal(shiftLocal('2027-01-31T23:30', 45), '2027-02-01T00:15')
+})
+
+test('Khmer times use Khmer digits and the time of day as a word', () => {
+  const at = (h: number, m = 0) => new Date(Date.UTC(2027, 0, 1, h - 7, m))
+  assert.equal(formatTime(at(7), 'km', 'Asia/Phnom_Penh'), '៧:០០ ព្រឹក')
+  assert.equal(formatTime(at(14, 30), 'km', 'Asia/Phnom_Penh'), '២:៣០ រសៀល')
+  assert.equal(eventDisplay(at(14), at(15), 'Asia/Phnom_Penh').km.time, '២:០០ – ៣:០០ រសៀល')
+  assert.equal(eventDisplay(at(10), at(12), 'Asia/Phnom_Penh').km.time, '១០:០០ ព្រឹក – ១២:០០ ថ្ងៃត្រង់')
+  assert.match(eventDisplay(at(14), at(15), 'Asia/Phnom_Penh').en.time, /^2:00\s–\s3:00\sPM$/)
 })

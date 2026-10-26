@@ -34,6 +34,7 @@ const links = computed(() => [
   { to: '/admin/invitations', label: t('admin.nav.invitations') },
   { to: '/admin/events', label: t('admin.nav.events') },
   { to: '/admin/gallery', label: t('admin.nav.gallery') },
+  { to: '/admin/theme', label: t('admin.nav.theme') },
   { to: '/admin/settings', label: t('admin.nav.settings') },
 ])
 watch(() => route.path, () => (menuOpen.value = false))

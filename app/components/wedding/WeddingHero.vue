@@ -6,6 +6,16 @@ const { t } = useI18n()
 const locale = useLocaleCode()
 const w = computed(() => props.data.wedding)
 const other = computed<Locale>(() => (locale.value === 'km' ? 'en' : 'km'))
+const floral = computed(() => w.value.theme.style === 'floral')
+
+// Floral style shows the date as month, then "weekday │ day │ year"
+const dateParts = computed(() => {
+  const parts = new Intl.DateTimeFormat(locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US', {
+    timeZone: w.value.timezone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  }).formatToParts(new Date(props.data.dateUtc))
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)?.value ?? ''
+  return { weekday: part('weekday'), day: part('day'), month: part('month'), year: part('year') }
+})
 
 // Drifting petals run only while the hero is on screen
 const section = ref<HTMLElement>()
@@ -51,6 +61,10 @@ const step = (i: number) => ({ '--i': i })
       </svg>
     </div>
 
+    <template v-if="floral">
+      <WeddingFlorals class="corner corner-l" />
+      <WeddingFlorals class="corner corner-r" flip />
+    </template>
     <div class="container hero-inner">
       <div class="text">
         <p class="eyebrow step" :style="step(0)">{{ t('hero.invite') }}</p>
@@ -70,8 +84,15 @@ const step = (i: number) => ({ '--i': i })
           </p>
         </div>
         <WeddingOrnament :motif="w.theme.motif" class="step draw" :style="step(6)" />
-        <p class="date step" :style="step(7)">{{ data.display[locale].date }}</p>
-        <p class="time tabular step" :style="step(7)">{{ data.display[locale].time }}</p>
+        <div v-if="floral" class="date-block step" :style="step(7)">
+          <p class="db-month">{{ dateParts.month }}</p>
+          <p class="db-row"><span>{{ dateParts.weekday }}</span><span class="db-day">{{ dateParts.day }}</span><span>{{ dateParts.year }}</span></p>
+          <p class="time tabular">{{ data.display[locale].time }}</p>
+        </div>
+        <template v-else>
+          <p class="date step" :style="step(7)">{{ data.display[locale].date }}</p>
+          <p class="time tabular step" :style="step(7)">{{ data.display[locale].time }}</p>
+        </template>
         <p v-if="w.content[locale].message" class="message step" :style="step(8)">{{ w.content[locale].message }}</p>
         <div class="cta step" :style="step(9)">
           <a href="#rsvp" class="btn btn-primary">{{ t('hero.rsvp') }}</a>
@@ -81,7 +102,7 @@ const step = (i: number) => ({ '--i': i })
       <div v-if="w.coverImage" class="photo step-photo">
         <span class="halo" aria-hidden="true" />
         <span class="frame">
-          <img :src="w.coverImage" :alt="`${w.names[locale].partner1} & ${w.names[locale].partner2}`" width="800" height="1000" fetchpriority="high">
+          <img :src="w.coverImage" :style="{ objectPosition: w.coverPosition }" :alt="`${w.names[locale].partner1} & ${w.names[locale].partner2}`" width="800" height="1000" fetchpriority="high">
         </span>
       </div>
     </div>
@@ -92,7 +113,8 @@ const step = (i: number) => ({ '--i': i })
 </template>
 
 <style scoped>
-.hero { position: relative; overflow: hidden; padding-block: var(--space-7) var(--space-8); }
+/* clip, not hidden: hidden would make the hero a scroll container and freeze the photo's scroll-linked parallax */
+.hero { position: relative; overflow: clip; padding-block: var(--space-7) var(--space-8); }
 .hero-inner { position: relative; display: grid; gap: var(--space-7); align-items: center; }
 .text { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3); }
 .eyebrow { text-transform: uppercase; letter-spacing: 0.24em; font-size: 0.78rem; color: var(--c-accent-ink); }
@@ -115,7 +137,7 @@ const step = (i: number) => ({ '--i': i })
   border: 1px solid var(--c-line);
   border-radius: 999px 999px var(--radius) var(--radius);
 }
-.frame { display: block; overflow: hidden; border-radius: 999px 999px 6px 6px; }
+.frame { display: block; overflow: clip; border-radius: 999px 999px 6px 6px; }
 .photo img {
   width: 100%;
   aspect-ratio: 4 / 5;
@@ -123,6 +145,32 @@ const step = (i: number) => ({ '--i': i })
   border-radius: 999px 999px 6px 6px;
   outline: 1px solid rgb(0 0 0 / 0.06);
   outline-offset: -1px;
+}
+
+/* Floral style: flowers in the top corners, handwritten names, a ruled date, full-width photo with torn edges */
+.corner { position: absolute; top: 0; width: min(64%, 360px); }
+.corner-l { left: -6%; }
+.corner-r { right: -10%; width: min(42%, 240px); }
+.style-floral .hero { padding-top: clamp(9.5rem, 40vw, 14rem); }
+.style-floral .hero-inner { grid-template-columns: 1fr; }
+.style-floral .names { font-family: var(--font-script); font-size: clamp(3rem, 13vw, 5rem); line-height: 1.15; }
+.style-floral .and { font-family: var(--font-serif); font-size: 0.32em; }
+.date-block { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); margin-block: var(--space-3); }
+.db-month { font-family: var(--font-serif); font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; font-size: 0.85rem; }
+.db-month:lang(km) { letter-spacing: 0.02em; font-size: 1rem; }
+.db-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-3); width: min(100%, 22rem); }
+.db-row > span:not(.db-day) { padding-block: var(--space-1); border-block: 1px solid var(--c-text); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.db-row > span:not(.db-day):lang(km) { letter-spacing: 0; }
+.db-day { font-family: var(--font-script); font-size: 4rem; line-height: 1; color: var(--c-accent); }
+.style-floral .photo {
+  width: min(100vw, 46rem); max-width: none; margin-inline: calc(50% - min(50vw, 23rem));
+  padding: 0; border: 0; border-radius: 0;
+}
+.style-floral .halo { display: none; }
+.style-floral .frame,
+.style-floral .photo img { border-radius: 0; outline: 0; }
+.style-floral .frame {
+  mask: var(--torn-top) top / 100% 18px no-repeat, linear-gradient(#000 0 0) center / 100% calc(100% - 34px) no-repeat, var(--torn-bottom) bottom / 100% 18px no-repeat;
 }
 
 /* Two columns from tablet portrait (e.g. 800px wide) upwards */
@@ -177,6 +225,13 @@ const step = (i: number) => ({ '--i': i })
 }
 /* Zoomed slightly so the drift never shows an edge inside the frame */
 @keyframes drift { from { transform: scale(1.1) translateY(-4%); } to { transform: scale(1.1) translateY(4%); } }
+/* Floral: a stronger parallax, the photo moving at about half the scroll speed inside its torn frame */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .style-floral .photo img { animation-name: parallax; }
+  }
+}
+@keyframes parallax { from { transform: scale(1.28) translateY(-11%); } to { transform: scale(1.28) translateY(11%); } }
 
 /* Petals */
 .petals { position: absolute; inset: 0; pointer-events: none; }

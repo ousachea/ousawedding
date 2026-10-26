@@ -8,7 +8,6 @@ const { push } = useToasts()
 const { confirm } = useConfirm()
 const config = useRuntimeConfig().public
 
-const DEFAULT_THEME: ThemeConfig = { background: '#F5F0F6', accent: '#C9A24A', secondary: '#5B2A86', tertiary: '#2D1640', text: '#2A1F33', headingFont: 'serif', motif: 'lotus' }
 
 // Editable copy of the wedding; saved as one PATCH
 type Draft = Omit<Wedding, 'id' | 'createdAt' | 'updatedAt' | 'isSample'>
@@ -79,17 +78,8 @@ const shareField = (key: 'title' | 'description') => computed<Localized>({
 const shareTitle = shareField('title')
 const shareDescription = shareField('description')
 
-// Live preview: the real invitation page, fed the unsaved draft and scrolled to the section being edited
-const frame = ref<HTMLIFrameElement>()
+// The section of the invitation the preview scrolls to, following what is being edited
 const previewSection = ref('home')
-const previewLocale = ref<Locale>('km')
-const previewSrc = computed(() => wedding.value && `${previewLocale.value === 'en' ? '/en' : ''}/${wedding.value.slug}?preview=1`)
-function sendPreview() {
-  if (!draft.value) return
-  frame.value?.contentWindow?.postMessage({ type: 'wedding-preview', draft: JSON.parse(JSON.stringify(draft.value)), section: previewSection.value }, location.origin)
-}
-watch([draft, previewSection], sendPreview, { deep: true })
-const colorKeys = ['background', 'accent', 'secondary', 'tertiary', 'text'] as const
 
 // Admin access (Firebase only)
 const admins = ref<Admin[]>([])
@@ -119,14 +109,7 @@ async function removeAdmin(a: Admin) {
     </div>
 
     <div class="editor">
-    <details class="preview panel" open>
-      <summary>{{ t('admin.settings.preview') }}</summary>
-      <select v-model="previewLocale" class="input preview-lang" :aria-label="t('common.language')">
-        <option value="km">{{ t('common.khmer') }}</option>
-        <option value="en">{{ t('common.english') }}</option>
-      </select>
-      <iframe v-if="previewSrc" ref="frame" :src="previewSrc" :title="t('admin.settings.preview')" @load="sendPreview" />
-    </details>
+    <AdminPreview :draft="draft" :section="previewSection" />
 
     <form id="settings-form" class="sections" @submit.prevent="save">
       <section class="panel form-grid" @focusin="previewSection = 'home'">
@@ -172,36 +155,6 @@ async function removeAdmin(a: Admin) {
         <div class="field">
           <label for="s-music">{{ t('admin.settings.music') }}</label>
           <input id="s-music" v-model="draft.musicUrl" type="url">
-        </div>
-      </section>
-
-      <section class="panel form-grid" @focusin="previewSection = 'home'">
-        <h2>{{ t('admin.settings.theme') }}</h2>
-        <div class="theme">
-          <div class="form-grid">
-            <div class="colors">
-              <div v-for="key in colorKeys" :key="key" class="field color">
-                <label :for="`c-${key}`">{{ t(`admin.settings.${key}`) }}</label>
-                <input :id="`c-${key}`" v-model="draft.theme[key]" type="color">
-              </div>
-            </div>
-            <div class="form-grid cols-2">
-              <div class="field">
-                <label for="s-font">{{ t('admin.settings.headingFont') }}</label>
-                <select id="s-font" v-model="draft.theme.headingFont">
-                  <option value="serif">{{ t('admin.settings.fonts.serif') }}</option>
-                  <option value="sans">{{ t('admin.settings.fonts.sans') }}</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="s-motif">{{ t('admin.settings.motif') }}</label>
-                <select id="s-motif" v-model="draft.theme.motif">
-                  <option v-for="m in (['lotus', 'kbach', 'none'] as const)" :key="m" :value="m">{{ t(`admin.settings.motifs.${m}`) }}</option>
-                </select>
-              </div>
-            </div>
-            <div><button type="button" class="btn btn-ghost btn-sm" @click="draft.theme = { ...DEFAULT_THEME }">{{ t('admin.settings.resetTheme') }}</button></div>
-          </div>
         </div>
       </section>
 
@@ -291,13 +244,6 @@ async function removeAdmin(a: Admin) {
   .editor { grid-template-columns: minmax(0, 1fr) 380px; }
   .preview { grid-column: 2; grid-row: 1; }
 }
-.preview { position: sticky; top: var(--space-3); z-index: 1; display: grid; gap: var(--space-2); padding: var(--space-3); }
-.preview summary { font-weight: 600; cursor: pointer; }
-.preview-lang { width: auto; justify-self: end; margin-top: calc(-1 * var(--space-6)); }
-.preview iframe { width: 100%; height: min(75dvh, 760px); border: 1px solid var(--c-line-soft); border-radius: var(--radius-sm); background: #fff; }
-@media (max-width: 1099px) { .preview iframe { height: 45dvh; } }
-.colors { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
-.color input[type='color'] { padding: 2px; cursor: pointer; }
 .admins { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .admins li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
 .add-admin { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }

@@ -5,6 +5,7 @@ export type InvitationStatus = 'draft' | 'sent' | 'viewed' | 'responded' | 'revo
 export type GuestSide = 'bride' | 'groom' | 'both'
 export type AdminRole = 'owner' | 'editor'
 export type Motif = 'lotus' | 'kbach' | 'none'
+export type WeddingStyle = 'classic' | 'floral'
 export type TextBlock = 'story' | 'thanks' | 'apology'
 export type EventIcon = 'calendar' | 'rings' | 'lotus' | 'incense' | 'knot' | 'scissors' | 'gift' | 'food' | 'guests' | 'music' | 'heart' | 'camera' | 'dress' | 'clock'
 
@@ -16,6 +17,8 @@ export interface ThemeConfig {
   text: string
   headingFont: 'serif' | 'sans'
   motif: Motif
+  // Page design; missing on weddings saved before styles existed (= classic)
+  style?: WeddingStyle
 }
 
 export interface Wedding {
@@ -30,6 +33,8 @@ export interface Wedding {
   timezone: string
   content: Record<Locale, { message: string, dressCode: string, instructions: string, story: string, thanks: string, apology: string }>
   coverImage: string
+  // Point of the cover photo kept in view when it is cropped, as CSS object-position ("50% 20%"); missing = centre
+  coverPosition?: string
   theme: ThemeConfig
   defaultLocale: Locale
   rsvp: {

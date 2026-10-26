@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     id, weddingId: wedding.id, storagePath, thumbPath, url, thumbUrl,
     width: num('width'), height: num('height'),
     caption: { km: '', en: '' }, alt: { km: '', en: '' },
-    order: existing.length, visible: true, createdAt: now, updatedAt: now,
+    order: existing.length, visible: field('visible')?.data.toString() !== 'false', createdAt: now, updatedAt: now,
   }
   await useDb().set('gallery', id, item)
   return item
