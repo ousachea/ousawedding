@@ -8,6 +8,52 @@ A Khmer and English wedding invitation website with personal invitation links, R
 
 Everything shown when you first run the app is **sample data** (Sokha & Dara, placeholder venues and photos). Edit it in the admin dashboard before sending invitations; a banner says so until you do.
 
+## Live site
+
+- **GitHub Pages:** https://ousachea.github.io/ousawedding/. This still shows the earlier one-page invitation and no longer updates: GitHub Pages only hosts static files, and this app needs a server for invitation links, RSVPs and the admin dashboard.
+- **Vercel:** the new app's address will be added here after the first deploy (see *Deploy to Vercel*).
+
+## Screenshots
+
+Taken from the app running with sample data.
+
+### Guest invitation (phone)
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/envelope.png" width="220" alt="Envelope with a red wax seal and the guest's name, with Open invitation and Skip buttons"><br>Envelope with the guest's name</td>
+    <td align="center"><img src="docs/screenshots/hero-khmer.png" width="220" alt="Khmer invitation with the couple's names, date and RSVP button"><br>Invitation in Khmer</td>
+    <td align="center"><img src="docs/screenshots/hero-english.png" width="220" alt="The same invitation in English"><br>Invitation in English</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/schedule.png" width="220" alt="Schedule timeline with event cards, directions and add-to-calendar buttons"><br>Schedule with directions and calendar</td>
+    <td align="center"><img src="docs/screenshots/rsvp-form.png" width="220" alt="RSVP form for a named guest with attendance choice, guest count and names"><br>Personal RSVP form</td>
+    <td align="center"><img src="docs/screenshots/rsvp-success.png" width="220" alt="RSVP confirmation message with a Change my response button"><br>RSVP confirmation</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/gallery-viewer.png" width="220" alt="Full-screen photo viewer with previous and next buttons"><br>Photo viewer</td>
+    <td align="center"><img src="docs/screenshots/admin-guests-mobile.png" width="220" alt="Admin guest list on a phone, rows shown as cards"><br>Admin guest list on a phone</td>
+    <td></td>
+  </tr>
+</table>
+
+### Desktop
+
+![Invitation on desktop: names and date beside an arched cover photo](docs/screenshots/desktop.png)
+
+### Admin dashboard
+
+![Dashboard with guest totals, response rate and an RSVP status bar](docs/screenshots/admin-dashboard.png)
+
+![Guest list with search, filters, RSVP and invitation status, and row actions](docs/screenshots/admin-guests.png)
+
+<details>
+<summary>Invitations page (publishing, phone preview, personal links)</summary>
+
+![Invitations page with publish control, RSVP deadline, phone preview and the list of personal links](docs/screenshots/admin-invitations.png)
+
+</details>
+
 ## Run locally
 
 ```sh
