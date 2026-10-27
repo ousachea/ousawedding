@@ -9,12 +9,26 @@ A Khmer and English wedding invitation website, published as a **static site** (
 
 ## Live site
 
-- **Vercel / Netlify:** both build the static site from this repository on every push (see *Publish*).
+- **https://ousawedding.vercel.app**: Vercel builds the static site from this repository on every push (Netlify works the same way; see *Publish*).
 - **GitHub Pages:** https://ousachea.github.io/ousawedding/ shows the earlier one-page invitation and no longer updates.
+
+## What guests see
+
+- **Envelope:** a purple envelope with gold trim and a gold foil seal. Opening it raises the letter ("You are warmly invited to celebrate our wedding"), then shows the invitation from the top. The page can't scroll behind it (iPhone included). The same tap goes fullscreen where the browser allows it (Android, iPad) and asks iPhone for motion access, for the tilting flowers.
+- **Cover:** the couple's names, date and cover photo, with flowers in the corners that sway and lean as the phone tilts.
+- **Schedule:** grouped by day, one column on phones. The line draws down with the reader and each item's dot fills in as it is reached. Dress code with the wedding colours (the theme's purples and gold), guest information and a contact number.
+- **Gallery:** a stack of up to five photos, all inside the screen, that plays on its own and loops. Swipe or tap a side photo to move; tap the middle one for full screen.
+- **Around the page:** falling petals, butterflies in random pastel tints that gather around a finger on phones and tablets, and still greenery down both sides.
+- **Navigation:** a slim top bar (monogram, music, language) and a floating gold bottom bar with an icon per section. Both tuck away while scrolling down and come back when scrolling up.
+- Visitors who turn on *reduce motion* get the same page without the animations.
+
+### Share previews
+
+Each invitation has full share and search tags: the cover photo, the title, and the share text followed by the date and time, in Khmer or English. Settings → *Link preview* shows how the link will look in chat apps and in Google while you type.
 
 ## Screenshots
 
-Taken from the app running with sample data.
+Taken from an earlier version with sample data: the envelope is now purple and gold, the gallery is a stack of photos, and the sections are in a bottom bar.
 
 ### Guest invitation (phone)
 
@@ -57,9 +71,11 @@ Taken from the app running with sample data.
 
 ```sh
 npm install --no-bin-links   # --no-bin-links is only needed on Android shared storage
-cp .env.example .env         # set your admin password and the live site address
+cp .env.example .env         # admin password (for other devices) and the live site address
 npm run dev                  # http://localhost:8000/admin
 ```
+
+On the computer running `npm run dev`, `http://localhost:8000/admin` opens without a password. The dev server can also be reached from other devices on the same network (for example a tablet); those sign in with `NUXT_LOCAL_ADMIN_PASSWORD`.
 
 The admin saves to files in the project:
 
@@ -81,7 +97,9 @@ git commit -m "Update invitation"
 git push
 ```
 
-`npm run build` generates every page into static files (Vercel detects this automatically; `netlify.toml` tells Netlify to publish `dist/`). Set `NUXT_PUBLIC_SITE_URL` on the host too, so share previews and calendar files use the live address. No other settings or secrets are needed.
+`npm run build` generates every page into static files (Vercel detects this automatically; `netlify.toml` tells Netlify to publish `dist/`). The live address, used in share previews, personal links and calendar files, defaults to `https://ousawedding.vercel.app` in `nuxt.config.ts`; set `NUXT_PUBLIC_SITE_URL` on the host to use another. No other settings or secrets are needed.
+
+Uploaded photos are named by a unique ID and never change, so `vercel.json` and `netlify.toml` let browsers cache them for a year; pages are always re-checked, so changes show up straight away.
 
 ### RSVP replies
 
@@ -105,15 +123,17 @@ npm run build                      # the static site, into .output/public (dist/
 app/
   pages/[slug].vue                 Public invitation (one scrolling page)
   pages/admin/*                    Dashboard, guests, invitations (+ print), schedule, gallery, theme, settings
-  components/wedding/*             Envelope, hero, countdown, schedule, gallery, flowers, RSVP, navigation…
-  components/admin/*               Live preview, modal, QR code, bilingual field, stat card
+  components/wedding/*             Envelope, hero, countdown, schedule, gallery, flowers, petals, butterflies,
+                                   greenery, RSVP, top bar and bottom bar…
+  components/admin/*               Live preview, link preview, modal, QR code, bilingual field, stat card
+  composables/*                    Shared page state (e.g. hiding the bars while scrolling)
 i18n/locales/{km,en}.json          Interface text
 server/
   api/public/*                     Wedding content and calendar files (.ics), read when the site is built
   api/admin/*, api/auth/*          The admin dashboard's API (on your computer only)
   utils/db.ts                      JSON files: content/ (public) and .data/local/ (private)
   utils/storage.ts                 Photo uploads into public/uploads/
-shared/                            Types, timezone and link helpers used by both sides
+shared/                            Types, timezone, link and share-preview helpers used by both sides
 content/                           The published wedding content
 tests/                             node:test suites
 ```
