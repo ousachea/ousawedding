@@ -31,6 +31,8 @@ const days = computed(() => {
   })
   return out
 })
+// The wedding colours, shown with the dress code: the theme's purples, then gold
+const colours = computed(() => [w.value.theme.accent, w.value.theme.secondary, w.value.theme.tertiary, 'var(--c-gold)'])
 const started = (e: Item) => now.value !== null && now.value >= Date.parse(e.startUtc)
 
 // Focus: items crossing the middle of the screen stay sharp, the rest blur until scrolled to.
@@ -114,6 +116,11 @@ function remaining(e: Item) {
           <WeddingIcon name="dress" class="info-icon" />
           <h3>{{ t('events.dressCode') }}</h3>
           <p>{{ w.content[locale].dressCode }}</p>
+          <p class="colours-label">{{ t('events.colours') }}</p>
+          <!-- Visual only: the dress code text above says what to wear -->
+          <ul class="colours" aria-hidden="true">
+            <li v-for="c in colours" :key="c" :class="{ gold: c === 'var(--c-gold)' }" :style="{ '--swatch': c }" />
+          </ul>
         </div>
         <div v-if="w.content[locale].instructions" v-reveal="100" class="info-card">
           <WeddingIcon name="info" class="info-icon" />
@@ -195,6 +202,12 @@ function remaining(e: Item) {
 .info-icon { font-size: 30px; color: var(--c-accent-ink); margin: 0 auto var(--space-2); display: block; }
 .info-card h3 { font-size: 1.25rem; margin-bottom: var(--space-2); color: var(--c-secondary); }
 .info-card a { color: var(--c-secondary); }
+.colours-label { margin-top: var(--space-3); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
+.colours-label:lang(km) { font-size: 0.85rem; letter-spacing: 0; text-transform: none; }
+.colours { display: flex; justify-content: center; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+/* A thin ring keeps light colours visible against the card */
+.colours li { width: 30px; height: 30px; border-radius: 50%; background: var(--swatch); box-shadow: 0 0 0 2px var(--c-bg), 0 0 0 3px var(--c-line), 0 2px 6px -2px rgb(0 0 0 / 0.3); }
+.colours li.gold { background: radial-gradient(circle at 35% 30%, var(--c-gold-light), var(--c-gold) 55%, var(--c-gold-deep)); }
 
 /* Floral style: no cards. On phones one column, line on the left, each item clearly on its own.
    From tablet width, items zig-zag left and right of a centre line. */
