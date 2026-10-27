@@ -196,27 +196,36 @@ function remaining(e: Item) {
 .info-card h3 { font-size: 1.25rem; margin-bottom: var(--space-2); color: var(--c-secondary); }
 .info-card a { color: var(--c-secondary); }
 
-/* Floral style: no cards; items zig-zag left and right of a centre line, icons next to the line */
-.style-floral .timeline::before { left: 50%; background: var(--c-text); opacity: 0.6; }
-/* Two columns; each item spans two rows starting one row after the previous, so left and right interleave */
-.style-floral .timeline { display: grid; grid-template-columns: 1fr 1fr; }
-.style-floral .item { grid-column: 2; grid-row: var(--row) / span 2; padding: 0 0 var(--space-7) 2.1rem; }
-.style-floral .item:nth-child(even) { grid-column: 1; padding: 0 2.1rem var(--space-7) 0; text-align: right; }
-.style-floral .dot { left: -14px; top: 0; background: var(--c-bg); border-color: var(--c-text); color: var(--c-text); }
-.style-floral .item:nth-child(even) .dot { left: auto; right: -14px; }
+/* Floral style: no cards. On phones one column, line on the left, each item clearly on its own.
+   From tablet width, items zig-zag left and right of a centre line. */
+.style-floral .timeline::before { left: 13px; background: var(--c-text); opacity: 0.35; }
+.style-floral .item { padding: 0 0 var(--space-6) 2.75rem; }
+.style-floral .item:last-child { padding-bottom: var(--space-2); }
+.style-floral .dot { left: 0; top: 0; background: var(--c-bg); border-color: var(--c-text); color: var(--c-text); }
 .style-floral .card { background: none; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
 .style-floral .card-body { padding: 0; gap: var(--space-2); }
-.style-floral .day-title { margin-bottom: var(--space-3); }
-.style-floral .when { font-size: 0.75rem; letter-spacing: 0.06em; color: var(--c-text); }
+.style-floral .day-title { margin-bottom: var(--space-5); padding-bottom: var(--space-2); border-bottom: 1px solid var(--c-line-soft); }
+.style-floral .day + .day { margin-top: var(--space-7); }
+/* Time first, as a small label, so each item starts clearly */
+.style-floral .when { align-self: flex-start; padding: 0.15rem 0.6rem; border-radius: 999px; background: color-mix(in srgb, var(--c-secondary) 9%, transparent); font-size: 0.75rem; letter-spacing: 0.06em; color: var(--c-secondary); }
 .style-floral .when > .icon { display: none; }
-.style-floral .item:nth-child(even) .when,
-.style-floral .item:nth-child(even) .actions { justify-content: flex-end; }
-.style-floral .event-title { display: block; font-size: 1.1rem; font-family: var(--font-serif); font-weight: 600; text-wrap: balance; }
-/* Icon on its own line above the title, on the side nearest the centre line */
-.style-floral .event-icon { display: block; margin-bottom: var(--space-2); font-size: 1.6rem; color: var(--c-secondary); }
-.style-floral .item:nth-child(even) .event-icon { margin-left: auto; }
-.style-floral .item:nth-child(even) .venue { flex-direction: row-reverse; }
-.style-floral .desc { font-size: 0.85rem; line-height: 1.7; text-wrap: pretty; }
+.style-floral .event-title { display: flex; align-items: center; gap: var(--space-2); margin-top: 2px; font-size: 1.15rem; line-height: 1.35; font-family: var(--font-serif); font-weight: 600; text-wrap: balance; }
+.style-floral .event-icon { flex: none; font-size: 1.35rem; color: var(--c-secondary); }
+.style-floral .desc { font-size: 0.88rem; line-height: 1.7; text-wrap: pretty; }
 .style-floral .venue { font-size: 0.85rem; }
 .style-floral .left { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
+
+@media (min-width: 700px) {
+  .style-floral .timeline::before { left: 50%; }
+  /* Two columns; each item spans two rows starting one row after the previous, so left and right interleave */
+  .style-floral .timeline { display: grid; grid-template-columns: 1fr 1fr; column-gap: 0; }
+  .style-floral .item { grid-column: 2; grid-row: var(--row) / span 2; padding: 0 0 var(--space-7) 2.75rem; }
+  .style-floral .item:nth-child(even) { grid-column: 1; padding: 0 2.75rem var(--space-7) 0; text-align: right; }
+  .style-floral .dot { left: -14px; }
+  .style-floral .item:nth-child(even) .dot { left: auto; right: -14px; }
+  .style-floral .item:nth-child(even) .when { align-self: flex-end; }
+  .style-floral .item:nth-child(even) .event-title { flex-direction: row-reverse; }
+  .style-floral .item:nth-child(even) .actions { justify-content: flex-end; }
+  .style-floral .item:nth-child(even) .venue { flex-direction: row-reverse; }
+}
 </style>
