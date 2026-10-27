@@ -1,11 +1,14 @@
 <script setup lang="ts">
-const props = defineProps<{ images: PublicWedding['gallery'], motif: Motif }>()
+const props = defineProps<{ images: PublicWedding['gallery'], motif: Motif, names: string }>()
 const { t } = useI18n()
 const L = useLocalized()
 
 const dialog = ref<HTMLDialogElement>()
 const index = ref(0)
 const current = computed(() => props.images[index.value])
+// Photos without alt text or a caption still get a description, so screen readers don't skip them
+const altFor = (img: PublicWedding['gallery'][number], i: number) =>
+  L(img.alt) || L(img.caption) || t('gallery.alt', { names: props.names, n: i + 1, total: props.images.length })
 
 function open(i: number) {
   index.value = i
@@ -39,7 +42,7 @@ function onTouchEnd(e: TouchEvent) {
       <ul class="grid" :class="{ few: images.length <= 4 }">
         <li v-for="(img, i) in images" :key="img.id" v-reveal="(i % 3) * 90">
           <button type="button" class="thumb" :aria-label="t('gallery.open', { n: i + 1 })" @click="open(i)">
-            <span class="pic"><img :src="img.thumbUrl || img.url" :alt="L(img.alt) || L(img.caption)" :width="img.width" :height="img.height" loading="lazy" decoding="async"></span>
+            <span class="pic"><img :src="img.thumbUrl || img.url" :alt="altFor(img, i)" :width="img.width" :height="img.height" loading="lazy" decoding="async"></span>
           </button>
           <p v-if="L(img.caption)" class="caption">{{ L(img.caption) }}</p>
         </li>
@@ -49,7 +52,7 @@ function onTouchEnd(e: TouchEvent) {
     <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @click.self="dialog?.close()">
       <div v-if="current" class="viewer-inner" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
         <Transition name="photo" mode="out-in">
-          <img :key="current.id" :src="current.url" :alt="L(current.alt) || L(current.caption)" :width="current.width" :height="current.height">
+          <img :key="current.id" :src="current.url" :alt="altFor(current, index)" :width="current.width" :height="current.height" loading="lazy" decoding="async">
         </Transition>
         <p class="viewer-caption">
           <span class="tabular">{{ t('gallery.counter', { n: index + 1, total: images.length }) }}</span>

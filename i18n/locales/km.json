@@ -83,7 +83,8 @@
     "title": "រូបភាព",
     "open": "បើករូបភាពទី {n}",
     "viewer": "កម្មវិធីមើលរូបភាព",
-    "counter": "{n} នៃ {total}"
+    "counter": "{n} នៃ {total}",
+    "alt": "{names} រូបភាពទី {n} នៃ {total}"
   },
   "rsvp": {
     "title": "ឆ្លើយតបការអញ្ជើញ",

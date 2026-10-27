@@ -224,7 +224,7 @@ useSeoMeta({
       <WeddingFlorals v-if="floral && textBlocks.length" class="fl-sprig" variant="sprig" :seed="2" />
 
       <WeddingFlorals v-if="floral" class="fl-garland" variant="garland" />
-      <WeddingGallery v-if="data!.gallery.length" :images="data!.gallery" :motif="w.theme.motif" />
+      <WeddingGallery v-if="data!.gallery.length" :images="data!.gallery" :motif="w.theme.motif" :names="names" />
       <WeddingFlorals v-if="floral" class="fl-sprig fl-right" variant="sprig" :seed="1" flip />
       <WeddingRsvpForm :data="data!" :guest-name="guestName" />
 

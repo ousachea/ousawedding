@@ -83,7 +83,8 @@
     "title": "Gallery",
     "open": "Open photo {n}",
     "viewer": "Photo viewer",
-    "counter": "{n} of {total}"
+    "counter": "{n} of {total}",
+    "alt": "{names}, photo {n} of {total}"
   },
   "rsvp": {
     "title": "RSVP",

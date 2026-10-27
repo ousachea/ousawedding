@@ -2,3 +2,9 @@
 [build]
   command = "npm run build"
   publish = "dist"
+
+# Uploaded photos are named by a unique ID and never change, so browsers can keep them for a year
+[[headers]]
+  for = "/uploads/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
