@@ -118,10 +118,10 @@ const textBlocks = computed(() => (w.value.textOrder ?? TEXT_BLOCKS)
   .filter(b => b.text))
 
 const sections = computed(() => [
-  { id: 'schedule', label: t('nav.schedule') },
-  ...(L({ km: w.value.content.km.story, en: w.value.content.en.story }) ? [{ id: 'story', label: t('nav.story') }] : []),
-  ...(data.value!.gallery.length ? [{ id: 'gallery', label: t('nav.gallery') }] : []),
-  { id: 'rsvp', label: t('nav.rsvp') },
+  { id: 'schedule', label: t('nav.schedule'), icon: 'calendar' as const },
+  ...(L({ km: w.value.content.km.story, en: w.value.content.en.story }) ? [{ id: 'story', label: t('nav.story'), icon: 'heart' as const }] : []),
+  ...(data.value!.gallery.length ? [{ id: 'gallery', label: t('nav.gallery'), icon: 'camera' as const }] : []),
+  { id: 'rsvp', label: t('nav.rsvp'), icon: 'envelope' as const },
 ])
 
 // Share previews and search settings. Uses only public wedding fields, never guest data.
@@ -209,7 +209,7 @@ useSeoMeta({
 
     <WeddingPetals v-if="w.theme.motif !== 'none' || floral" />
     <WeddingButterflies v-if="!isPreview" />
-    <WeddingNavigation :sections="sections" :music-url="w.musicUrl" :monogram="w.monogram" />
+    <WeddingNavigation :music-url="w.musicUrl" :monogram="w.monogram" />
 
     <main>
       <WeddingHero :data="data!" :intro-delay="introDelay" />
@@ -240,6 +240,7 @@ useSeoMeta({
       <WeddingFlorals flip />
     </div>
     <WeddingFooter :data="data!" />
+    <WeddingTabBar :sections="sections" />
   </div>
 </template>
 
