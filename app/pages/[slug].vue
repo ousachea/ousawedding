@@ -125,21 +125,69 @@ const abs = (u: string) => (!u ? undefined : u.startsWith('http') ? u : `${siteU
 const share = computed(() => w.value.share[loc.value])
 const names = computed(() => `${w.value.names[loc.value].partner1} & ${w.value.names[loc.value].partner2}`)
 const localePath = useLocalePath()
+const switchLocalePath = useSwitchLocalePath()
+const pageUrl = computed(() => `${siteUrl}${localePath(`/${w.value.slug}`)}`)
+const title = computed(() => share.value.title || `${names.value} | ${t('hero.invite')}`)
+// The date and time always appear in the preview, after the couple's own text
+const when = computed(() => `${data.value!.display[loc.value].date} · ${data.value!.display[loc.value].time}`)
+const description = computed(() => [share.value.description || t('hero.invite'), when.value].join(' · '))
+// Size of the cover photo, when it is one of the gallery photos, so apps can lay out the preview before loading it
+const cover = computed(() => data.value!.gallery.find(g => g.url === w.value.coverImage))
+const coverType = computed(() => ({ webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', svg: 'image/svg+xml' } as Record<string, string>)[w.value.coverImage.split('.').pop()!.toLowerCase()])
+
+// Event details for search engines (schema.org), from the first to the last item of the schedule
+const eventLd = computed(() => {
+  const ev = data.value!.events
+  const place = ev.find(e => L(e.venue))
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: title.value,
+    description: description.value,
+    startDate: ev[0]?.startUtc ?? data.value!.dateUtc,
+    endDate: ev.at(-1)?.endUtc,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    image: abs(w.value.coverImage),
+    url: pageUrl.value,
+    inLanguage: loc.value,
+    ...(place && { location: { '@type': 'Place', name: L(place.venue), address: L(place.address) || undefined } }),
+  }
+})
+
 useHead(() => ({
   htmlAttrs: { lang: loc.value },
-  link: [{ rel: 'canonical', href: `${siteUrl}${localePath(`/${w.value.slug}`)}` }],
+  link: [
+    { rel: 'canonical', href: pageUrl.value },
+    // The same invitation in the other language
+    { rel: 'alternate', hreflang: 'km', href: `${siteUrl}${switchLocalePath('km')}` },
+    { rel: 'alternate', hreflang: 'en', href: `${siteUrl}${switchLocalePath('en')}` },
+    { rel: 'alternate', hreflang: 'x-default', href: `${siteUrl}${switchLocalePath('km')}` },
+  ],
   // Tints the mobile browser bar to match
   meta: [{ name: 'theme-color', content: w.value.theme.background }],
+  // `<` is escaped so text from the admin can never close the script tag
+  script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(eventLd.value).replace(/</g, '\\u003c') }],
 }))
 useSeoMeta({
-  title: () => share.value.title || `${names.value} | ${t('hero.invite')}`,
-  description: () => share.value.description || `${t('hero.invite')} · ${data.value!.display[loc.value].date}`,
+  title: () => title.value,
+  description: () => description.value,
   ogTitle: () => share.value.title || names.value,
-  ogDescription: () => share.value.description || data.value!.display[loc.value].date,
+  ogDescription: () => description.value,
   ogType: 'website',
+  ogUrl: () => pageUrl.value,
+  ogSiteName: () => names.value,
   ogImage: () => abs(w.value.coverImage),
+  ogImageType: () => coverType.value as 'image/webp',
+  ogImageWidth: () => cover.value?.width,
+  ogImageHeight: () => cover.value?.height,
+  ogImageAlt: () => L(cover.value?.alt ?? { km: '', en: '' }) || names.value,
   ogLocale: () => (loc.value === 'km' ? 'km_KH' : 'en_US'),
+  ogLocaleAlternate: () => (loc.value === 'km' ? 'en_US' : 'km_KH'),
   twitterCard: 'summary_large_image',
+  twitterTitle: () => share.value.title || names.value,
+  twitterDescription: () => description.value,
+  twitterImage: () => abs(w.value.coverImage),
   robots: () => (w.value.privacy.allowIndexing ? 'index, follow' : 'noindex, nofollow'),
 })
 </script>
