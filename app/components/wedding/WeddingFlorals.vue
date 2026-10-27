@@ -178,7 +178,8 @@ const TINTS: Record<Tint, [string, string, string, string]> = {
   white: ['color-mix(in srgb, var(--c-accent) 60%, #fff)', 'color-mix(in srgb, var(--c-accent) 20%, #fff)', '#fbf9fd', '#fffefe'],
 }
 // Each flower sways at its own pace
-const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': `${-(i * 1.3) % 4}s` })
+// --depth: how far each flower follows the phone tilt (0.6–1.4), so nearer ones move more than farther ones
+const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': `${-(i * 1.3) % 4}s`, '--depth': (0.6 + ((i * 0.37) % 0.8)).toFixed(2) })
 </script>
 
 <template>
@@ -278,9 +279,17 @@ const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': 
 .greens-2 { transform-origin: 60% 60%; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Phone tilt (--tilt-x/-y from the page, -1..1): flowers move more than the greenery, for depth */
-  .flower { translate: calc(var(--tilt-x, 0) * var(--dir, 1) * 7px) calc(var(--tilt-y, 0) * 5px); }
-  .greens { translate: calc(var(--tilt-x, 0) * var(--dir, 1) * 3px) calc(var(--tilt-y, 0) * 2px); }
+  /* Phone tilt (--tilt-x/-y from the page, -1..1): flowers slide and lean toward the low side, each by its own
+     depth, and move well ahead of the greenery, so the cluster reads as layered. Lengths are in viewBox units
+     (320 wide), about 0.7 of a screen pixel on a phone. `transform` adds to the sway's `rotate`. */
+  .flower {
+    translate: calc(var(--tilt-x, 0) * var(--dir, 1) * var(--depth, 1) * 22px) calc(var(--tilt-y, 0) * var(--depth, 1) * 16px);
+    transform: rotate(calc(var(--tilt-x, 0) * var(--dir, 1) * var(--depth, 1) * 9deg));
+  }
+  .greens {
+    translate: calc(var(--tilt-x, 0) * var(--dir, 1) * 8px) calc(var(--tilt-y, 0) * 6px);
+    transform: rotate(calc(var(--tilt-x, 0) * var(--dir, 1) * 3deg));
+  }
 
   /* Always: a gentle breeze */
   .flower { animation: sway var(--dur) ease-in-out var(--delay) infinite alternate; }

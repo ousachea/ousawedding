@@ -17,50 +17,16 @@ const dateParts = computed(() => {
   return { weekday: part('weekday'), day: part('day'), month: part('month'), year: part('year') }
 })
 
-// Drifting petals run only while the hero is on screen
-const section = ref<HTMLElement>()
-const petalsActive = ref(false)
-let io: IntersectionObserver | undefined
-onMounted(() => {
-  if (!section.value || !('IntersectionObserver' in window)) return
-  io = new IntersectionObserver(([entry]) => (petalsActive.value = !!entry?.isIntersecting))
-  io.observe(section.value)
-})
-onBeforeUnmount(() => io?.disconnect())
-
-// Fixed positions so server and client render the same markup
-const petals = [
-  { left: 8, delay: 0, dur: 17, size: 14 },
-  { left: 22, delay: 6, dur: 21, size: 10 },
-  { left: 37, delay: 11, dur: 19, size: 12 },
-  { left: 55, delay: 3, dur: 23, size: 9 },
-  { left: 68, delay: 9, dur: 18, size: 13 },
-  { left: 82, delay: 1, dur: 22, size: 11 },
-  { left: 93, delay: 13, dur: 20, size: 10 },
-]
 const step = (i: number) => ({ '--i': i })
 </script>
 
 <template>
   <section
     id="home"
-    ref="section"
     class="hero"
-    :class="{ intro: introDelay !== null, 'petals-on': petalsActive }"
+    :class="{ intro: introDelay !== null }"
     :style="{ '--intro-delay': `${introDelay ?? 0}ms` }"
   >
-    <div v-if="w.theme.motif !== 'none' || floral" class="petals" aria-hidden="true">
-      <svg
-        v-for="(p, i) in petals"
-        :key="i"
-        class="petal"
-        viewBox="0 0 20 28"
-        :style="{ left: `${p.left}%`, width: `${p.size}px`, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }"
-      >
-        <path d="M10 1 C3 9 3 19 10 27 C17 19 17 9 10 1 Z" fill="currentColor" />
-      </svg>
-    </div>
-
     <template v-if="floral">
       <WeddingFlorals class="corner corner-l" />
       <WeddingFlorals class="corner corner-r" :seed="1" flip />
@@ -232,27 +198,4 @@ const step = (i: number) => ({ '--i': i })
   }
 }
 @keyframes parallax { from { transform: scale(1.28) translateY(-11%); } to { transform: scale(1.28) translateY(11%); } }
-
-/* Petals */
-.petals { position: absolute; inset: 0; pointer-events: none; }
-.petal {
-  position: absolute;
-  top: -40px;
-  height: auto;
-  color: var(--c-accent);
-  opacity: 0;
-  animation: fall linear infinite;
-  animation-play-state: paused;
-}
-.petals-on .petal { animation-play-state: running; }
-@keyframes fall {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
-  10% { opacity: 0.35; }
-  50% { transform: translate3d(28px, 50vh, 0) rotate(160deg); }
-  90% { opacity: 0.3; }
-  100% { transform: translate3d(-12px, 105vh, 0) rotate(320deg); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .petals { display: none; }
-}
 </style>

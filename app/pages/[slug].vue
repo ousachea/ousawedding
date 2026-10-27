@@ -31,10 +31,14 @@ onMounted(() => {
     page.value?.style.setProperty('--tilt-y', now[1]!.toFixed(3))
     frame = Math.abs(target[0]! - now[0]!) + Math.abs(target[1]! - now[1]!) > 0.002 ? requestAnimationFrame(step) : 0
   }
-  // gamma: left/right tilt; beta: forward/back, about 45° when a phone is held to read
+  // gamma: left/right tilt; beta: forward/back. Forward/back is measured from how the visitor is holding the
+  // phone (the first reading, then slowly following it), so lying in bed or standing both start level.
+  // Full effect at 20° of tilt.
+  let level: number | null = null
   const onTilt = (e: DeviceOrientationEvent) => {
     if (e.gamma === null || e.beta === null) return
-    target = [clamp(e.gamma / 30), clamp((e.beta - 45) / 30)]
+    level = level === null ? e.beta : level + (e.beta - level) * 0.02
+    target = [clamp(e.gamma / 20), clamp((e.beta - level) / 20)]
     frame ||= requestAnimationFrame(step)
   }
   const start = () => addEventListener('deviceorientation', onTilt)
@@ -202,6 +206,8 @@ useSeoMeta({
 
     <p v-if="w.isSample" class="banner">{{ t('common.sample') }}</p>
 
+    <WeddingPetals v-if="w.theme.motif !== 'none' || floral" />
+    <WeddingButterflies v-if="!isPreview" />
     <WeddingNavigation :sections="sections" :music-url="w.musicUrl" :monogram="w.monogram" />
 
     <main>
