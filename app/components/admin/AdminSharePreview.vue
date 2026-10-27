@@ -31,6 +31,48 @@ const meta = computed(() => {
 })
 // Rough limits before Google cuts the text off
 const LIMITS = { title: 60, description: 160 }
+
+// Link-preview crop: click the photo to choose the point kept in view. The cover is cropped here to 1200×630
+// and saved as its own image, since chat apps otherwise crop the middle of the whole cover themselves.
+const emit = defineEmits<{ shareImage: [value: Wedding['shareImage']] }>()
+const { base } = useCurrentWedding()
+const api = useAdminApi()
+const { push } = useToasts()
+const sharePosition = computed(() => (props.draft.shareImage?.cover === props.draft.coverImage ? props.draft.shareImage.position : '50% 50%'))
+const cropping = ref(false)
+async function setSharePosition(event: MouseEvent) {
+  if (cropping.value) return
+  const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const clamp = (v: number) => Math.min(Math.max(v, 0), 1)
+  const [px, py] = [clamp((event.clientX - box.left) / box.width), clamp((event.clientY - box.top) / box.height)]
+  const pct = (v: number) => `${Math.round(v * 1000) / 10}%`
+  cropping.value = true
+  try {
+    const img = new Image()
+    img.src = props.draft.coverImage
+    await img.decode()
+    // The largest 1200:630 area of the photo, placed like CSS object-position, so it matches this preview
+    const ratio = 1200 / 630
+    const [w, h] = [img.naturalWidth, img.naturalHeight]
+    const [cw, ch] = w / h > ratio ? [h * ratio, h] : [w, w / ratio]
+    const canvas = Object.assign(document.createElement('canvas'), { width: 1200, height: 630 })
+    canvas.getContext('2d')!.drawImage(img, px * (w - cw), py * (h - ch), cw, ch, 0, 0, 1200, 630)
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.86))
+    if (!blob) throw new Error('encode failed')
+    const form = new FormData()
+    form.append('image', blob, 'share.jpg')
+    form.append('cover', props.draft.coverImage)
+    form.append('position', `${pct(px)} ${pct(py)}`)
+    const updated = await api<Wedding>(`${base.value}/share-image`, { method: 'POST', body: form })
+    emit('shareImage', updated.shareImage)
+    push(t('common.saved'))
+  } catch (e) {
+    // api() already shows its own errors; this covers a photo that can't be loaded or drawn
+    if (!(e as { statusCode?: number }).statusCode) push(t('common.error'), 'error')
+  } finally {
+    cropping.value = false
+  }
+}
 </script>
 
 <template>
@@ -48,13 +90,18 @@ const LIMITS = { title: 60, description: 160 }
     <template v-if="meta">
       <p class="where">{{ t('admin.settings.previewChat') }}</p>
       <div class="card" :lang="lang">
-        <img v-if="draft.coverImage" :src="draft.coverImage" :style="{ objectPosition: draft.coverPosition }" alt="">
+        <button v-if="draft.coverImage" type="button" class="crop" :class="{ busy: cropping }" :aria-label="t('admin.settings.shareImageHint')" @click="setSharePosition">
+          <img :src="draft.coverImage" :style="{ objectPosition: sharePosition }" alt="">
+          <span class="focus" :style="{ left: sharePosition.split(' ')[0], top: sharePosition.split(' ')[1] }" aria-hidden="true" />
+        </button>
         <div class="card-text">
           <span class="host">{{ host }}</span>
           <strong class="card-title">{{ meta.cardTitle }}</strong>
           <span class="desc">{{ meta.description }}</span>
         </div>
       </div>
+
+      <p v-if="draft.coverImage" class="muted small">{{ t('admin.settings.shareImageHint') }}</p>
 
       <p class="where">{{ t('admin.settings.previewGoogle') }}</p>
       <div class="serp" :class="{ hidden: !draft.privacy.allowIndexing }" :lang="lang">
@@ -86,7 +133,11 @@ const LIMITS = { title: 60, description: 160 }
 
 /* A generic link card: wide photo on top, as most chat apps crop it */
 .card { max-width: 26rem; overflow: hidden; border: 1px solid var(--c-line-soft); border-radius: var(--radius); background: var(--c-bg); }
-.card img { display: block; width: 100%; aspect-ratio: 1.91 / 1; object-fit: cover; }
+.card img { display: block; width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; }
+/* Click the photo to choose the point kept in view */
+.crop { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; cursor: crosshair; }
+.crop.busy { opacity: 0.6; cursor: progress; }
+.focus { position: absolute; width: 18px; height: 18px; translate: -50% -50%; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4); pointer-events: none; }
 .card-text { display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-3) var(--space-3); }
 .host { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-muted); }
 .card-title { font-size: 0.95rem; line-height: 1.35; }

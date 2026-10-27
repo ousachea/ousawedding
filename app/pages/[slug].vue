@@ -64,6 +64,8 @@ onMounted(() => {
 })
 
 const introDelay = ref<number | null>(null)
+// Runs inside the tap that opens the envelope, so the browser lets the music start (see WeddingMusic)
+const startMusic = () => window.dispatchEvent(new Event('wedding:open'))
 
 // Inside the admin settings preview: show unsaved edits sent by the parent page (same origin only)
 const isPreview = route.query.preview === '1'
@@ -136,6 +138,8 @@ const title = computed(() => meta.value.title)
 const description = computed(() => meta.value.description)
 // Size of the cover photo, when it is one of the gallery photos, so apps can lay out the preview before loading it
 const cover = computed(() => data.value!.gallery.find(g => g.url === w.value.coverImage))
+// The cropped link-preview image, while it still matches the current cover photo
+const shareImage = computed(() => (w.value.shareImage?.cover === w.value.coverImage ? w.value.shareImage.url : undefined))
 const coverType = computed(() => ({ webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', svg: 'image/svg+xml' } as Record<string, string>)[w.value.coverImage.split('.').pop()!.toLowerCase()])
 
 // Event details for search engines (schema.org), from the first to the last item of the schedule
@@ -180,17 +184,17 @@ useSeoMeta({
   ogType: 'website',
   ogUrl: () => pageUrl.value,
   ogSiteName: () => names.value,
-  ogImage: () => abs(w.value.coverImage),
-  ogImageType: () => coverType.value as 'image/webp',
-  ogImageWidth: () => cover.value?.width,
-  ogImageHeight: () => cover.value?.height,
+  ogImage: () => abs(shareImage.value ?? w.value.coverImage),
+  ogImageType: () => (shareImage.value ? 'image/jpeg' : coverType.value) as 'image/webp',
+  ogImageWidth: () => (shareImage.value ? 1200 : cover.value?.width),
+  ogImageHeight: () => (shareImage.value ? 630 : cover.value?.height),
   ogImageAlt: () => L(cover.value?.alt ?? { km: '', en: '' }) || names.value,
   ogLocale: () => (loc.value === 'km' ? 'km_KH' : 'en_US'),
   ogLocaleAlternate: () => (loc.value === 'km' ? 'en_US' : 'km_KH'),
   twitterCard: 'summary_large_image',
   twitterTitle: () => meta.value.cardTitle,
   twitterDescription: () => description.value,
-  twitterImage: () => abs(w.value.coverImage),
+  twitterImage: () => abs(shareImage.value ?? w.value.coverImage),
   robots: () => (w.value.privacy.allowIndexing ? 'index, follow' : 'noindex, nofollow'),
 })
 </script>
@@ -202,7 +206,7 @@ useSeoMeta({
       :monogram="w.monogram"
       :motif="w.theme.motif"
       :guest-name="guestName"
-      @revealing="introDelay = $event"
+      @revealing="introDelay = $event; startMusic()"
     />
 
     <p v-if="w.isSample" class="banner">{{ t('common.sample') }}</p>

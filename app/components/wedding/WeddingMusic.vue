@@ -1,9 +1,14 @@
 <script setup lang="ts">
-// Off by default; only a tap starts playback.
+// Starts when the guest opens the envelope (the page sends `wedding:open` from inside that tap, which browsers
+// require before playing sound); the button pauses and resumes. Without the envelope, only the button plays it.
 defineProps<{ src: string }>()
 const { t } = useI18n()
 const audio = ref<HTMLAudioElement>()
 const playing = ref(false)
+
+const autoplay = () => audio.value?.play().catch(() => {})
+onMounted(() => window.addEventListener('wedding:open', autoplay))
+onBeforeUnmount(() => window.removeEventListener('wedding:open', autoplay))
 
 async function toggle() {
   if (!audio.value) return

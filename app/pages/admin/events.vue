@@ -160,7 +160,8 @@ const L = useLocalized()
           </div>
           <div class="field">
             <label for="e-img">{{ t('admin.events.imageUrl') }}</label>
-            <input id="e-img" v-model="editing.data.imageUrl" type="url">
+            <!-- Not type="url": gallery photos have site paths ("/uploads/…"), which the browser would reject -->
+            <input id="e-img" v-model="editing.data.imageUrl">
           </div>
         </div>
       </form>

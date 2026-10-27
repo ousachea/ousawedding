@@ -38,6 +38,27 @@ async function save() {
   }
 }
 
+// Music is saved as soon as it is uploaded; the draft takes the new address, keeping other unsaved edits
+const uploadingMusic = ref(false)
+async function uploadMusic(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || !draft.value) return
+  uploadingMusic.value = true
+  try {
+    const form = new FormData()
+    form.append('music', file)
+    const updated = await api<Wedding>(`${base.value}/music`, { method: 'POST', body: form })
+    draft.value.musicUrl = updated.musicUrl
+    push(t('common.saved'))
+  } catch {
+    // the error toast is shown by api()
+  } finally {
+    uploadingMusic.value = false
+  }
+}
+
 const loc = (key: 'message' | 'story' | 'thanks' | 'apology') => computed<Localized>({
   get: () => ({ km: draft.value!.content.km[key], en: draft.value!.content.en[key] }),
   set: (v) => {
@@ -135,7 +156,14 @@ const previewSection = ref('home')
         </div>
         <div class="field">
           <label for="s-music">{{ t('admin.settings.music') }}</label>
-          <input id="s-music" v-model="draft.musicUrl" type="url">
+          <!-- Not type="url": uploaded music has a site path ("/uploads/…"), which the browser would reject; the server checks it -->
+          <input id="s-music" v-model="draft.musicUrl">
+          <label class="btn btn-ghost btn-sm music-upload" :class="{ busy: uploadingMusic }">
+            <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" class="visually-hidden" :disabled="uploadingMusic" @change="uploadMusic">
+            {{ uploadingMusic ? t('admin.settings.musicUploading') : `+ ${t('admin.settings.musicUpload')}` }}
+          </label>
+          <audio v-if="draft.musicUrl" :src="draft.musicUrl" controls preload="none" class="music-preview" />
+          <p class="hint">{{ t('admin.settings.musicHint') }}</p>
         </div>
       </section>
 
@@ -173,7 +201,7 @@ const previewSection = ref('home')
         <h2>{{ t('admin.settings.share') }}</h2>
         <AdminLocalizedField v-model="shareTitle" :label="t('admin.settings.shareTitle')" />
         <AdminLocalizedField v-model="shareDescription" :label="t('admin.settings.shareDescription')" multiline />
-        <AdminSharePreview :draft="draft" />
+        <AdminSharePreview :draft="draft" @share-image="draft.shareImage = $event" />
       </section>
 
       <div><button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button></div>
@@ -192,6 +220,10 @@ const previewSection = ref('home')
 
 <style scoped>
 .sections { display: flex; flex-direction: column; gap: var(--space-5); }
+.music-upload { align-self: flex-start; cursor: pointer; }
+.music-upload.busy { opacity: 0.7; cursor: progress; }
+.music-upload:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
+.music-preview { width: 100%; max-width: 24rem; }
 .panel h2 { font-size: 1.3rem; }
 .narrow { max-width: 14rem; }
 .text-block { position: relative; }

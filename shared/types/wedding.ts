@@ -48,6 +48,9 @@ export interface Wedding {
   musicUrl: string
   contact: { name: string, phone: string, email: string }
   share: Record<Locale, { title: string, description: string }>
+  // Link-preview image: `cover` cropped to 1200×630 around `position` (object-position). Used only while the
+  // cover photo is still `cover`; otherwise previews show the whole cover. Set by the share-image upload.
+  shareImage?: { url: string, cover: string, position: string }
   createdAt: string
   updatedAt: string
 }

@@ -62,7 +62,7 @@
       "thanks",
       "apology"
     ],
-    "musicUrl": "",
+    "musicUrl": "/uploads/weddings/rgbke4AtHLhcB8ro/music/q8r-mayBSfKMVE9C.mp3",
     "contact": {
       "name": "Ousa & Kanha",
       "phone": "+855 92 850 751",
@@ -79,7 +79,12 @@
       }
     },
     "createdAt": "2026-10-26T23:31:19.332Z",
-    "updatedAt": "2026-10-27T04:16:50.164Z",
-    "coverPosition": "50.7% 3.3%"
+    "updatedAt": "2026-10-27T14:47:33.060Z",
+    "coverPosition": "50.7% 3.3%",
+    "shareImage": {
+      "url": "/uploads/weddings/rgbke4AtHLhcB8ro/share/b2tpgZ_qEsY2IupV.jpg",
+      "cover": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/PCdsmlNN3kYPsBy3.webp",
+      "position": "53.1% 5%"
+    }
   }
 }

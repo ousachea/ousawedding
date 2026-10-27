@@ -243,6 +243,47 @@ describe('exports and isolation', () => {
     assert.ok(!existsSync(file))
   })
 
+  test('music upload checks the real file type and replaces the earlier upload', async () => {
+    const mp3 = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(64)])
+    const form = (data: Blob) => {
+      const f = new FormData()
+      f.append('music', data, 'song.mp3')
+      return f
+    }
+    const fake = await call(`${api}/music`, { method: 'POST', auth: true, raw: form(new Blob(['<script>'], { type: 'audio/mpeg' })) })
+    assert.equal(fake.status, 400)
+    const first = await call(`${api}/music`, { method: 'POST', auth: true, raw: form(new Blob([mp3], { type: 'audio/mpeg' })) })
+    assert.equal(first.status, 200)
+    assert.match(first.json.musicUrl, /^\/uploads\/.+\.mp3$/)
+    const firstFile = join(uploadsDir, first.json.musicUrl.slice('/uploads/'.length))
+    assert.ok(existsSync(firstFile))
+    const second = await call(`${api}/music`, { method: 'POST', auth: true, raw: form(new Blob([mp3], { type: 'audio/mpeg' })) })
+    assert.equal(second.status, 200)
+    assert.ok(!existsSync(firstFile))
+    assert.ok(existsSync(join(uploadsDir, second.json.musicUrl.slice('/uploads/'.length))))
+  })
+
+  test('share image must be a JPEG with a valid crop point, and replaces the earlier one', async () => {
+    const jpeg = Buffer.concat([Buffer.from('ffd8ffe0', 'hex'), Buffer.alloc(64)])
+    const form = (data: Blob, position = '50% 20%') => {
+      const f = new FormData()
+      f.append('image', data, 'share.jpg')
+      f.append('cover', '/uploads/cover.webp')
+      f.append('position', position)
+      return f
+    }
+    assert.equal((await call(`${api}/share-image`, { method: 'POST', auth: true, raw: form(new Blob(['<script>'])) })).status, 400)
+    assert.equal((await call(`${api}/share-image`, { method: 'POST', auth: true, raw: form(new Blob([jpeg]), 'top') })).status, 400)
+    const first = await call(`${api}/share-image`, { method: 'POST', auth: true, raw: form(new Blob([jpeg])) })
+    assert.equal(first.status, 200)
+    assert.deepEqual({ ...first.json.shareImage, url: undefined }, { url: undefined, cover: '/uploads/cover.webp', position: '50% 20%' })
+    const firstFile = join(uploadsDir, first.json.shareImage.url.slice('/uploads/'.length))
+    assert.ok(existsSync(firstFile))
+    const second = await call(`${api}/share-image`, { method: 'POST', auth: true, raw: form(new Blob([jpeg])) })
+    assert.equal(second.status, 200)
+    assert.ok(!existsSync(firstFile))
+  })
+
   test('sign out ends the session', async () => {
     await call('/api/auth/session', { method: 'DELETE', auth: true })
     const res = await call('/api/admin/weddings', { headers: { cookie: '' } })
