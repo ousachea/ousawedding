@@ -1,7 +1,6 @@
 <script setup lang="ts">
-// Greenery behind the whole page: leafy vines down both sides, in two depths that move at different speeds
-// as the page scrolls (parallax). Each vine is a repeating tile, moved up by the scroll times its depth and
-// wrapped by the tile's height, so it never runs out. The middle of the page stays clear for the text.
+// Greenery behind the whole page: leafy vines down both sides, in two depths, fixed to the screen.
+// Each vine is a repeating tile filling the screen's height. The middle of the page stays clear for the text.
 const TILE = { w: 110, h: 360 }
 
 // One tile of vine: a wavy stem with leaves on alternating sides. Fixed values, so server and client match.
@@ -19,39 +18,17 @@ const leaves = Array.from({ length: 12 }, (_, i) => {
 const leaf = (len: number) => `M0 0 C${len * 0.3} ${-len * 0.28} ${len * 0.75} ${-len * 0.24} ${len} 0 C${len * 0.75} ${len * 0.24} ${len * 0.3} ${len * 0.28} 0 0 Z`
 const SHADES = ['#6f8a66', '#8ba17f', '#56704f']
 
-// Far vines: small, faint, slow. Near vines: larger, stronger, faster.
+// Far vines: small and faint. Near vines: larger and stronger. They stay still behind the page.
 const layers = [
-  { id: 'far', depth: 0.12, scale: 0.8, opacity: 0.16, inset: '6%' },
-  { id: 'near', depth: 0.3, scale: 1.25, opacity: 0.24, inset: '-18px' },
+  { id: 'far', scale: 0.8, opacity: 0.16, inset: '6%' },
+  { id: 'near', scale: 1.25, opacity: 0.24, inset: '-18px' },
 ]
 const uid = useId()
-const els = ref<HTMLElement[]>([])
-
-let frame = 0
-function update() {
-  frame = 0
-  const y = window.scrollY
-  els.value.forEach((el, i) => {
-    const l = layers[i]!
-    const tile = TILE.h * l.scale
-    el.style.transform = `translate3d(0, ${-((y * l.depth) % tile)}px, 0)`
-  })
-}
-const onScroll = () => (frame ||= requestAnimationFrame(update))
-onMounted(() => {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  addEventListener('scroll', onScroll, { passive: true })
-  update()
-})
-onBeforeUnmount(() => {
-  removeEventListener('scroll', onScroll)
-  cancelAnimationFrame(frame)
-})
 </script>
 
 <template>
   <div class="greenery" aria-hidden="true">
-    <div v-for="l in layers" :key="l.id" ref="els" class="layer" :style="{ '--tile': `${TILE.h * l.scale}px`, opacity: l.opacity }">
+    <div v-for="l in layers" :key="l.id" class="layer" :style="{ opacity: l.opacity }">
       <svg v-for="side in ['left', 'right']" :key="side" class="vine" :class="side" :style="{ [side]: l.inset, width: `${TILE.w * l.scale}px` }">
         <defs>
           <pattern :id="`${uid}-${l.id}-${side}`" :width="TILE.w" :height="TILE.h" patternUnits="userSpaceOnUse" :patternTransform="`scale(${l.scale})`">
@@ -74,8 +51,7 @@ onBeforeUnmount(() => {
 <style scoped>
 /* Behind the content but above the page's paper background (the page is its own stacking context) */
 .greenery { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-/* One tile taller than the screen, so moving it up by up to one tile never shows a gap */
-.layer { position: absolute; inset: 0 0 auto; height: calc(100% + var(--tile)); will-change: transform; }
+.layer { position: absolute; inset: 0; }
 .vine { position: absolute; top: 0; height: 100%; }
 .vine.right { scale: -1 1; }
 </style>
