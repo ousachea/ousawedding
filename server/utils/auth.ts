@@ -18,9 +18,22 @@ export async function endSession(event: H3Event) {
   await (await localSession(event)).clear()
 }
 
+// Visits from this computer itself (http://localhost) need no password. The dev server is also
+// reachable from the network, so other devices still sign in. Requests reach this worker through
+// Nuxt's dev proxy; the `listen` hook in nuxt.config.ts sets x-forwarded-for to the real visitor.
+// The Host check stops a web page from reaching the admin by pointing its own domain at 127.0.0.1.
+function isThisComputer(event: H3Event) {
+  const ip = getRequestHeader(event, 'x-forwarded-for') ?? ''
+  const host = (getRequestHeader(event, 'host') ?? '').replace(/:\d+$/, '')
+  return import.meta.dev
+    && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(ip)
+    && ['localhost', '127.0.0.1', '[::1]'].includes(host)
+}
+
 /** Returns the signed-in admin, or null. */
 export async function getAdmin(event: H3Event): Promise<Admin | null> {
   if (event.context.admin !== undefined) return event.context.admin
+  if (isThisComputer(event)) return (event.context.admin = LOCAL_ADMIN)
   const session = await localSession(event)
   event.context.admin = session.data.uid === LOCAL_ADMIN.id ? LOCAL_ADMIN : null
   return event.context.admin

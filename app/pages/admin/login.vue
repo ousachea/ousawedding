@@ -22,6 +22,11 @@ async function submit() {
   }
 }
 
+// On this computer no password is needed, so go straight to the dashboard
+onMounted(async () => {
+  if (await useAdminSession().load()) await navigateTo(localePath('/admin'))
+})
+
 useHead({ title: () => `${t('admin.login.title')} · ${t('admin.title')}`, meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 </script>
 

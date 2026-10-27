@@ -60,6 +60,13 @@ export default defineNuxtConfig({
   // The published site is static: every invitation page is built ahead of time from content/.
   // The admin and its API exist only when you run `npm run dev` on your computer.
   hooks: {
+    // The admin trusts x-forwarded-for to tell visits from this computer apart (server/utils/auth.ts).
+    // Set it from the real connection so another device cannot claim to be localhost.
+    listen(server) {
+      server.prependListener('request', (req) => {
+        req.headers['x-forwarded-for'] = req.socket.remoteAddress ?? ''
+      })
+    },
     'pages:extend'(pages) {
       if (process.env.NODE_ENV !== 'production') return
       for (let i = pages.length - 1; i >= 0; i--) if (pages[i]!.path.startsWith('/admin')) pages.splice(i, 1)
