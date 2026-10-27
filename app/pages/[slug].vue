@@ -42,9 +42,10 @@ onMounted(() => {
     frame ||= requestAnimationFrame(step)
   }
   const start = () => addEventListener('deviceorientation', onTilt)
-  const ask = (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission
-  const askOnTap = () => ask!().then(s => s === 'granted' && start()).catch(() => {})
-  if (ask) addEventListener('click', askOnTap, { once: true })
+  // Called on DeviceOrientationEvent itself: Safari rejects a detached call ("Illegal invocation")
+  const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
+  const askOnTap = () => DOE.requestPermission!().then(s => s === 'granted' && start()).catch(() => {})
+  if (typeof DOE.requestPermission === 'function') addEventListener('click', askOnTap, { once: true })
   else start()
   stopTilt = () => {
     removeEventListener('deviceorientation', onTilt)

@@ -12,15 +12,41 @@ useHead({ noscript: [{ innerHTML: '<style>.envelope-overlay{display:none!importa
 const state = ref<'closed' | 'opening' | 'gone'>('closed')
 const sealButton = ref<HTMLButtonElement>()
 
+// Stop the page behind from scrolling. iOS Safari ignores overflow: hidden on the page, so the body is
+// pinned in place instead (at the current scroll position), and put back when the envelope goes.
+let scrollY = 0
+function lockScroll() {
+  scrollY = window.scrollY
+  document.documentElement.style.overflow = 'hidden'
+  Object.assign(document.body.style, { position: 'fixed', top: `-${scrollY}px`, left: '0', right: '0', overflow: 'hidden' })
+}
+function unlockScroll() {
+  document.documentElement.style.removeProperty('overflow')
+  for (const p of ['position', 'top', 'left', 'right', 'overflow']) document.body.style.removeProperty(p)
+  window.scrollTo(0, scrollY)
+}
+
 function finish() {
   if (state.value === 'closed') emit('revealing', 0)
+  if (state.value !== 'gone') unlockScroll()
   state.value = 'gone'
-  document.documentElement.style.removeProperty('overflow')
   emit('opened')
+}
+
+// Opening the invitation (or skipping) also goes fullscreen where the browser allows it: Android and iPad.
+// iPhone Safari has no fullscreen for pages, so there it quietly does nothing. Must run in the tap itself.
+function fullscreen() {
+  const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void }
+  if (document.fullscreenElement) return
+  try {
+    if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {})
+    else el.webkitRequestFullscreen?.()
+  } catch {}
 }
 
 function open() {
   if (state.value !== 'closed') return
+  fullscreen()
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
   state.value = 'opening'
   // The letter rises by 1.15s and stays up long enough to read its line, then the envelope fades
@@ -29,14 +55,15 @@ function open() {
 }
 
 function skip() {
+  fullscreen()
   finish()
 }
 
 onMounted(() => {
-  document.documentElement.style.overflow = 'hidden'
+  lockScroll()
   sealButton.value?.focus({ preventScroll: true })
 })
-onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
+onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
 </script>
 
 <template>
@@ -90,6 +117,8 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   /* `safe` + scroll: on very short screens start at the top instead of clipping it */
   place-items: safe center;
   overflow-y: auto;
+  /* Scrolling inside the envelope screen (very short screens) never carries on to the page behind */
+  overscroll-behavior: contain;
   padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 60%),
