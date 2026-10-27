@@ -18,7 +18,7 @@
       }
     },
     "monogram": "O & K",
-    "date": "2027-01-31T07:00",
+    "date": "2027-01-01T07:00",
     "timezone": "Asia/Phnom_Penh",
     "content": {
       "km": {
@@ -51,7 +51,7 @@
     },
     "defaultLocale": "km",
     "rsvp": {
-      "deadline": "2027-01-25T23:59",
+      "deadline": "2026-12-26T23:59",
       "formUrl": ""
     },
     "privacy": {
@@ -79,7 +79,7 @@
       }
     },
     "createdAt": "2026-10-26T23:31:19.332Z",
-    "updatedAt": "2026-10-27T02:26:02.598Z",
+    "updatedAt": "2026-10-27T02:57:57.566Z",
     "coverPosition": "50.7% 3.3%"
   }
 }
