@@ -18,6 +18,14 @@ const dateParts = computed(() => {
 })
 
 const step = (i: number) => ({ '--i': i })
+
+// Specks of warm light drifting up through the hero: left %, top %, size px, duration s, delay s.
+// Fixed numbers so server and browser render the same markup.
+const motes = [
+  [8, 62, 5, 9, 0], [16, 30, 3, 11, 4], [24, 78, 4, 10, 2], [33, 44, 6, 13, 7], [41, 20, 3, 9, 5],
+  [52, 70, 5, 12, 1], [60, 36, 4, 10, 8], [68, 84, 3, 11, 3], [76, 52, 6, 14, 6], [84, 24, 4, 9, 2],
+  [91, 66, 5, 12, 9], [47, 52, 3, 10, 11],
+].map(([left, top, size, dur, delay]) => ({ left: `${left}%`, top: `${top}%`, width: `${size}px`, height: `${size}px`, animationDuration: `${dur}s`, animationDelay: `${-delay!}s` }))
 </script>
 
 <template>
@@ -27,6 +35,9 @@ const step = (i: number) => ({ '--i': i })
     :class="{ intro: introDelay !== null }"
     :style="{ '--intro-delay': `${introDelay ?? 0}ms` }"
   >
+    <div class="motes" aria-hidden="true">
+      <span v-for="(m, i) in motes" :key="i" class="mote" :style="m" />
+    </div>
     <template v-if="floral">
       <WeddingFlorals class="corner corner-l" />
       <WeddingFlorals class="corner corner-r" :seed="1" flip />
@@ -162,6 +173,50 @@ const step = (i: number) => ({ '--i': i })
   animation-delay: calc(var(--intro-delay) + var(--i) * 90ms + 150ms);
 }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+
+/* Gold-foil names: a gold gradient clipped to the letters. The gradient is wider than the name, with a light
+   streak in its middle that sits outside the name at rest; moving the gradient sweeps the streak across. */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .name {
+    padding-inline: 0.12em; /* the script's swashes stay inside the painted area */
+    background: linear-gradient(105deg, var(--c-gold-deep) 0 40%, var(--c-gold) 46%, var(--c-gold-light) 50%, var(--c-gold) 54%, var(--c-gold-deep) 60% 100%) 100% 0 / 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+/* Soft warm light behind the names */
+.names { position: relative; }
+.names::before {
+  content: ''; position: absolute; inset: -35% -25%; z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c-gold-light) 70%, transparent), color-mix(in srgb, var(--c-gold-light) 25%, transparent) 55%, transparent);
+}
+.motes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mote {
+  position: absolute; border-radius: 50%; opacity: 0.55;
+  background: radial-gradient(circle, #fff 0 25%, var(--c-gold-light) 45%, transparent 70%);
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--c-gold-light) 60%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .name { animation: shine 9s ease-in-out 2.5s infinite; }
+  /* As the envelope opens, each name is written in from left to right, then catches the light */
+  .intro .name.step {
+    animation: write 1.5s cubic-bezier(0.45, 0, 0.25, 1) both, shine 9s ease-in-out infinite;
+    animation-delay: calc(var(--intro-delay) + var(--i) * 160ms), calc(var(--intro-delay) + 2.2s);
+  }
+  .names::before { animation: glow 7s ease-in-out infinite alternate; }
+  .mote { animation: float linear infinite; }
+}
+@keyframes write { from { clip-path: inset(-30% 100% -30% -10%); } to { clip-path: inset(-30% -10% -30% -10%); } }
+@keyframes shine { 0% { background-position: 100% 0; } 25%, 100% { background-position: 0 0; } }
+@keyframes glow { from { opacity: 0.7; scale: 0.95; } to { opacity: 1; scale: 1.05; } }
+@keyframes float {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  20% { opacity: 0.7; }
+  50% { transform: translate3d(10px, -60px, 0); opacity: 0.35; }
+  80% { opacity: 0.75; }
+  100% { transform: translate3d(-6px, -120px, 0); opacity: 0; }
+}
 @keyframes settle { from { opacity: 0; transform: scale(0.96); } }
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 

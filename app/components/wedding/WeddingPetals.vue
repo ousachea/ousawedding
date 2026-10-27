@@ -4,14 +4,10 @@
 // Fixed positions so server and client render the same markup.
 const petals = [
   { left: 4, delay: 0, dur: 17, size: 14 },
-  { left: 14, delay: 8, dur: 22, size: 10 },
   { left: 23, delay: 4, dur: 19, size: 12 },
-  { left: 34, delay: 12, dur: 24, size: 9 },
   { left: 45, delay: 2, dur: 18, size: 13 },
   { left: 56, delay: 10, dur: 21, size: 10 },
-  { left: 66, delay: 6, dur: 23, size: 12 },
   { left: 77, delay: 14, dur: 20, size: 9 },
-  { left: 86, delay: 1, dur: 22, size: 11 },
   { left: 95, delay: 9, dur: 19, size: 10 },
 ]
 </script>

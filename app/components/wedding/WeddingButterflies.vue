@@ -105,7 +105,7 @@ function release() {
 
 onMounted(async () => {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('animate' in Element.prototype)) return
-  const count = innerWidth >= 760 ? 8 : 5
+  const count = innerWidth >= 760 ? 5 : 3
   flock.value = Array.from({ length: count }, (_, id) => ({
     id,
     size: Math.round(rand(18, 30)),

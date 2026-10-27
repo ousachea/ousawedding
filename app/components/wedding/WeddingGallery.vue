@@ -23,13 +23,22 @@ function onKey(e: KeyboardEvent) {
   else if (e.key === 'ArrowLeft') go(-1)
 }
 
-let touchX: number | null = null
-const onTouchStart = (e: TouchEvent) => (touchX = e.touches[0]!.clientX)
-function onTouchEnd(e: TouchEvent) {
-  if (touchX === null) return
-  const dx = e.changedTouches[0]!.clientX - touchX
-  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1)
-  touchX = null
+// Viewer swipe: the photo follows the finger (or mouse) and, past 50px, gives way to the next one;
+// otherwise it slides back
+const viewDrag = ref(0)
+let viewX: number | null = null
+function onViewStart(e: PointerEvent) {
+  viewX = e.clientX
+  ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+}
+function onViewMove(e: PointerEvent) {
+  if (viewX !== null && props.images.length > 1) viewDrag.value = e.clientX - viewX
+}
+function onViewEnd() {
+  if (viewX === null) return
+  if (Math.abs(viewDrag.value) > 50) go(viewDrag.value < 0 ? 1 : -1)
+  viewX = null
+  viewDrag.value = 0
 }
 
 // Carousel: a stack of up to five. The current photo sits in the middle; two either side sit smaller and
@@ -172,9 +181,12 @@ onBeforeUnmount(() => {
     </div>
 
     <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @click.self="dialog?.close()">
-      <div v-if="current" class="viewer-inner" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
+      <div
+        v-if="current" class="viewer-inner" :class="{ dragging: viewDrag !== 0 }"
+        @pointerdown="onViewStart" @pointermove="onViewMove" @pointerup="onViewEnd" @pointercancel="onViewEnd" @dragstart.prevent
+      >
         <Transition name="photo" mode="out-in">
-          <img :key="current.id" :src="current.url" :alt="altFor(current, index)" :width="current.width" :height="current.height" loading="lazy" decoding="async">
+          <img :key="current.id" :style="{ translate: `${viewDrag}px 0` }" :src="current.url" :alt="altFor(current, index)" :width="current.width" :height="current.height" loading="lazy" decoding="async">
         </Transition>
         <p class="viewer-caption">
           <span class="tabular">{{ t('gallery.counter', { n: index + 1, total: images.length }) }}</span>
@@ -191,7 +203,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.gallery { padding-block: var(--space-8); background: var(--c-surface); border-block: 1px solid var(--c-line-soft); }
+.gallery { position: relative; padding-block: var(--space-8); }
+/* The band's paper has softly torn top and bottom edges. Drawn on a layer behind the content (masking the
+   section itself would clip the photos). */
+.gallery::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: var(--c-surface);
+  mask: var(--torn-top) top / 100% 18px no-repeat, linear-gradient(#000 0 0) center / 100% calc(100% - 34px) no-repeat, var(--torn-bottom) bottom / 100% 18px no-repeat;
+}
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
 .carousel { margin-top: var(--space-5); overflow: hidden; }
 /* All photos share one grid cell, so the stage is as tall as the tallest; place() then moves each one.
@@ -256,8 +274,7 @@ onBeforeUnmount(() => {
 }
 .style-floral .slide:not(.current) .thumb { rotate: calc(var(--d) * 2deg); }
 .style-floral .slide.current .thumb { rotate: 0deg; }
-.style-floral .pic { border-radius: 0; }
-.thumb img { width: 100%; max-height: 62svh; object-fit: cover; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
+.style-floral .pic { border-radius: 0; }.thumb img { width: 100%; max-height: 62svh; object-fit: cover; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
 @media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
 .slide:not(.current) .thumb { cursor: pointer; }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }
@@ -272,8 +289,11 @@ onBeforeUnmount(() => {
 .viewer[open] { display: grid; place-items: center; animation: fade 0.2s var(--ease-out); }
 @keyframes fade { from { opacity: 0; } }
 .viewer-inner { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 3.5rem 1rem 2rem; max-width: 100%; }
+.viewer-inner { touch-action: pan-y; user-select: none; }
+.viewer-inner img { transition: translate 0.25s var(--ease-out); }
+.viewer-inner.dragging img { transition: none; }
 .viewer-inner img { max-height: 78dvh; width: auto; max-width: min(100%, 1200px); object-fit: contain; border-radius: var(--radius-sm); }
-.photo-enter-active, .photo-leave-active { transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out); }
+.viewer-inner .photo-enter-active, .viewer-inner .photo-leave-active { transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out); }
 .photo-enter-from { opacity: 0; transform: scale(0.98); }
 .photo-leave-to { opacity: 0; }
 .viewer-caption { font-size: 0.9rem; opacity: 0.85; text-align: center; }

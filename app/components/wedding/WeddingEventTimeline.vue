@@ -82,6 +82,10 @@ function remaining(e: Item) {
         </h3>
         <ol class="timeline">
           <li v-for="({ e, n }, i) in day.items" :key="e.id" :ref="observe" v-reveal class="item" :class="{ active: active.has(e.id) }" :data-id="e.id" :style="{ '--row': i + 1 }">
+            <!-- Floral style: a flower opens behind the number as the vine reaches it -->
+            <svg v-if="w.theme.style === 'floral'" class="bloom" viewBox="-24 -24 48 48" aria-hidden="true">
+              <ellipse v-for="a in [0, 72, 144, 216, 288]" :key="a" cx="0" cy="-14" rx="7.5" ry="10" :transform="`rotate(${a})`" />
+            </svg>
             <span class="dot" aria-hidden="true">{{ num(n + 1) }}</span>
             <article class="card">
               <img v-if="e.imageUrl" :src="e.imageUrl" alt="" class="card-img" loading="lazy" decoding="async" width="640" height="360">
@@ -215,6 +219,25 @@ function remaining(e: Item) {
 .style-floral .item { padding: 0 0 var(--space-6) 2.75rem; }
 .style-floral .item:last-child { padding-bottom: var(--space-2); }
 .style-floral .dot { left: 0; top: 0; background: var(--c-bg); border-color: var(--c-text); color: var(--c-text); }
+/* The line becomes a vine: pairs of leaves along it, unveiled from the top as the line grows. The flower
+   behind each number (drawn before it, so it sits underneath) opens as the vine reaches it. */
+.style-floral .timeline::after {
+  content: ''; position: absolute; left: 1.5px; top: 8px; bottom: 8px; width: 24px; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='46'%3E%3Cg fill='%238fa886' opacity='.85'%3E%3Cpath d='M12 16C8 16 3 13 2 7C7 7 11 10 12 16Z'/%3E%3Cpath d='M12 39C16 39 21 36 22 30C17 30 13 33 12 39Z'/%3E%3C/g%3E%3C/svg%3E") repeat-y;
+}
+.bloom { display: none; }
+.style-floral .bloom {
+  display: block; position: absolute; left: -10.5px; top: -10.5px; width: 48px; height: 48px;
+  fill: color-mix(in srgb, var(--c-accent) 45%, #fff); stroke: var(--c-accent); stroke-width: 0.8;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .style-floral .timeline::after { animation: unveil linear both; animation-timeline: view(block 50% 50%); }
+    .style-floral .bloom { animation: open linear both; animation-timeline: view(block 50% 50%); }
+  }
+}
+@keyframes unveil { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes open { 0%, 40% { scale: 0; rotate: -70deg; } 70%, 100% { scale: 1; rotate: 0deg; } }
 .style-floral .card { background: none; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
 .style-floral .card-body { padding: 0; gap: var(--space-2); }
 .style-floral .day-title { margin-bottom: var(--space-5); padding-bottom: var(--space-2); border-bottom: 1px solid var(--c-line-soft); }
@@ -230,6 +253,9 @@ function remaining(e: Item) {
 
 @media (min-width: 700px) {
   .style-floral .timeline::before { left: 50%; }
+  .style-floral .timeline::after { left: calc(50% - 12px); }
+  .style-floral .bloom { left: -24.5px; }
+  .style-floral .item:nth-child(even) .bloom { left: auto; right: -24.5px; }
   /* Two columns; each item spans two rows starting one row after the previous, so left and right interleave */
   .style-floral .timeline { display: grid; grid-template-columns: 1fr 1fr; column-gap: 0; }
   .style-floral .item { grid-column: 2; grid-row: var(--row) / span 2; padding: 0 0 var(--space-7) 2.75rem; }
