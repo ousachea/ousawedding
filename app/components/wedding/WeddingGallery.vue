@@ -47,41 +47,65 @@ function offset(i: number) {
 const step = (by: number) => (at.value = (((at.value + by) % count.value) + count.value) % count.value)
 // Each photo's place, set as the final transform rather than computed in CSS from a variable: Safari
 // can skip the transition when only a custom property changes. Photos further round wait hidden behind.
+// Value at x places from the middle, blending between whole places so photos follow a drag smoothly
+function curve(vals: number[], x: number) {
+  const i = Math.min(Math.floor(x), vals.length - 2)
+  return vals[i]! + (vals[i + 1]! - vals[i]!) * Math.min(x - i, 1)
+}
 function place(i: number) {
-  const d = offset(i)
-  const far = Math.abs(d) > 2
-  // Shift (as a share of the photo's width) and size for 0, 1 and 2 places from the middle
-  const shift = [0, 32, 59][Math.abs(d)] ?? 0
-  const size = [1, 0.82, 0.66][Math.abs(d)] ?? 0.5
+  // While dragging, each photo sits part-way between places
+  const d = offset(i) + drag.value
+  const a = Math.abs(d)
+  const far = a > 3
+  // Shift (as a share of the photo's width), size and opacity for 0, 1, 2 and 3 places from the middle
   return {
     '--d': d,
-    'transform': far ? 'translate3d(0, 0, 0) scale(0.5)' : `translate3d(${Math.sign(d) * shift}%, 0, 0) scale(${size})`,
-    'zIndex': 10 - Math.min(Math.abs(d), 3),
-    'opacity': far ? 0 : [1, 0.9, 0.75][Math.abs(d)],
+    'transform': far ? 'translate3d(0, 0, 0) scale(0.5)' : `translate3d(${Math.sign(d) * curve([0, 32, 59, 70], a)}%, 0, 0) scale(${curve([1, 0.82, 0.66, 0.5], a)})`,
+    'zIndex': 10 - Math.min(Math.round(a), 3),
+    'opacity': far ? 0 : curve([1, 0.9, 0.75, 0], a),
   }
 }
 
 // Tap the middle photo to open it; tap a side photo to bring it to the middle
 function tap(i: number) {
   hold()
+  if (dragged) return
   if (offset(i) === 0) open(i)
   else step(offset(i))
 }
 
-// Swipe sideways to move along; up and down still scrolls the page
+// Swipe or drag sideways (finger or mouse): the photos follow the pointer, the next one sliding into the
+// middle, then settle on release. Up and down still scrolls the page (touch-action: pan-y).
+// drag: how many places the photos have been pulled (negative = towards the next photo)
+const drag = ref(0)
 let swipeX: number | null = null
 let swipeY = 0
-function onSwipeStart(e: TouchEvent) {
+let placeWidth = 1
+let dragged = false
+function onSwipeStart(e: PointerEvent) {
   hold()
-  swipeX = e.touches[0]!.clientX
-  swipeY = e.touches[0]!.clientY
+  swipeX = e.clientX
+  swipeY = e.clientY
+  // Dragging 40% of a photo's width pulls the photos one place (the side photo sits about a third over)
+  placeWidth = ((stage.value?.querySelector('.slide') as HTMLElement | null)?.offsetWidth ?? 300) * 0.4
+  dragged = false
 }
-function onSwipeEnd(e: TouchEvent) {
+function onSwipeMove(e: PointerEvent) {
   if (swipeX === null) return
-  const dx = e.changedTouches[0]!.clientX - swipeX
-  const dy = e.changedTouches[0]!.clientY - swipeY
-  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1)
+  const dx = e.clientX - swipeX
+  if (!dragged && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(e.clientY - swipeY)) {
+    dragged = true
+    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+  }
+  if (dragged) drag.value = Math.max(-2, Math.min(2, dx / placeWidth))
+}
+function onSwipeEnd() {
+  if (swipeX === null) return
+  // Past a third of a place, move on: by one, or two for a long drag
+  const p = drag.value
+  if (dragged && Math.abs(p) > 0.3) step(-Math.sign(p) * Math.max(1, Math.round(Math.abs(p))))
   swipeX = null
+  drag.value = 0
 }
 
 // Autoplay: one photo every few seconds while the gallery is on screen. Touching it pauses for a few seconds.
@@ -116,7 +140,10 @@ onBeforeUnmount(() => {
     </div>
     <!-- Full width, outside the container, with room for the photos either side -->
     <div v-reveal="150" class="carousel" @mouseenter="hold" @focusin="hold">
-      <ul ref="stage" class="stage" :aria-label="t('gallery.title')" @touchstart.passive="onSwipeStart" @touchend="onSwipeEnd">
+      <ul
+        ref="stage" class="stage" :class="{ dragging: drag !== 0 }" :aria-label="t('gallery.title')"
+        @pointerdown="onSwipeStart" @pointermove="onSwipeMove" @pointerup="onSwipeEnd" @pointercancel="onSwipeEnd" @dragstart.prevent
+      >
         <li
           v-for="(img, i) in images"
           :key="img.id"
@@ -178,7 +205,11 @@ onBeforeUnmount(() => {
   padding: var(--space-5) 0 var(--space-6);
   list-style: none;
   touch-action: pan-y;
+  user-select: none;
 }
+/* While dragging, photos track the pointer directly; on release they animate to their places */
+.stage.dragging { cursor: grabbing; }
+.stage.dragging .slide, .stage.dragging .thumb { transition: none; }
 /* Sized by the screen's height too, so a whole portrait photo (2:3) and its frame fit on screen.
    Position, size, order and opacity come from place(). Only transform and opacity animate (smooth on
    iPhone); the stacking order switches a third of the way through, so the photo coming to the middle
