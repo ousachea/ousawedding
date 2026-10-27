@@ -42,5 +42,93 @@
     "visible": true,
     "createdAt": "2026-10-27T02:26:41.025Z",
     "updatedAt": "2026-10-27T02:26:41.025Z"
+  },
+  "deu4bz1L5RDsS5bY": {
+    "id": "deu4bz1L5RDsS5bY",
+    "weddingId": "rgbke4AtHLhcB8ro",
+    "storagePath": "weddings/rgbke4AtHLhcB8ro/gallery/deu4bz1L5RDsS5bY.webp",
+    "thumbPath": "weddings/rgbke4AtHLhcB8ro/gallery/deu4bz1L5RDsS5bY_thumb.webp",
+    "url": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/deu4bz1L5RDsS5bY.webp",
+    "thumbUrl": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/deu4bz1L5RDsS5bY_thumb.webp",
+    "width": 1334,
+    "height": 2000,
+    "caption": {
+      "km": "",
+      "en": ""
+    },
+    "alt": {
+      "km": "",
+      "en": ""
+    },
+    "order": 2,
+    "visible": true,
+    "createdAt": "2026-10-27T07:05:29.383Z",
+    "updatedAt": "2026-10-27T07:05:29.383Z"
+  },
+  "6nx9ytKLx8FSl7LD": {
+    "id": "6nx9ytKLx8FSl7LD",
+    "weddingId": "rgbke4AtHLhcB8ro",
+    "storagePath": "weddings/rgbke4AtHLhcB8ro/gallery/6nx9ytKLx8FSl7LD.webp",
+    "thumbPath": "weddings/rgbke4AtHLhcB8ro/gallery/6nx9ytKLx8FSl7LD_thumb.webp",
+    "url": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/6nx9ytKLx8FSl7LD.webp",
+    "thumbUrl": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/6nx9ytKLx8FSl7LD_thumb.webp",
+    "width": 1334,
+    "height": 2000,
+    "caption": {
+      "km": "",
+      "en": ""
+    },
+    "alt": {
+      "km": "",
+      "en": ""
+    },
+    "order": 3,
+    "visible": true,
+    "createdAt": "2026-10-27T07:05:29.742Z",
+    "updatedAt": "2026-10-27T07:05:29.742Z"
+  },
+  "BcpD84h65RSzB4kz": {
+    "id": "BcpD84h65RSzB4kz",
+    "weddingId": "rgbke4AtHLhcB8ro",
+    "storagePath": "weddings/rgbke4AtHLhcB8ro/gallery/BcpD84h65RSzB4kz.webp",
+    "thumbPath": "weddings/rgbke4AtHLhcB8ro/gallery/BcpD84h65RSzB4kz_thumb.webp",
+    "url": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/BcpD84h65RSzB4kz.webp",
+    "thumbUrl": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/BcpD84h65RSzB4kz_thumb.webp",
+    "width": 1334,
+    "height": 2000,
+    "caption": {
+      "km": "",
+      "en": ""
+    },
+    "alt": {
+      "km": "",
+      "en": ""
+    },
+    "order": 4,
+    "visible": true,
+    "createdAt": "2026-10-27T07:05:33.261Z",
+    "updatedAt": "2026-10-27T07:05:33.261Z"
+  },
+  "2PL0Y8W8Gy36PRIs": {
+    "id": "2PL0Y8W8Gy36PRIs",
+    "weddingId": "rgbke4AtHLhcB8ro",
+    "storagePath": "weddings/rgbke4AtHLhcB8ro/gallery/2PL0Y8W8Gy36PRIs.webp",
+    "thumbPath": "weddings/rgbke4AtHLhcB8ro/gallery/2PL0Y8W8Gy36PRIs_thumb.webp",
+    "url": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/2PL0Y8W8Gy36PRIs.webp",
+    "thumbUrl": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/2PL0Y8W8Gy36PRIs_thumb.webp",
+    "width": 1334,
+    "height": 2000,
+    "caption": {
+      "km": "",
+      "en": ""
+    },
+    "alt": {
+      "km": "",
+      "en": ""
+    },
+    "order": 5,
+    "visible": true,
+    "createdAt": "2026-10-27T07:05:33.594Z",
+    "updatedAt": "2026-10-27T07:05:33.594Z"
   }
 }
