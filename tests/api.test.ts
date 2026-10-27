@@ -34,6 +34,8 @@ before(async () => {
       ...process.env, PORT: String(PORT), HOST: '127.0.0.1',
       NUXT_CONTENT_DIR: contentDir, NUXT_LOCAL_DATA_DIR: privateDir, NUXT_UPLOADS_DIR: uploadsDir,
       NUXT_LOCAL_ADMIN_PASSWORD: PASSWORD, NUXT_SESSION_SECRET: 'test-session-secret-0123456789abcdef',
+      // The sample wedding is seeded at this address, whatever the real site's default is
+      NUXT_PUBLIC_DEFAULT_WEDDING_SLUG: 'our-wedding',
     },
     stdio: ['ignore', 'ignore', 'inherit'],
   })
