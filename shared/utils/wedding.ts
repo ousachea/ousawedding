@@ -9,3 +9,23 @@ export function inviteLink(wedding: { slug: string }, guestName: string, siteUrl
   const prefix = locale === 'en' ? '/en' : ''
   return `${siteUrl.replace(/\/$/, '')}${prefix}/${wedding.slug}?to=${encodeURIComponent(guestName)}`
 }
+
+/**
+ * What a shared link shows: the page title (browser tab, Google), the title chat apps show, and the description.
+ * The couple's own text comes first; the date and time are always added. Used by the invitation and the admin preview.
+ */
+export function shareMeta(
+  wedding: { names: Record<'km' | 'en', { partner1: string, partner2: string }>, share: Record<'km' | 'en', { title: string, description: string }> },
+  when: { date: string, time: string },
+  locale: 'km' | 'en',
+  invite: string,
+) {
+  const share = wedding.share[locale]
+  const names = `${wedding.names[locale].partner1} & ${wedding.names[locale].partner2}`
+  return {
+    names,
+    title: share.title || `${names} | ${invite}`,
+    cardTitle: share.title || names,
+    description: [share.description || invite, `${when.date} · ${when.time}`].join(' · '),
+  }
+}

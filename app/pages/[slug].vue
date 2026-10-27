@@ -122,15 +122,13 @@ const sections = computed(() => [
 // Share previews and search settings. Uses only public wedding fields, never guest data.
 const siteUrl = useRuntimeConfig().public.siteUrl || useRequestURL().origin
 const abs = (u: string) => (!u ? undefined : u.startsWith('http') ? u : `${siteUrl}${u}`)
-const share = computed(() => w.value.share[loc.value])
-const names = computed(() => `${w.value.names[loc.value].partner1} & ${w.value.names[loc.value].partner2}`)
+const meta = computed(() => shareMeta(w.value, data.value!.display[loc.value], loc.value, t('hero.invite')))
+const names = computed(() => meta.value.names)
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
 const pageUrl = computed(() => `${siteUrl}${localePath(`/${w.value.slug}`)}`)
-const title = computed(() => share.value.title || `${names.value} | ${t('hero.invite')}`)
-// The date and time always appear in the preview, after the couple's own text
-const when = computed(() => `${data.value!.display[loc.value].date} · ${data.value!.display[loc.value].time}`)
-const description = computed(() => [share.value.description || t('hero.invite'), when.value].join(' · '))
+const title = computed(() => meta.value.title)
+const description = computed(() => meta.value.description)
 // Size of the cover photo, when it is one of the gallery photos, so apps can lay out the preview before loading it
 const cover = computed(() => data.value!.gallery.find(g => g.url === w.value.coverImage))
 const coverType = computed(() => ({ webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', svg: 'image/svg+xml' } as Record<string, string>)[w.value.coverImage.split('.').pop()!.toLowerCase()])
@@ -172,7 +170,7 @@ useHead(() => ({
 useSeoMeta({
   title: () => title.value,
   description: () => description.value,
-  ogTitle: () => share.value.title || names.value,
+  ogTitle: () => meta.value.cardTitle,
   ogDescription: () => description.value,
   ogType: 'website',
   ogUrl: () => pageUrl.value,
@@ -185,7 +183,7 @@ useSeoMeta({
   ogLocale: () => (loc.value === 'km' ? 'km_KH' : 'en_US'),
   ogLocaleAlternate: () => (loc.value === 'km' ? 'en_US' : 'km_KH'),
   twitterCard: 'summary_large_image',
-  twitterTitle: () => share.value.title || names.value,
+  twitterTitle: () => meta.value.cardTitle,
   twitterDescription: () => description.value,
   twitterImage: () => abs(w.value.coverImage),
   robots: () => (w.value.privacy.allowIndexing ? 'index, follow' : 'noindex, nofollow'),

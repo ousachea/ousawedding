@@ -173,6 +173,7 @@ const previewSection = ref('home')
         <h2>{{ t('admin.settings.share') }}</h2>
         <AdminLocalizedField v-model="shareTitle" :label="t('admin.settings.shareTitle')" />
         <AdminLocalizedField v-model="shareDescription" :label="t('admin.settings.shareDescription')" multiline />
+        <AdminSharePreview :draft="draft" />
       </section>
 
       <div><button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button></div>
