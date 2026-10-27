@@ -30,7 +30,7 @@ export default defineNuxtConfig({
     public: {
       // The live address, used in personal invitation links, QR codes and share previews
       siteUrl: '',
-      defaultWeddingSlug: 'our-wedding',
+      defaultWeddingSlug: 'ousa-kanha',
       version: process.env.npm_package_version ?? '',
       commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.COMMIT_REF ?? '').slice(0, 7),
     },
