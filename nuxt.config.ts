@@ -29,8 +29,10 @@ export default defineNuxtConfig({
     sessionSecret: '',
     public: {
       // The live address, used in personal invitation links, QR codes and share previews.
-      // Set here so builds on Vercel / Netlify never fall back to http://localhost; NUXT_PUBLIC_SITE_URL overrides it.
-      siteUrl: 'https://ousawedding.vercel.app',
+      // Each host's build uses its own address (Netlify sets URL, Vercel its production domain), so link previews
+      // on either site point at that site; never http://localhost. NUXT_PUBLIC_SITE_URL overrides it.
+      siteUrl: process.env.URL
+        ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://ousawedding.vercel.app'),
       defaultWeddingSlug: 'ousa-kanha',
       version: process.env.npm_package_version ?? '',
       commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.COMMIT_REF ?? '').slice(0, 7),
