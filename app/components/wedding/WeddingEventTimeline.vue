@@ -35,8 +35,8 @@ const days = computed(() => {
 const colours = computed(() => [w.value.theme.accent, w.value.theme.secondary, w.value.theme.tertiary, 'var(--c-gold)'])
 const started = (e: Item) => now.value !== null && now.value >= Date.parse(e.startUtc)
 
-// Focus: items crossing the middle of the screen stay sharp, the rest blur until scrolled to.
-// Set up in the browser only (template refs don't run on the server), so without JavaScript nothing blurs.
+// Focus: items crossing the middle of the screen stay clear, the rest fade back until scrolled to.
+// Set up in the browser only (template refs don't run on the server), so without JavaScript nothing fades.
 const active = ref(new Set<string>())
 const focusing = ref(false)
 let io: IntersectionObserver | undefined
@@ -152,8 +152,9 @@ function remaining(e: Item) {
 
 .timeline { list-style: none; padding: 0; margin: var(--space-4) auto 0; max-width: 40rem; position: relative; }
 .day + .day { margin-top: var(--space-6); }
-.focusing .item > * { transition: filter 0.45s var(--ease-out), opacity 0.45s var(--ease-out); }
-.focusing .item:not(.active, :focus-within) > * { filter: blur(3px); opacity: 0.4; }
+/* Opacity only: a blur here would be redrawn every frame while scrolling, which stutters on iPhone */
+.focusing .item > * { transition: opacity 0.6s ease; }
+.focusing .item:not(.active, :focus-within) > * { opacity: 0.35; }
 @media (prefers-reduced-motion: reduce) { .focusing .item > * { transition: none; } }
 .day-title { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-family: var(--font-serif); font-size: 1.3rem; text-align: center; color: var(--c-accent-ink); }
 .day-title .left { font-family: var(--font-sans); font-size: 0.8rem; color: var(--c-text); }

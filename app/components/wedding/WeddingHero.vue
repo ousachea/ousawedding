@@ -160,8 +160,8 @@ const motes = [
 
 /* Entrance, played once as the envelope opens */
 .intro .step {
-  animation: rise 0.9s var(--ease-out) both;
-  animation-delay: calc(var(--intro-delay) + var(--i) * 90ms);
+  animation: rise 1.3s ease both;
+  animation-delay: calc(var(--intro-delay) + var(--i) * 110ms);
 }
 .intro .step-photo {
   animation: settle 1.4s var(--ease-out) both;
@@ -172,7 +172,7 @@ const motes = [
   animation: draw 1.8s var(--ease-out) both;
   animation-delay: calc(var(--intro-delay) + var(--i) * 90ms + 150ms);
 }
-@keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+@keyframes rise { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
 
 /* Gold-foil names: a gold gradient clipped to the letters. The gradient is wider than the name, with a light
    streak in its middle that sits outside the name at rest; moving the gradient sweeps the streak across. */

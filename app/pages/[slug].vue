@@ -14,7 +14,8 @@ const w = computed(() => data.value!.wedding)
 const loc = computed(() => locale.value as Locale)
 const floral = computed(() => w.value.theme.style === 'floral')
 
-// Floral style: the flowers lean as the phone tilts (gyroscope), via --tilt-x / --tilt-y on the page (-1..1).
+// Floral style: the flower clusters slide as the phone tilts (gyroscope). Each cluster's transform is set directly:
+// a CSS variable on the page would make the browser restyle every element on every frame.
 // iOS only reports tilt after the visitor allows it, and the request must come from a tap, so it is asked
 // on the first tap (usually "Open invitation" on the envelope). Smoothed so the flowers drift, not jitter.
 const page = ref<HTMLElement>()
@@ -27,8 +28,8 @@ onMounted(() => {
   let frame = 0
   const step = () => {
     for (const i of [0, 1]) now[i]! += (target[i]! - now[i]!) * 0.1
-    page.value?.style.setProperty('--tilt-x', now[0]!.toFixed(3))
-    page.value?.style.setProperty('--tilt-y', now[1]!.toFixed(3))
+    const move = `translate3d(${(now[0]! * 14).toFixed(2)}px, ${(now[1]! * 10).toFixed(2)}px, 0)`
+    for (const el of page.value?.querySelectorAll<SVGElement>('.florals') ?? []) el.style.transform = move
     frame = Math.abs(target[0]! - now[0]!) + Math.abs(target[1]! - now[1]!) > 0.002 ? requestAnimationFrame(step) : 0
   }
   // gamma: left/right tilt; beta: forward/back. Forward/back is measured from how the visitor is holding the
@@ -251,7 +252,9 @@ useSeoMeta({
 
 <style scoped>
 /* isolate: the page is its own stacking context, so the greenery (z-index -1) sits above this background */
-.wedding { isolation: isolate; background: var(--paper), var(--c-bg); color: var(--c-text); min-height: 100dvh; }
+/* overflow-x clip: flowers at the edges sway and slide past the screen side; without it the page scrolls sideways.
+   clip, not hidden: hidden would make the page a scroll container and stop the scroll-linked animations. */
+.wedding { isolation: isolate; overflow-x: clip; background: var(--paper), var(--c-bg); color: var(--c-text); min-height: 100dvh; }
 .banner {
   padding: 0.5rem 1rem; text-align: center; font-size: 0.85rem;
   background: color-mix(in srgb, var(--c-accent) 22%, var(--c-bg)); color: var(--c-text);

@@ -2,8 +2,10 @@
 // Watercolour-style flowers for the "floral" style, drawn in SVG and tinted from the theme accent:
 // roses (deep, blush or white), pale anemones, filler blooms, and greenery (leaves, ferns, vines,
 // eucalyptus, lavender, grass). `variant` + `seed` pick one of several layouts so no two spots match;
-// `flip` mirrors it. Movement: flowers sway on their stems, greenery flutters, and with scroll-driven
-// animation support each flower blooms open as it scrolls in and the cluster drifts (parallax).
+// `flip` mirrors it. Movement: each cluster sways in the breeze, leans with the phone tilt (set by the page),
+// and with scroll-driven animation support blooms in as it scrolls into view and drifts (parallax).
+// Only the whole <svg> moves, never the shapes inside it: iPhone Safari redraws moving SVG shapes on the
+// processor every frame, but moves a whole element on the graphics chip, which stays smooth.
 // Fixed numbers only (no randomness), so server and browser draw the same picture.
 const props = withDefaults(defineProps<{ flip?: boolean, variant?: 'corner' | 'sprig' | 'garland', seed?: number }>(), { variant: 'corner', seed: 0 })
 const uid = useId()
@@ -185,20 +187,22 @@ const TINTS: Record<Tint, [string, string, string, string]> = {
   blush: ['color-mix(in srgb, var(--c-accent) 50%, #9c3d63)', 'color-mix(in srgb, var(--c-accent) 55%, #e59bb4)', 'color-mix(in srgb, var(--c-accent) 30%, #f8d3df)', '#fbeef3'],
   white: ['color-mix(in srgb, var(--c-accent) 60%, #fff)', 'color-mix(in srgb, var(--c-accent) 20%, #fff)', '#fbf9fd', '#fffefe'],
 }
-// Each flower sways at its own pace
-// --depth: how far each flower follows the phone tilt (0.6–1.4), so nearer ones move more than farther ones
-const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': `${-(i * 1.3) % 4}s`, '--depth': (0.6 + ((i * 0.37) % 0.8)).toFixed(2) })
+// Mirrored inside the drawing, so the element's own transform stays free for the tilt
+const mirror = computed(() => (props.flip ? `matrix(-1 0 0 1 ${art.value.box.split(' ')[2]} 0)` : undefined))
+// Each cluster sways at its own pace
+const breeze = computed(() => ({ '--dur': `${7 + ((props.seed * 1.7) % 3)}s`, '--delay': `${-props.seed * 2.3}s` }))
 </script>
 
 <template>
-  <svg class="florals" :class="[{ flip }, variant]" :viewBox="art.box" aria-hidden="true">
+  <svg class="florals" :class="[{ flip }, variant]" :viewBox="art.box" :style="breeze" aria-hidden="true">
     <defs>
-      <!-- A light paint texture: roughens edges a little but keeps the drawing crisp -->
-      <filter :id="`${uid}-paint`" x="-5%" y="-5%" width="110%" height="110%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" />
-        <feDisplacementMap in="SourceGraphic" scale="2.2" />
-      </filter>
-      <filter :id="`${uid}-bleed`"><feGaussianBlur stdDeviation="10" /></filter>
+      <!-- No SVG filters here: the flowers animate, and iPhone Safari redraws a filter on every frame, which stutters.
+           The wash is a soft-edged gradient instead of a blur. -->
+      <radialGradient :id="`${uid}-wash`">
+        <stop offset="0" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)' }" />
+        <stop offset="0.6" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)', stopOpacity: 0.5 }" />
+        <stop offset="1" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)', stopOpacity: 0 }" />
+      </radialGradient>
       <!-- Petals are drawn rotated around each flower's centre, so the centre is (0,0) in their space -->
       <template v-for="(f, i) in art.flowers" :key="`g${i}`">
         <radialGradient v-if="f.kind === 'rose'" :id="`${uid}-f${i}`" gradientUnits="userSpaceOnUse" cx="0" cy="0" :r="f.r">
@@ -218,14 +222,13 @@ const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': 
       </linearGradient>
     </defs>
 
+    <g :transform="mirror">
     <!-- Pigment bleeding into wet paper behind the cluster -->
-    <g :filter="`url(#${uid}-bleed)`" opacity="0.3">
-      <ellipse :cx="art.wash[0]" :cy="art.wash[1]" :rx="art.wash[2]" :ry="art.wash[3]" :style="{ fill: 'color-mix(in srgb, var(--c-accent) 45%, #fff)' }" />
-    </g>
+    <ellipse :cx="art.wash[0]" :cy="art.wash[1]" :rx="art.wash[2] + 20" :ry="art.wash[3] + 20" :fill="`url(#${uid}-wash)`" opacity="0.3" />
 
-    <g :filter="`url(#${uid}-paint)`">
-      <!-- Greenery, in two layers that flutter out of step -->
-      <g class="greens">
+    <g>
+      <!-- Greenery, in two layers -->
+      <g>
         <path v-for="(w, i) in art.wisps.flat()" :key="`w${i}`" :d="w" fill="none" stroke="#7d9476" stroke-width="0.9" stroke-linecap="round" opacity="0.7" />
         <g v-for="(v, i) in art.vines" :key="`vi${i}`">
           <path :d="v.path" fill="none" stroke="#6f8a69" stroke-width="1.1" stroke-linecap="round" />
@@ -236,7 +239,7 @@ const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': 
           <path v-for="(l, j) in f.leaflets" :key="j" :d="leafPath(l.l, l.w)" :transform="`translate(${l.x} ${l.y}) rotate(${l.a})`" fill="#86a07e" opacity="0.92" />
         </g>
       </g>
-      <g class="greens greens-2">
+      <g>
         <g v-for="(l, i) in art.leaves" :key="`l${i}`" :transform="`translate(${l.x} ${l.y}) rotate(${l.a})`">
           <path :d="leafPath(l.l, l.w)" :fill="`url(#${uid}-leaf)`" opacity="0.88" />
           <path :d="`M1 0L${l.l - 3} 0${veins(l.l, l.w)}`" fill="none" stroke="#56704f" stroke-width="0.7" stroke-linecap="round" opacity="0.5" />
@@ -254,8 +257,8 @@ const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': 
         </g>
       </g>
 
-      <!-- Flowers: each sways on its own and blooms open as it scrolls into view -->
-      <g v-for="(f, i) in art.flowers" :key="`f${i}`" class="flower" :style="motion(i)">
+      <!-- Flowers -->
+      <g v-for="(f, i) in art.flowers" :key="`f${i}`">
         <template v-if="f.kind === 'rose'">
           <path
             v-for="(p, j) in f.petals" :key="j" :d="p.d" :transform="p.t" :fill="`url(#${uid}-f${i})`"
@@ -275,49 +278,32 @@ const motion = (i: number) => ({ '--dur': `${5.5 + (i * 1.7) % 3}s`, '--delay': 
       </g>
       <circle v-for="(b, i) in art.berries" :key="`y${i}`" :cx="b[0]" :cy="b[1]" r="3" fill="#43375f" />
     </g>
+    </g>
   </svg>
 </template>
 
 <style scoped>
 .florals { display: block; width: 100%; height: auto; overflow: visible; pointer-events: none; }
-.flip { transform: scaleX(-1); --dir: -1; }
-.flower, .greens { transform-box: fill-box; }
-.flower { transform-origin: 50% 85%; }
-.greens { transform-origin: 30% 50%; }
-.greens-2 { transform-origin: 60% 60%; }
+/* Sway from where the cluster is attached: its top corner (mirrored ones: the right), or the middle of a sprig */
+.florals { transform-origin: 0 0; }
+.flip { transform-origin: 100% 0; }
+.sprig, .garland { transform-origin: 50% 50%; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Phone tilt (--tilt-x/-y from the page, -1..1): flowers slide and lean toward the low side, each by its own
-     depth, and move well ahead of the greenery, so the cluster reads as layered. Lengths are in viewBox units
-     (320 wide), about 0.7 of a screen pixel on a phone. `transform` adds to the sway's `rotate`. */
-  .flower {
-    translate: calc(var(--tilt-x, 0) * var(--dir, 1) * var(--depth, 1) * 22px) calc(var(--tilt-y, 0) * var(--depth, 1) * 16px);
-    transform: rotate(calc(var(--tilt-x, 0) * var(--dir, 1) * var(--depth, 1) * 9deg));
-  }
-  .greens {
-    translate: calc(var(--tilt-x, 0) * var(--dir, 1) * 8px) calc(var(--tilt-y, 0) * 6px);
-    transform: rotate(calc(var(--tilt-x, 0) * var(--dir, 1) * 3deg));
-  }
+  /* rotate: the breeze; translate: the scroll drift; scale + opacity: the bloom; transform: the phone tilt
+     (set on the element by the page). Separate properties, so they combine. */
+  .florals { will-change: transform; animation: breeze var(--dur) ease-in-out var(--delay) infinite alternate; }
+  .sprig, .garland { --sway: 1deg; --drift: 14px; }
 
-  /* Always: a gentle breeze */
-  .flower { animation: sway var(--dur) ease-in-out var(--delay) infinite alternate; }
-  .greens { animation: flutter 6.5s ease-in-out infinite alternate; }
-  .greens-2 { animation-duration: 8s; animation-delay: -3s; }
-
-  /* Where scroll-driven animation is supported: flowers bloom open as they scroll in, and the cluster drifts */
   @supports (animation-timeline: view()) {
-    /* Named on the <svg> (it has a CSS box); SVG shapes inside cannot be view() subjects themselves */
-    .florals { view-timeline-name: --florals; animation: drift linear both; animation-timeline: view(); }
-    .sprig, .garland { --drift: 14px; }
-    .flower {
-      animation: sway var(--dur) ease-in-out var(--delay) infinite alternate, bloom linear both;
-      animation-timeline: auto, --florals;
-      animation-range: normal, entry 5% cover 35%;
+    .florals {
+      animation: breeze var(--dur) ease-in-out var(--delay) infinite alternate, drift linear both, bloom linear both;
+      animation-timeline: auto, view(), view();
+      animation-range: normal, normal, entry 0% cover 30%;
     }
   }
 }
-@keyframes sway { from { rotate: -3deg; } to { rotate: 3deg; } }
-@keyframes flutter { from { rotate: -1.6deg; } to { rotate: 1.4deg; } }
-@keyframes bloom { from { scale: 0.35; opacity: 0; } }
+@keyframes breeze { from { rotate: calc(-1 * var(--sway, 1.6deg)); } to { rotate: var(--sway, 1.6deg); } }
+@keyframes bloom { from { scale: 0.85; opacity: 0; } }
 @keyframes drift { from { translate: 0 var(--drift, 26px); } to { translate: 0 calc(-1 * var(--drift, 26px)); } }
 </style>

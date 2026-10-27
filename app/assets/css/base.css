@@ -147,10 +147,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* Scroll reveal (see plugins/reveal.ts) */
+/* Opacity eases in evenly (a sharp ease-out would show most of it at once); the short rise settles slowly */
 .reveal-init {
   opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 1.2s ease, transform 1.4s var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal-init.revealed { opacity: 1; transform: none; }
