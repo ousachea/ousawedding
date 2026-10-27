@@ -37,7 +37,8 @@
     "label": "Wedding invitation envelope",
     "open": "Open invitation",
     "skip": "Skip",
-    "for": "Specially for {name}"
+    "for": "Specially for {name}",
+    "invite": "You are warmly invited to celebrate our wedding"
   },
   "music": {
     "play": "Play music",

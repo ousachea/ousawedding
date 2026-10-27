@@ -16,6 +16,10 @@
   /* Gold dark enough for small text on ivory (WCAG AA) */
   --c-accent-ink: color-mix(in srgb, var(--c-accent) 50%, var(--c-text));
   --c-on-secondary: #FFF9EE;
+  /* Gold for the envelope, whatever accent the theme uses */
+  --c-gold: #C9A24A;
+  --c-gold-light: #F3E2A6;
+  --c-gold-deep: #8A6A22;
   --c-danger: #A3262A;
   --c-success: #2F6B47;
 }

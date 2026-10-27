@@ -23,8 +23,9 @@ function open() {
   if (state.value !== 'closed') return
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
   state.value = 'opening'
-  emit('revealing', 1150)
-  setTimeout(finish, 1700)
+  // The letter rises by 1.15s and stays up long enough to read its line, then the envelope fades
+  emit('revealing', 2450)
+  setTimeout(finish, 3000)
 }
 
 function skip() {
@@ -54,6 +55,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
         <div class="letter">
           <WeddingOrnament :motif="motif" kind="flower" />
           <span class="letter-mono">{{ monogram }}</span>
+          <p class="invite">{{ t('envelope.invite') }}</p>
         </div>
         <div class="pocket">
           <WeddingOrnament :motif="motif" kind="corner" class="corner-l" />
@@ -93,20 +95,20 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
     radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 60%),
     var(--paper),
     var(--c-bg);
-  transition: opacity 0.5s var(--ease-out) 1.15s;
+  transition: opacity 0.5s var(--ease-out) 2.45s;
 }
 .envelope-overlay.opening { opacity: 0; pointer-events: none; }
 
 .stage {
   /* Also fit the height: envelope (w × 5/7) plus room for the rising letter, the text and the buttons */
-  --fit-h: max(240px, (100dvh - 13rem) * 1.07);
+  --fit-h: max(240px, (100dvh - 13rem) * 0.98);
   --w: min(86vw, 420px, var(--fit-h));
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-5);
-  /* The letter rises ~30% of the envelope's height above it when opening */
-  padding-top: calc(var(--w) * 5 / 7 * 0.3);
+  /* The letter (82% of the envelope's height) rises half its height, ~41% of the envelope, above it */
+  padding-top: calc(var(--w) * 5 / 7 * 0.42);
 }
 
 .envelope {
@@ -115,6 +117,8 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   width: var(--w);
   aspect-ratio: 7 / 5;
   perspective: 1200px;
+  /* Ornaments and the flap line draw in currentColor */
+  color: var(--c-gold);
 }
 
 .back, .pocket, .flap { position: absolute; inset: 0; border-radius: 6px; }
@@ -130,15 +134,20 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+  /* Content sits in the top half: that is the part that rises out of the envelope */
+  justify-content: flex-start;
+  padding: 9% 10% 0;
+  gap: var(--space-1);
+  text-align: center;
   background: var(--c-surface);
-  border: 1px solid var(--c-line);
+  border: 1px solid color-mix(in srgb, var(--c-gold) 70%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--c-gold) 45%, transparent);
+  outline-offset: -5px;
   border-radius: 4px;
   transition: transform 0.7s var(--ease-out) 0.45s;
 }
-.letter-mono { font-family: var(--font-serif); font-size: 1.6rem; color: var(--c-accent-ink); letter-spacing: 0.08em; }
-.opening .letter { transform: translateY(-46%); }
+.letter-mono { font-family: var(--font-serif); font-size: 1.6rem; color: var(--c-gold-deep); letter-spacing: 0.08em; }
+.opening .letter { transform: translateY(-50%); }
 .opening .envelope { animation: none; }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
@@ -149,8 +158,11 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   z-index: 3;
   background: var(--c-secondary);
   clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%);
-  border: 1px solid var(--c-accent);
+  border: 1px solid var(--c-gold);
+  /* A thin gold rule inside the edge */
+  box-shadow: inset 0 0 0 5px var(--c-secondary), inset 0 0 0 6px color-mix(in srgb, var(--c-gold) 70%, transparent);
 }
+.pocket :deep(.ornament), .letter :deep(.ornament) { color: var(--c-gold); }
 .corner-l, .corner-r { position: absolute; bottom: 8px; }
 .corner-l { left: 8px; transform: rotate(-90deg); }
 .corner-r { right: 8px; transform: rotate(180deg); }
@@ -165,7 +177,7 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   /* Drop behind the letter halfway through the turn */
   transition: transform 0.6s var(--ease-out), z-index 0s linear 0.3s;
 }
-.flap svg { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--c-accent); }
+.flap svg { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--c-gold); }
 .opening .flap { transform: rotateX(180deg); z-index: 1; }
 
 .seal {
@@ -181,8 +193,14 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
   border: 0;
   border-radius: 50%;
   cursor: pointer;
-  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c-accent) 60%, #fff), var(--c-accent) 60%);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 40%, transparent), 0 6px 14px -4px rgb(0 0 0 / 0.45);
+  /* Gold foil: bright where the light hits, deeper at the rim */
+  background:
+    radial-gradient(circle at 35% 30%, var(--c-gold-light), var(--c-gold) 55%, var(--c-gold-deep));
+  box-shadow:
+    inset 0 0 0 4px color-mix(in srgb, var(--c-gold-deep) 35%, transparent),
+    inset 0 0 0 5px color-mix(in srgb, var(--c-gold-light) 70%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--c-gold) 40%, transparent),
+    0 6px 14px -4px rgb(0 0 0 / 0.45);
   overflow: hidden;
   transition: transform 0.2s var(--ease-out), opacity 0.3s;
 }
@@ -205,7 +223,9 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 .seal-mono {
   font-family: var(--font-serif);
   font-size: 1rem;
-  color: var(--c-tertiary);
+  color: color-mix(in srgb, var(--c-gold-deep) 70%, #000);
+  /* Pressed into the foil */
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--c-gold-light) 80%, transparent);
   letter-spacing: 0.04em;
   padding: 0 6px;
   text-align: center;
@@ -213,7 +233,10 @@ onBeforeUnmount(() => document.documentElement.style.removeProperty('overflow'))
 }
 .opening .seal { opacity: 0; transform: scale(0.8); }
 
+/* The guest's name, filled in after load, so its line is reserved */
 .for-guest { font-family: var(--font-serif); font-size: 1.25rem; font-style: italic; color: var(--c-accent-ink); min-height: 1.9em; text-align: center; }
+.invite { margin: 0; font-family: var(--font-serif); font-size: clamp(0.8rem, calc(var(--w) * 0.036), 1.05rem); line-height: 1.45; color: var(--c-text); text-wrap: balance; }
+.invite:lang(km) { font-size: clamp(0.72rem, calc(var(--w) * 0.032), 0.95rem); line-height: 1.75; }
 
 @media (min-width: 700px) {
   .stage { --w: min(72vw, 560px, var(--fit-h)); }
