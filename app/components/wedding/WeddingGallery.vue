@@ -48,9 +48,8 @@ const slides = computed(() => {
     ...all.slice(0, k).map(s => ({ ...s, copy: true })),
   ]
 })
-// Position in `slides`, and the real photo it shows
+// Position in `slides`
 const pos = ref(extra.value)
-const shown = computed(() => slides.value[pos.value]?.real ?? 0)
 
 const slideEls = () => (track.value ? [...track.value.children] as HTMLElement[] : [])
 function goTo(p: number, smooth = true) {
@@ -85,12 +84,13 @@ function onScroll() {
 }
 const step = (by: number) => goTo(nearest() + by)
 
-// Autoplay: one slide every few seconds while the gallery is on screen and nobody is touching it
+// Autoplay (there are no buttons): one slide every few seconds while the gallery is on screen.
+// Touching or swiping pauses it for a few seconds, then it carries on.
 let autoplay: ReturnType<typeof setInterval> | undefined
 let holdUntil = 0
 let onScreen = false
 let seen: IntersectionObserver | undefined
-const hold = () => (holdUntil = Date.now() + 6000)
+const hold = () => (holdUntil = Date.now() + 4000)
 const onResize = () => goTo(pos.value, false)
 onMounted(async () => {
   await nextTick()
@@ -101,7 +101,7 @@ onMounted(async () => {
   if (track.value) seen.observe(track.value)
   autoplay = setInterval(() => {
     if (onScreen && !document.hidden && Date.now() > holdUntil && !dialog.value?.open) step(1)
-  }, 4500)
+  }, 3500)
 })
 onBeforeUnmount(() => {
   clearInterval(autoplay)
@@ -117,49 +117,34 @@ onBeforeUnmount(() => {
       <span v-reveal class="section-icon"><WeddingIcon name="camera" /></span>
       <h2 v-reveal id="gallery-title" class="section-title">{{ t('gallery.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="motif" />
-      <div v-reveal="150" class="carousel" @pointerdown="hold" @touchstart.passive="hold" @mouseenter="hold" @focusin="hold">
-        <ul ref="track" class="track" :class="{ single: !loops }" :aria-label="t('gallery.title')" @scroll.passive="onScroll">
-          <li
-            v-for="(s, p) in slides"
-            :key="`${s.img.id}-${p}`"
-            class="slide"
-            :class="{ current: p === pos }"
-            :aria-hidden="s.copy || undefined"
-          >
-            <button type="button" class="thumb" :tabindex="s.copy ? -1 : undefined" :aria-label="t('gallery.open', { n: s.real + 1 })" @click="open(s.real)">
-              <span class="pic">
-                <img
-                  :src="s.img.url"
-                  :srcset="s.img.thumbUrl && s.img.thumbUrl !== s.img.url ? `${s.img.thumbUrl} 427w, ${s.img.url} ${s.img.width}w` : undefined"
-                  sizes="(min-width: 760px) 22rem, 76vw"
-                  :alt="s.copy ? '' : altFor(s.img, s.real)"
-                  :width="s.img.width"
-                  :height="s.img.height"
-                  loading="lazy"
-                  decoding="async"
-                >
-              </span>
-            </button>
-            <p v-if="L(s.img.caption)" class="caption">{{ L(s.img.caption) }}</p>
-          </li>
-        </ul>
-        <div v-if="loops" class="controls">
-          <button type="button" class="ctrl" :aria-label="t('common.previous')" @click="hold(); step(-1)">‹</button>
-          <div class="dots">
-            <button
-              v-for="(img, i) in images"
-              :key="img.id"
-              type="button"
-              class="dot"
-              :class="{ on: i === shown }"
-              :aria-label="t('gallery.counter', { n: i + 1, total: count })"
-              :aria-current="i === shown || undefined"
-              @click="hold(); goTo(extra + i)"
-            />
-          </div>
-          <button type="button" class="ctrl" :aria-label="t('common.next')" @click="hold(); step(1)">›</button>
-        </div>
-      </div>
+    </div>
+    <!-- Full width, outside the container, so the photos either side reach the screen edges -->
+    <div v-reveal="150" class="carousel" @pointerdown="hold" @touchstart.passive="hold" @mouseenter="hold" @focusin="hold">
+      <ul ref="track" class="track" :class="{ single: !loops }" :aria-label="t('gallery.title')" @scroll.passive="onScroll">
+        <li
+          v-for="(s, p) in slides"
+          :key="`${s.img.id}-${p}`"
+          class="slide"
+          :class="{ current: p === pos }"
+          :aria-hidden="s.copy || undefined"
+        >
+          <button type="button" class="thumb" :tabindex="s.copy ? -1 : undefined" :aria-label="t('gallery.open', { n: s.real + 1 })" @click="open(s.real)">
+            <span class="pic">
+              <img
+                :src="s.img.url"
+                :srcset="s.img.thumbUrl && s.img.thumbUrl !== s.img.url ? `${s.img.thumbUrl} 427w, ${s.img.url} ${s.img.width}w` : undefined"
+                sizes="(min-width: 760px) 22rem, 76vw"
+                :alt="s.copy ? '' : altFor(s.img, s.real)"
+                :width="s.img.width"
+                :height="s.img.height"
+                loading="lazy"
+                decoding="async"
+              >
+            </span>
+          </button>
+          <p v-if="L(s.img.caption)" class="caption">{{ L(s.img.caption) }}</p>
+        </li>
+      </ul>
     </div>
 
     <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @click.self="dialog?.close()">
@@ -184,15 +169,18 @@ onBeforeUnmount(() => {
 <style scoped>
 .gallery { padding-block: var(--space-8); background: var(--c-surface); border-block: 1px solid var(--c-line-soft); }
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
-.carousel { margin-top: var(--space-6); }
+.carousel { margin-top: var(--space-5); }
 /* Sideways scroller; each photo snaps to the middle with its neighbours peeking in */
 .track {
   position: relative;
   display: flex;
   gap: var(--space-4);
   margin: 0;
-  padding: var(--space-4) 0 var(--space-5);
+  /* Room above and below for the tilted frames and their shadows */
+  padding: var(--space-5) 0 var(--space-6);
   list-style: none;
+  /* The photos at the screen edges fade out instead of stopping sharply */
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
@@ -240,19 +228,7 @@ onBeforeUnmount(() => {
 @media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }
 
-.controls { display: flex; align-items: center; justify-content: center; gap: var(--space-4); }
-.ctrl {
-  width: 44px; height: 44px; display: grid; place-items: center; padding: 0 0 2px;
-  border: 1px solid var(--c-line); border-radius: 50%; background: none; color: var(--c-accent-ink);
-  font-size: 1.5rem; line-height: 1; cursor: pointer; transition: background-color 0.2s;
-}
-.ctrl:hover { background: var(--c-line-soft); }
-.dots { display: flex; gap: 2px; }
-/* 24px tap target around an 8px dot; the current one stretches into a pill */
-.dot { width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
-.dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: var(--c-line); transition: width 0.3s var(--ease-out), background-color 0.3s; }
-.dot.on::before { width: 18px; background: var(--c-accent-ink); }
-@media (prefers-reduced-motion: reduce) { .slide, .dot::before { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
 
 .viewer {
   width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0;
