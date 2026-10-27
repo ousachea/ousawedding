@@ -13,17 +13,18 @@ const state = ref<'closed' | 'opening' | 'gone'>('closed')
 const sealButton = ref<HTMLButtonElement>()
 
 // Stop the page behind from scrolling. iOS Safari ignores overflow: hidden on the page, so the body is
-// pinned in place instead (at the current scroll position), and put back when the envelope goes.
-let scrollY = 0
+// pinned in place instead. The invitation always opens at the top, on the cover: the browser's own
+// restore-where-you-were (after a reload) is turned off, and the page goes back to the top when it opens.
 function lockScroll() {
-  scrollY = window.scrollY
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+  window.scrollTo({ top: 0, behavior: 'instant' })
   document.documentElement.style.overflow = 'hidden'
-  Object.assign(document.body.style, { position: 'fixed', top: `-${scrollY}px`, left: '0', right: '0', overflow: 'hidden' })
+  Object.assign(document.body.style, { position: 'fixed', top: '0', left: '0', right: '0', overflow: 'hidden' })
 }
 function unlockScroll() {
   document.documentElement.style.removeProperty('overflow')
   for (const p of ['position', 'top', 'left', 'right', 'overflow']) document.body.style.removeProperty(p)
-  window.scrollTo(0, scrollY)
+  window.scrollTo({ top: 0, behavior: 'instant' })
 }
 
 function finish() {
