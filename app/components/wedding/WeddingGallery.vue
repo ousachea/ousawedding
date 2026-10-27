@@ -32,82 +32,78 @@ function onTouchEnd(e: TouchEvent) {
   touchX = null
 }
 
-// Carousel: a sideways scroller that snaps each photo to the middle. To loop, copies of the last and first
-// photos sit at either end; landing on a copy jumps (invisibly) to the real photo it shows.
-const track = ref<HTMLElement>()
+// Carousel: a stack of up to five. The current photo sits in the middle; two either side sit smaller and
+// smaller, tucked behind it and fully on screen. Each photo is placed by its distance from the current one, wrapping round, so it
+// loops without copies.
 const count = computed(() => props.images.length)
 const loops = computed(() => count.value > 1)
-const extra = computed(() => (loops.value ? Math.min(2, count.value) : 0))
-const slides = computed(() => {
-  const all = props.images.map((img, i) => ({ img, real: i, copy: false }))
-  if (!loops.value) return all
-  const k = extra.value
-  return [
-    ...all.slice(-k).map(s => ({ ...s, copy: true })),
-    ...all,
-    ...all.slice(0, k).map(s => ({ ...s, copy: true })),
-  ]
-})
-// Position in `slides`
-const pos = ref(extra.value)
+const at = ref(0)
+// -2 … 2 from left to right, 0 in the middle; further ones hide behind the middle
+function offset(i: number) {
+  let d = (((i - at.value) % count.value) + count.value) % count.value
+  if (d > count.value / 2) d -= count.value
+  return d
+}
+const step = (by: number) => (at.value = (((at.value + by) % count.value) + count.value) % count.value)
+// Each photo's place, set as the final transform rather than computed in CSS from a variable: Safari
+// can skip the transition when only a custom property changes. Photos further round wait hidden behind.
+function place(i: number) {
+  const d = offset(i)
+  const far = Math.abs(d) > 2
+  // Shift (as a share of the photo's width) and size for 0, 1 and 2 places from the middle
+  const shift = [0, 32, 59][Math.abs(d)] ?? 0
+  const size = [1, 0.82, 0.66][Math.abs(d)] ?? 0.5
+  return {
+    '--d': d,
+    'transform': far ? 'translate3d(0, 0, 0) scale(0.5)' : `translate3d(${Math.sign(d) * shift}%, 0, 0) scale(${size})`,
+    'zIndex': 10 - Math.min(Math.abs(d), 3),
+    'opacity': far ? 0 : [1, 0.9, 0.75][Math.abs(d)],
+  }
+}
 
-const slideEls = () => (track.value ? [...track.value.children] as HTMLElement[] : [])
-function goTo(p: number, smooth = true) {
-  const t = track.value
-  const el = slideEls()[Math.max(0, Math.min(p, slides.value.length - 1))]
-  if (!t || !el) return
-  t.scrollTo({ left: el.offsetLeft - (t.clientWidth - el.offsetWidth) / 2, behavior: smooth ? 'smooth' : 'instant' })
+// Tap the middle photo to open it; tap a side photo to bring it to the middle
+function tap(i: number) {
+  hold()
+  if (offset(i) === 0) open(i)
+  else step(offset(i))
 }
-// The slide nearest the middle of the track
-function nearest() {
-  const t = track.value
-  if (!t) return pos.value
-  const middle = t.scrollLeft + t.clientWidth / 2
-  let best = 0
-  let bestDist = Infinity
-  slideEls().forEach((el, i) => {
-    const d = Math.abs(el.offsetLeft + el.offsetWidth / 2 - middle)
-    if (d < bestDist) [best, bestDist] = [i, d]
-  })
-  return best
-}
-let settle: ReturnType<typeof setTimeout> | undefined
-function onScroll() {
-  pos.value = nearest()
-  // Once scrolling stops on a copy, swap to the real photo
-  clearTimeout(settle)
-  settle = setTimeout(() => {
-    const p = nearest()
-    if (p < extra.value) goTo(p + count.value, false)
-    else if (p >= extra.value + count.value) goTo(p - count.value, false)
-  }, 140)
-}
-const step = (by: number) => goTo(nearest() + by)
 
-// Autoplay (there are no buttons): one slide every few seconds while the gallery is on screen.
-// Touching or swiping pauses it for a few seconds, then it carries on.
+// Swipe sideways to move along; up and down still scrolls the page
+let swipeX: number | null = null
+let swipeY = 0
+function onSwipeStart(e: TouchEvent) {
+  hold()
+  swipeX = e.touches[0]!.clientX
+  swipeY = e.touches[0]!.clientY
+}
+function onSwipeEnd(e: TouchEvent) {
+  if (swipeX === null) return
+  const dx = e.changedTouches[0]!.clientX - swipeX
+  const dy = e.changedTouches[0]!.clientY - swipeY
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1)
+  swipeX = null
+}
+
+// Autoplay: one photo every few seconds while the gallery is on screen. Touching it pauses for a few seconds.
+const stage = ref<HTMLElement>()
 let autoplay: ReturnType<typeof setInterval> | undefined
 let holdUntil = 0
 let onScreen = false
 let seen: IntersectionObserver | undefined
-const hold = () => (holdUntil = Date.now() + 4000)
-const onResize = () => goTo(pos.value, false)
-onMounted(async () => {
-  await nextTick()
-  goTo(extra.value, false)
-  addEventListener('resize', onResize)
+function hold() {
+  holdUntil = Date.now() + 4000
+}
+onMounted(() => {
   if (!loops.value || matchMedia('(prefers-reduced-motion: reduce)').matches) return
   seen = new IntersectionObserver(([en]) => (onScreen = !!en?.isIntersecting), { threshold: 0.5 })
-  if (track.value) seen.observe(track.value)
+  if (stage.value) seen.observe(stage.value)
   autoplay = setInterval(() => {
     if (onScreen && !document.hidden && Date.now() > holdUntil && !dialog.value?.open) step(1)
   }, 3500)
 })
 onBeforeUnmount(() => {
   clearInterval(autoplay)
-  clearTimeout(settle)
   seen?.disconnect()
-  removeEventListener('resize', onResize)
 })
 </script>
 
@@ -118,31 +114,32 @@ onBeforeUnmount(() => {
       <h2 v-reveal id="gallery-title" class="section-title">{{ t('gallery.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="motif" />
     </div>
-    <!-- Full width, outside the container, so the photos either side reach the screen edges -->
-    <div v-reveal="150" class="carousel" @pointerdown="hold" @touchstart.passive="hold" @mouseenter="hold" @focusin="hold">
-      <ul ref="track" class="track" :class="{ single: !loops }" :aria-label="t('gallery.title')" @scroll.passive="onScroll">
+    <!-- Full width, outside the container, with room for the photos either side -->
+    <div v-reveal="150" class="carousel" @mouseenter="hold" @focusin="hold">
+      <ul ref="stage" class="stage" :aria-label="t('gallery.title')" @touchstart.passive="onSwipeStart" @touchend="onSwipeEnd">
         <li
-          v-for="(s, p) in slides"
-          :key="`${s.img.id}-${p}`"
+          v-for="(img, i) in images"
+          :key="img.id"
           class="slide"
-          :class="{ current: p === pos }"
-          :aria-hidden="s.copy || undefined"
+          :class="{ current: offset(i) === 0, away: Math.abs(offset(i)) > 2 }"
+          :style="place(i)"
+          :aria-hidden="offset(i) !== 0 || undefined"
         >
-          <button type="button" class="thumb" :tabindex="s.copy ? -1 : undefined" :aria-label="t('gallery.open', { n: s.real + 1 })" @click="open(s.real)">
+          <button type="button" class="thumb" :tabindex="offset(i) === 0 ? undefined : -1" :aria-label="t('gallery.open', { n: i + 1 })" @click="tap(i)">
             <span class="pic">
               <img
-                :src="s.img.url"
-                :srcset="s.img.thumbUrl && s.img.thumbUrl !== s.img.url ? `${s.img.thumbUrl} 427w, ${s.img.url} ${s.img.width}w` : undefined"
-                sizes="(min-width: 760px) 22rem, 76vw"
-                :alt="s.copy ? '' : altFor(s.img, s.real)"
-                :width="s.img.width"
-                :height="s.img.height"
+                :src="img.url"
+                :srcset="img.thumbUrl && img.thumbUrl !== img.url ? `${img.thumbUrl} 427w, ${img.url} ${img.width}w` : undefined"
+                sizes="(min-width: 760px) 18rem, 50vw"
+                :alt="altFor(img, i)"
+                :width="img.width"
+                :height="img.height"
                 loading="lazy"
                 decoding="async"
               >
             </span>
           </button>
-          <p v-if="L(s.img.caption)" class="caption">{{ L(s.img.caption) }}</p>
+          <p v-if="L(img.caption)" class="caption">{{ L(img.caption) }}</p>
         </li>
       </ul>
     </div>
@@ -169,31 +166,34 @@ onBeforeUnmount(() => {
 <style scoped>
 .gallery { padding-block: var(--space-8); background: var(--c-surface); border-block: 1px solid var(--c-line-soft); }
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
-.carousel { margin-top: var(--space-5); }
-/* Sideways scroller; each photo snaps to the middle with its neighbours peeking in */
-.track {
-  position: relative;
-  display: flex;
-  gap: var(--space-4);
+.carousel { margin-top: var(--space-5); overflow: hidden; }
+/* All photos share one grid cell, so the stage is as tall as the tallest; place() then moves each one.
+   With the middle photo 50vw wide, the outer pair (66% size, moved 59% of a width) end
+   (0.59 + 0.33) × 50vw = 46vw from the centre, inside the screen. */
+.stage {
+  display: grid;
+  justify-items: center;
+  align-items: center;
   margin: 0;
-  /* Room above and below for the tilted frames and their shadows */
   padding: var(--space-5) 0 var(--space-6);
   list-style: none;
-  /* The photos at the screen edges fade out instead of stopping sharply */
-  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
+  touch-action: pan-y;
 }
-.track::-webkit-scrollbar { display: none; }
-.track.single { justify-content: center; }
-/* Sized by the screen's height as well as its width, so a whole portrait photo (2:3) and its frame always
-   fit on screen: 40svh wide makes it about 60svh tall. Taller photos are trimmed to that height. */
-.slide { flex: 0 0 min(76vw, 22rem, 40svh); scroll-snap-align: center; transition: opacity 0.4s var(--ease-out), scale 0.4s var(--ease-out); }
-/* Photos either side of the current one sit back a little */
-.slide:not(.current) { opacity: 0.8; scale: 0.94; }
-.track.single .slide { opacity: 1; scale: 1; }
+/* Sized by the screen's height too, so a whole portrait photo (2:3) and its frame fit on screen.
+   Position, size, order and opacity come from place(). Only transform and opacity animate (smooth on
+   iPhone); the stacking order switches a third of the way through, so the photo coming to the middle
+   passes in front once it is mostly out from behind. */
+.slide {
+  grid-area: 1 / 1;
+  width: min(50vw, 18rem, 34svh);
+  transition: transform 0.6s var(--ease-out), opacity 0.6s var(--ease-out), z-index 0s linear 0.2s;
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.slide:not(.current) .caption { opacity: 0; }
+.slide.away { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
 
 .thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); cursor: zoom-in; background: none; }
 /* The photo is clipped inside its frame, so the hover zoom stays within it */
@@ -223,11 +223,12 @@ onBeforeUnmount(() => {
   box-shadow: 0 10px 22px -12px rgb(60 40 80 / 0.45), 0 1px 2px rgb(60 40 80 / 0.12);
   rotate: -1.6deg; transition: rotate 0.35s var(--ease-out);
 }
-.style-floral .slide:nth-child(even) .thumb { rotate: 1.4deg; }
+.style-floral .slide:not(.current) .thumb { rotate: calc(var(--d) * 2deg); }
 .style-floral .slide.current .thumb { rotate: 0deg; }
 .style-floral .pic { border-radius: 0; }
 .thumb img { width: 100%; max-height: 62svh; object-fit: cover; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
 @media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
+.slide:not(.current) .thumb { cursor: pointer; }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }
 
 @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
