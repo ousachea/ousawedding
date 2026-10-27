@@ -180,7 +180,7 @@ onBeforeUnmount(() => {
   padding: var(--space-5) 0 var(--space-6);
   list-style: none;
   /* The photos at the screen edges fade out instead of stopping sharply */
-  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
@@ -188,9 +188,11 @@ onBeforeUnmount(() => {
 }
 .track::-webkit-scrollbar { display: none; }
 .track.single { justify-content: center; }
-.slide { flex: 0 0 76%; max-width: 22rem; scroll-snap-align: center; transition: opacity 0.4s var(--ease-out), scale 0.4s var(--ease-out); }
+/* Sized by the screen's height as well as its width, so a whole portrait photo (2:3) and its frame always
+   fit on screen: 40svh wide makes it about 60svh tall. Taller photos are trimmed to that height. */
+.slide { flex: 0 0 min(76vw, 22rem, 40svh); scroll-snap-align: center; transition: opacity 0.4s var(--ease-out), scale 0.4s var(--ease-out); }
 /* Photos either side of the current one sit back a little */
-.slide:not(.current) { opacity: 0.55; scale: 0.92; }
+.slide:not(.current) { opacity: 0.8; scale: 0.94; }
 .track.single .slide { opacity: 1; scale: 1; }
 
 .thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); cursor: zoom-in; background: none; }
@@ -224,7 +226,7 @@ onBeforeUnmount(() => {
 .style-floral .slide:nth-child(even) .thumb { rotate: 1.4deg; }
 .style-floral .slide.current .thumb { rotate: 0deg; }
 .style-floral .pic { border-radius: 0; }
-.thumb img { width: 100%; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
+.thumb img { width: 100%; max-height: 62svh; object-fit: cover; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
 @media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }
 
