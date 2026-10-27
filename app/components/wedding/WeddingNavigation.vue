@@ -2,10 +2,12 @@
 // The top bar: monogram, music and language, with the reading progress along its edge.
 // The sections themselves are in the bottom bar (WeddingTabBar).
 defineProps<{ musicUrl?: string, monogram: string }>()
+// Slides up out of the way while scrolling down, back when scrolling up
+const hidden = useBarsHidden()
 </script>
 
 <template>
-  <header class="nav">
+  <header class="nav" :class="{ tucked: hidden }">
     <div class="nav-inner container">
       <a href="#home" class="mono">{{ monogram }}</a>
       <div class="tools">
@@ -27,7 +29,10 @@ defineProps<{ musicUrl?: string, monogram: string }>()
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--c-line-soft);
+  transition: transform 0.35s var(--ease-out);
 }
+.nav.tucked { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) { .nav { transition: none; } }
 .nav-inner { display: flex; align-items: center; gap: var(--space-4); min-height: 3.75rem; }
 .mono { margin-right: auto; font-family: var(--font-serif); font-size: 1.15rem; color: var(--c-accent-ink); text-decoration: none; white-space: nowrap; }
 /* Reading progress, driven by page scroll where supported */

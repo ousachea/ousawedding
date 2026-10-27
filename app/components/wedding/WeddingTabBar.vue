@@ -6,6 +6,8 @@ type IconName = InstanceType<typeof WeddingIcon>['$props']['name']
 // Sticky at the very end of the page, so it stays on screen while scrolling yet never covers the footer.
 const props = defineProps<{ sections: Array<{ id: string, label: string, icon: IconName }> }>()
 const { t } = useI18n()
+// Slides down out of the way while scrolling down, back when scrolling up
+const hidden = useBarsHidden()
 
 const tabs = computed(() => [{ id: 'home', label: t('nav.home'), icon: 'rings' as IconName }, ...props.sections])
 
@@ -30,6 +32,7 @@ onBeforeUnmount(() => io?.disconnect())
 </script>
 
 <template>
+  <div class="dock" :class="{ tucked: hidden }">
   <nav class="tabbar" :aria-label="t('nav.label')">
     <a
       v-for="s in tabs"
@@ -43,50 +46,66 @@ onBeforeUnmount(() => io?.disconnect())
       <span class="tab-label">{{ s.label }}</span>
     </a>
   </nav>
+  </div>
 </template>
 
 <style scoped>
-.tabbar {
+/* A floating pill: sticky at the end of the page, lifted off the bottom edge, with no fill of its own.
+   The blur behind it keeps the gold icons readable over photos and text. */
+.dock {
   position: sticky;
-  bottom: 0;
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
   z-index: var(--z-nav);
   display: flex;
   justify-content: center;
-  padding: var(--space-1) var(--space-2) max(var(--space-1), env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--c-bg) 90%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-top: 1px solid var(--c-line-soft);
+  padding-inline: 0.75rem;
+  /* Only the pill takes taps */
+  pointer-events: none;
+  transition: transform 0.35s var(--ease-out), opacity 0.35s var(--ease-out);
+}
+.dock.tucked { transform: translateY(calc(100% + 1.5rem)); opacity: 0; }
+.dock.tucked .tabbar { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .dock { transition: none; } }
+.tabbar {
+  pointer-events: auto;
+  display: flex;
+  width: min(100%, 26rem);
+  padding: 0.3rem;
+  border: 1px solid color-mix(in srgb, var(--c-gold) 55%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
 .tab {
   /* Equal widths, at least a 44px tap target */
   flex: 1 1 0;
-  max-width: 6.5rem;
   min-width: 0;
-  min-height: 3.1rem;
+  min-height: 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: var(--space-1) 2px;
-  border-radius: var(--radius);
-  color: var(--c-muted);
+  gap: 1px;
+  padding: 0.2rem 2px;
+  border-radius: 999px;
+  color: var(--c-gold);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
   transition: color 0.2s;
 }
-.tab-icon { font-size: 1.45rem; transition: transform 0.25s var(--ease-out); }
-.tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.68rem; letter-spacing: 0.02em; }
-.tab-label:lang(km) { font-size: 0.72rem; }
-.tab:hover { color: var(--c-text); }
-.tab.current { color: var(--c-secondary); }
+.tab-icon { font-size: 1.4rem; stroke-width: 1.6; transition: transform 0.25s var(--ease-out); }
+.tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.66rem; letter-spacing: 0.02em; }
+.tab-label:lang(km) { font-size: 0.7rem; }
+.tab:hover { color: color-mix(in srgb, var(--c-gold) 60%, var(--c-gold-deep)); }
+/* Current: a deeper, richer gold (easier to read on the light page), bolder, with a small gold dot */
+.tab.current { color: var(--c-gold-deep); }
 .tab.current .tab-label { font-weight: 600; }
 .tab:active .tab-icon { transform: scale(0.9); }
-/* A small dot under the current tab */
-.tab::after { content: ''; width: 4px; height: 4px; margin-top: 1px; border-radius: 50%; background: currentColor; opacity: 0; transition: opacity 0.2s; }
+.tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0; transition: opacity 0.2s; }
 .tab.current::after { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) {
-  .tab.current .tab-icon { transform: translateY(-1px) scale(1.06); }
+  .tab.current .tab-icon { transform: translateY(-1px) scale(1.08); }
 }
 </style>
