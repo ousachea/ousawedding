@@ -207,6 +207,7 @@ useSeoMeta({
 
     <p v-if="w.isSample" class="banner">{{ t('common.sample') }}</p>
 
+    <WeddingGreenery />
     <WeddingPetals v-if="w.theme.motif !== 'none' || floral" />
     <WeddingButterflies v-if="!isPreview" />
     <WeddingNavigation :music-url="w.musicUrl" :monogram="w.monogram" />
@@ -245,7 +246,8 @@ useSeoMeta({
 </template>
 
 <style scoped>
-.wedding { background: var(--paper), var(--c-bg); color: var(--c-text); min-height: 100dvh; }
+/* isolate: the page is its own stacking context, so the greenery (z-index -1) sits above this background */
+.wedding { isolation: isolate; background: var(--paper), var(--c-bg); color: var(--c-text); min-height: 100dvh; }
 .banner {
   padding: 0.5rem 1rem; text-align: center; font-size: 0.85rem;
   background: color-mix(in srgb, var(--c-accent) 22%, var(--c-bg)); color: var(--c-text);
