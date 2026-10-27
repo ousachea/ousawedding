@@ -31,6 +31,84 @@ function onTouchEnd(e: TouchEvent) {
   if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1)
   touchX = null
 }
+
+// Carousel: a sideways scroller that snaps each photo to the middle. To loop, copies of the last and first
+// photos sit at either end; landing on a copy jumps (invisibly) to the real photo it shows.
+const track = ref<HTMLElement>()
+const count = computed(() => props.images.length)
+const loops = computed(() => count.value > 1)
+const extra = computed(() => (loops.value ? Math.min(2, count.value) : 0))
+const slides = computed(() => {
+  const all = props.images.map((img, i) => ({ img, real: i, copy: false }))
+  if (!loops.value) return all
+  const k = extra.value
+  return [
+    ...all.slice(-k).map(s => ({ ...s, copy: true })),
+    ...all,
+    ...all.slice(0, k).map(s => ({ ...s, copy: true })),
+  ]
+})
+// Position in `slides`, and the real photo it shows
+const pos = ref(extra.value)
+const shown = computed(() => slides.value[pos.value]?.real ?? 0)
+
+const slideEls = () => (track.value ? [...track.value.children] as HTMLElement[] : [])
+function goTo(p: number, smooth = true) {
+  const t = track.value
+  const el = slideEls()[Math.max(0, Math.min(p, slides.value.length - 1))]
+  if (!t || !el) return
+  t.scrollTo({ left: el.offsetLeft - (t.clientWidth - el.offsetWidth) / 2, behavior: smooth ? 'smooth' : 'instant' })
+}
+// The slide nearest the middle of the track
+function nearest() {
+  const t = track.value
+  if (!t) return pos.value
+  const middle = t.scrollLeft + t.clientWidth / 2
+  let best = 0
+  let bestDist = Infinity
+  slideEls().forEach((el, i) => {
+    const d = Math.abs(el.offsetLeft + el.offsetWidth / 2 - middle)
+    if (d < bestDist) [best, bestDist] = [i, d]
+  })
+  return best
+}
+let settle: ReturnType<typeof setTimeout> | undefined
+function onScroll() {
+  pos.value = nearest()
+  // Once scrolling stops on a copy, swap to the real photo
+  clearTimeout(settle)
+  settle = setTimeout(() => {
+    const p = nearest()
+    if (p < extra.value) goTo(p + count.value, false)
+    else if (p >= extra.value + count.value) goTo(p - count.value, false)
+  }, 140)
+}
+const step = (by: number) => goTo(nearest() + by)
+
+// Autoplay: one slide every few seconds while the gallery is on screen and nobody is touching it
+let autoplay: ReturnType<typeof setInterval> | undefined
+let holdUntil = 0
+let onScreen = false
+let seen: IntersectionObserver | undefined
+const hold = () => (holdUntil = Date.now() + 6000)
+const onResize = () => goTo(pos.value, false)
+onMounted(async () => {
+  await nextTick()
+  goTo(extra.value, false)
+  addEventListener('resize', onResize)
+  if (!loops.value || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  seen = new IntersectionObserver(([en]) => (onScreen = !!en?.isIntersecting), { threshold: 0.5 })
+  if (track.value) seen.observe(track.value)
+  autoplay = setInterval(() => {
+    if (onScreen && !document.hidden && Date.now() > holdUntil && !dialog.value?.open) step(1)
+  }, 4500)
+})
+onBeforeUnmount(() => {
+  clearInterval(autoplay)
+  clearTimeout(settle)
+  seen?.disconnect()
+  removeEventListener('resize', onResize)
+})
 </script>
 
 <template>
@@ -39,14 +117,49 @@ function onTouchEnd(e: TouchEvent) {
       <span v-reveal class="section-icon"><WeddingIcon name="camera" /></span>
       <h2 v-reveal id="gallery-title" class="section-title">{{ t('gallery.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="motif" />
-      <ul class="grid" :class="{ few: images.length <= 4 }">
-        <li v-for="(img, i) in images" :key="img.id" v-reveal="(i % 3) * 90">
-          <button type="button" class="thumb" :aria-label="t('gallery.open', { n: i + 1 })" @click="open(i)">
-            <span class="pic"><img :src="img.thumbUrl || img.url" :alt="altFor(img, i)" :width="img.width" :height="img.height" loading="lazy" decoding="async"></span>
-          </button>
-          <p v-if="L(img.caption)" class="caption">{{ L(img.caption) }}</p>
-        </li>
-      </ul>
+      <div v-reveal="150" class="carousel" @pointerdown="hold" @touchstart.passive="hold" @mouseenter="hold" @focusin="hold">
+        <ul ref="track" class="track" :class="{ single: !loops }" :aria-label="t('gallery.title')" @scroll.passive="onScroll">
+          <li
+            v-for="(s, p) in slides"
+            :key="`${s.img.id}-${p}`"
+            class="slide"
+            :class="{ current: p === pos }"
+            :aria-hidden="s.copy || undefined"
+          >
+            <button type="button" class="thumb" :tabindex="s.copy ? -1 : undefined" :aria-label="t('gallery.open', { n: s.real + 1 })" @click="open(s.real)">
+              <span class="pic">
+                <img
+                  :src="s.img.url"
+                  :srcset="s.img.thumbUrl && s.img.thumbUrl !== s.img.url ? `${s.img.thumbUrl} 427w, ${s.img.url} ${s.img.width}w` : undefined"
+                  sizes="(min-width: 760px) 22rem, 76vw"
+                  :alt="s.copy ? '' : altFor(s.img, s.real)"
+                  :width="s.img.width"
+                  :height="s.img.height"
+                  loading="lazy"
+                  decoding="async"
+                >
+              </span>
+            </button>
+            <p v-if="L(s.img.caption)" class="caption">{{ L(s.img.caption) }}</p>
+          </li>
+        </ul>
+        <div v-if="loops" class="controls">
+          <button type="button" class="ctrl" :aria-label="t('common.previous')" @click="hold(); step(-1)">‹</button>
+          <div class="dots">
+            <button
+              v-for="(img, i) in images"
+              :key="img.id"
+              type="button"
+              class="dot"
+              :class="{ on: i === shown }"
+              :aria-label="t('gallery.counter', { n: i + 1, total: count })"
+              :aria-current="i === shown || undefined"
+              @click="hold(); goTo(extra + i)"
+            />
+          </div>
+          <button type="button" class="ctrl" :aria-label="t('common.next')" @click="hold(); step(1)">›</button>
+        </div>
+      </div>
     </div>
 
     <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @click.self="dialog?.close()">
@@ -71,10 +184,27 @@ function onTouchEnd(e: TouchEvent) {
 <style scoped>
 .gallery { padding-block: var(--space-8); background: var(--c-surface); border-block: 1px solid var(--c-line-soft); }
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
-.grid { list-style: none; padding: 0; margin: var(--space-6) 0 0; columns: 2; column-gap: var(--space-3); }
-.grid li { break-inside: avoid; margin-bottom: var(--space-3); }
-/* Small galleries stay at two columns so no column is left empty */
-@media (min-width: 760px) { .grid { columns: 3; column-gap: var(--space-4); } .grid.few { columns: 2; max-width: 44rem; margin-inline: auto; } }
+.carousel { margin-top: var(--space-6); }
+/* Sideways scroller; each photo snaps to the middle with its neighbours peeking in */
+.track {
+  position: relative;
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-4) 0 var(--space-5);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.track::-webkit-scrollbar { display: none; }
+.track.single { justify-content: center; }
+.slide { flex: 0 0 76%; max-width: 22rem; scroll-snap-align: center; transition: opacity 0.4s var(--ease-out), scale 0.4s var(--ease-out); }
+/* Photos either side of the current one sit back a little */
+.slide:not(.current) { opacity: 0.55; scale: 0.92; }
+.track.single .slide { opacity: 1; scale: 1; }
+
 .thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); cursor: zoom-in; background: none; }
 /* The photo is clipped inside its frame, so the hover zoom stays within it */
 .pic { display: block; overflow: hidden; border-radius: calc(var(--radius) - 4px); background: var(--c-line-soft); }
@@ -97,26 +227,32 @@ function onTouchEnd(e: TouchEvent) {
   background-repeat: no-repeat;
 }
 
-/* Floral frame: printed photos on white paper, gently tilted left and right */
+/* Floral frame: printed photos on white paper, tilted left and right, straightening when centred */
 .style-floral .thumb {
   padding: 8px 8px 24px; border-radius: 2px; background: #fffdf9;
   box-shadow: 0 10px 22px -12px rgb(60 40 80 / 0.45), 0 1px 2px rgb(60 40 80 / 0.12);
   rotate: -1.6deg; transition: rotate 0.35s var(--ease-out);
 }
-.style-floral .grid li:nth-child(even) .thumb { rotate: 1.4deg; }
-.style-floral .grid li:nth-child(3n) .thumb { rotate: -0.6deg; }
+.style-floral .slide:nth-child(even) .thumb { rotate: 1.4deg; }
+.style-floral .slide.current .thumb { rotate: 0deg; }
 .style-floral .pic { border-radius: 0; }
-@media (hover: hover) { .style-floral .thumb:hover { rotate: 0deg; } }
 .thumb img { width: 100%; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
-/* `scale` for hover and `transform` for the scroll zoom are separate properties, so both work */
-@media (hover: hover) { .thumb:hover img { scale: 1.04; } }
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .thumb img { animation: unzoom linear both; animation-timeline: view(); animation-range: entry 0% cover 45%; }
-  }
+@media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
+.caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }
+
+.controls { display: flex; align-items: center; justify-content: center; gap: var(--space-4); }
+.ctrl {
+  width: 44px; height: 44px; display: grid; place-items: center; padding: 0 0 2px;
+  border: 1px solid var(--c-line); border-radius: 50%; background: none; color: var(--c-accent-ink);
+  font-size: 1.5rem; line-height: 1; cursor: pointer; transition: background-color 0.2s;
 }
-@keyframes unzoom { from { transform: scale(1.12); } }
-.caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-1); text-align: center; }
+.ctrl:hover { background: var(--c-line-soft); }
+.dots { display: flex; gap: 2px; }
+/* 24px tap target around an 8px dot; the current one stretches into a pill */
+.dot { width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: var(--c-line); transition: width 0.3s var(--ease-out), background-color 0.3s; }
+.dot.on::before { width: 18px; background: var(--c-accent-ink); }
+@media (prefers-reduced-motion: reduce) { .slide, .dot::before { transition: none; } }
 
 .viewer {
   width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0;
