@@ -154,20 +154,27 @@ function remaining(e: Item) {
   border-radius: 50%; background: var(--c-bg); border: 1px solid var(--c-accent);
   color: var(--c-accent-ink); font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums;
 }
-/* Each dot pulses softly; the gold line draws downward as the schedule scrolls by */
+/* The dot of the item being read pulses softly */
 .dot::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--c-accent); opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .dot::after { animation: ring 2.8s var(--ease-out) infinite; }
-  .item:nth-child(2) .dot::after { animation-delay: 0.9s; }
-  .item:nth-child(3n) .dot::after { animation-delay: 1.8s; }
+  .focusing .item.active .dot::after { animation: ring 2.8s var(--ease-out) infinite; }
 }
 @keyframes ring { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.4); opacity: 0; } }
+/* The line draws down with the reader: view(block 50% 50%) measures against a line across the middle of the
+   screen, so the tip sits at the centre of the screen. Each dot fills in as the tip reaches it. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .timeline::before { transform-origin: top; animation: grow linear both; animation-timeline: view(); animation-range: entry 10% cover 70%; }
+    .timeline::before { transform-origin: top; animation: grow linear both; animation-timeline: view(block 50% 50%); }
+    .dot { animation: reach linear both; animation-timeline: view(block 50% 50%); }
   }
 }
 @keyframes grow { from { transform: scaleY(0); } }
+@keyframes reach {
+  0%, 40% { background: var(--c-bg); }
+  60%, 100% { background: var(--c-dot-on); border-color: var(--c-dot-on); color: var(--c-on-secondary); }
+}
+.timeline { --c-dot-on: var(--c-accent); }
+.style-floral .timeline { --c-dot-on: var(--c-secondary); }
 .card { background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
 .card-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .card-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
