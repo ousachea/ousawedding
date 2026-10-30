@@ -5,8 +5,8 @@
     "isSample": false,
     "names": {
       "km": {
-        "partner1": "Ousa Chea",
-        "partner2": "Kanha Neak",
+        "partner1": "ជា​ ឧស្សា",
+        "partner2": "នាក់​ កញ្ញា​",
         "parents1": "",
         "parents2": ""
       },
@@ -45,9 +45,11 @@
       "secondary": "#7D5BAA",
       "tertiary": "#5A4675",
       "text": "#3A3242",
-      "headingFont": "serif",
-      "motif": "none",
-      "style": "floral"
+      "headingFont": "sans",
+      "motif": "lotus",
+      "style": "floral",
+      "fontEn": "",
+      "fontKm": "Fasthand"
     },
     "defaultLocale": "km",
     "rsvp": {
@@ -79,7 +81,7 @@
       }
     },
     "createdAt": "2026-10-26T23:31:19.332Z",
-    "updatedAt": "2026-10-30T15:17:53.014Z",
+    "updatedAt": "2026-10-30T15:28:07.498Z",
     "coverPosition": "50% 29.3%",
     "shareImage": {
       "url": "/uploads/weddings/rgbke4AtHLhcB8ro/share/zxWhPIx2rPMD2lXq.jpg",

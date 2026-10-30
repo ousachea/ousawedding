@@ -11,7 +11,10 @@ const STYLE_THEMES: Record<WeddingStyle, ThemeConfig> = {
   classic: DEFAULT_THEME,
   floral: { background: '#F7F5F2', accent: '#9F86C9', secondary: '#7D5BAA', tertiary: '#5A4675', text: '#3A3242', headingFont: 'serif', motif: 'none', style: 'floral' },
 }
-const setStyle = (s: WeddingStyle) => (theme.value = { ...STYLE_THEMES[s] })
+// Fonts are not part of a style, so they are kept
+const setStyle = (s: WeddingStyle) => (theme.value = { ...STYLE_THEMES[s], fontEn: theme.value?.fontEn, fontKm: theme.value?.fontKm })
+// Every choice is loaded here so each sample shows in its own font
+useHead({ link: [{ rel: 'stylesheet', href: fontsHref([...FONTS_EN, ...FONTS_KM]) }] })
 
 const colorKeys = ['background', 'accent', 'secondary', 'tertiary', 'text'] as const
 
@@ -69,6 +72,22 @@ async function save() {
                   </select>
                 </div>
                 <div class="field">
+                  <label for="s-font-en">{{ t('admin.settings.fontEn') }}</label>
+                  <select id="s-font-en" v-model="theme.fontEn">
+                    <option value="">{{ t('admin.settings.fontDefault', { name: 'Cormorant Garamond' }) }}</option>
+                    <option v-for="f in FONTS_EN" :key="f" :value="f">{{ f }}</option>
+                  </select>
+                  <p class="font-sample" :style="{ fontFamily: `'${theme.fontEn || 'Cormorant Garamond'}', serif` }">{{ wedding?.names.en.partner1 }} &amp; {{ wedding?.names.en.partner2 }}</p>
+                </div>
+                <div class="field">
+                  <label for="s-font-km">{{ t('admin.settings.fontKm') }}</label>
+                  <select id="s-font-km" v-model="theme.fontKm">
+                    <option value="">{{ t('admin.settings.fontDefault', { name: 'Noto Serif Khmer' }) }}</option>
+                    <option v-for="f in FONTS_KM" :key="f" :value="f">{{ f }}</option>
+                  </select>
+                  <p class="font-sample" lang="km" :style="{ fontFamily: `'${theme.fontKm || 'Noto Serif Khmer'}', serif` }">{{ wedding?.names.km.partner1 }} និង {{ wedding?.names.km.partner2 }}</p>
+                </div>
+                <div class="field">
                   <label for="s-motif">{{ t('admin.settings.motif') }}</label>
                   <select id="s-motif" v-model="theme.motif">
                     <option v-for="m in (['lotus', 'kbach', 'none'] as const)" :key="m" :value="m">{{ t(`admin.settings.motifs.${m}`) }}</option>
@@ -90,6 +109,7 @@ async function save() {
   .editor { grid-template-columns: minmax(0, 1fr) 380px; }
   .preview { grid-column: 2; grid-row: 1; }
 }
+.font-sample { margin-top: var(--space-1); font-size: 1.6rem; line-height: 1.4; }
 .colors { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
 .color input[type='color'] { padding: 2px; cursor: pointer; }
 </style>

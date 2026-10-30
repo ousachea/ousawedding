@@ -312,6 +312,9 @@
       "secondary": "Main (buttons, seal, highlights)",
       "tertiary": "Deep (countdown band, envelope)",
       "text": "Text",
+      "fontEn": "English font",
+      "fontKm": "Khmer font",
+      "fontDefault": "{name} (default)",
       "headingFont": "Heading style",
       "fonts": {
         "serif": "Classic serif",

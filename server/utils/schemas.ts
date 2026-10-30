@@ -31,6 +31,8 @@ export const weddingSchema = z.object({
     headingFont: z.enum(['serif', 'sans']),
     motif: z.enum(['lotus', 'kbach', 'none']),
     style: z.enum(['classic', 'floral']).default('classic'),
+    fontEn: z.enum(['', ...FONTS_EN]).default(''),
+    fontKm: z.enum(['', ...FONTS_KM]).default(''),
   }),
   defaultLocale: locale,
   // Replies go to a Google Form (or any form): the invitation links to it until the deadline

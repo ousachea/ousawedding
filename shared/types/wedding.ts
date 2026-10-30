@@ -18,6 +18,9 @@ export interface ThemeConfig {
   motif: Motif
   // Page design; missing on weddings saved before styles existed (= classic)
   style?: WeddingStyle
+  // Display fonts for each language (one of FONTS_EN / FONTS_KM); missing or '' = the default
+  fontEn?: string
+  fontKm?: string
 }
 
 export interface Wedding {

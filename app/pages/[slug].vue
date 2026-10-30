@@ -102,6 +102,17 @@ onMounted(() => { if (isPreview) addEventListener('message', onPreviewMessage) }
 onBeforeUnmount(() => removeEventListener('message', onPreviewMessage))
 
 
+function displayFonts(th: ThemeConfig) {
+  const km = `'${th.fontKm || 'Noto Serif Khmer'}'`
+  const serif = `'${th.fontEn || 'Cormorant Garamond'}', ${km}, Georgia, serif`
+  return {
+    '--font-serif': serif,
+    '--font-script': `'Great Vibes', ${km}, cursive`,
+    '--font-heading': th.headingFont === 'sans' && !th.fontEn ? `'Jost', ${km}, system-ui, sans-serif` : serif,
+  }
+}
+const pickedFonts = computed(() => [w.value.theme.fontEn, w.value.theme.fontKm].filter(Boolean) as string[])
+
 const themeStyle = computed(() => {
   const th = w.value.theme
   return {
@@ -110,7 +121,8 @@ const themeStyle = computed(() => {
     '--c-secondary': th.secondary,
     '--c-tertiary': th.tertiary,
     '--c-text': th.text,
-    '--font-heading': th.headingFont === 'sans' ? 'var(--font-sans)' : 'var(--font-serif)',
+    // The chosen fonts replace the defaults in tokens.css; the browser picks the Khmer one glyph by glyph
+    ...displayFonts(th),
   }
 })
 
@@ -171,6 +183,7 @@ useHead(() => ({
     { rel: 'alternate', hreflang: 'km', href: `${siteUrl}${switchLocalePath('km')}` },
     { rel: 'alternate', hreflang: 'en', href: `${siteUrl}${switchLocalePath('en')}` },
     { rel: 'alternate', hreflang: 'x-default', href: `${siteUrl}${switchLocalePath('km')}` },
+    ...(pickedFonts.value.length ? [{ rel: 'stylesheet', href: fontsHref(pickedFonts.value) }] : []),
   ],
   // Tints the mobile browser bar to match
   meta: [{ name: 'theme-color', content: w.value.theme.background }],

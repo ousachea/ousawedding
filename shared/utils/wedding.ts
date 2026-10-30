@@ -4,6 +4,14 @@ export const TEXT_BLOCKS = ['story', 'thanks', 'apology'] as const
 /** Icons a schedule item can use (all drawn in WeddingIcon). */
 export const EVENT_ICONS = ['calendar', 'rings', 'lotus', 'incense', 'knot', 'scissors', 'gift', 'food', 'guests', 'music', 'heart', 'camera', 'dress', 'clock'] as const satisfies readonly EventIcon[]
 
+/** Display fonts the couple can pick from Google Fonts; '' keeps the default (Cormorant Garamond / Noto Serif Khmer). */
+export const FONTS_EN = ['Playfair Display', 'Cinzel', 'Lora', 'EB Garamond', 'Great Vibes', 'Dancing Script', 'Parisienne', 'Montserrat'] as const
+export const FONTS_KM = ['Moul', 'Battambang', 'Bayon', 'Koulen', 'Dangrek', 'Hanuman', 'Kantumruy Pro', 'Angkor', 'Fasthand', 'Siemreap', 'Noto Sans Khmer'] as const
+
+/** Google Fonts stylesheet for the given families. shortcut: regular weight only (some fonts have no others); bold is synthesised. */
+export const fontsHref = (families: readonly string[]) =>
+  `https://fonts.googleapis.com/css2?${families.map(f => `family=${f.replace(/ /g, '+')}`).join('&')}&display=swap`
+
 /** A guest's personal invitation link: the live site address plus their name, which the envelope shows. */
 export function inviteLink(wedding: { slug: string }, guestName: string, siteUrl = '', locale: 'km' | 'en' = 'km') {
   const prefix = locale === 'en' ? '/en' : ''
