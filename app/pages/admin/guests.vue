@@ -176,6 +176,7 @@ async function copy(url: string) {
             <td class="grow">
               <strong>{{ r.name }}</strong>
               <p class="muted small">{{ t(`admin.guests.sides.${r.side}`) }}<template v-if="r.phone"> · {{ r.phone }}</template></p>
+              <a v-if="!r.archived" :href="linkFor(r)" target="_blank" rel="noopener" class="small guest-link">{{ linkFor(r) }}</a>
             </td>
             <td :data-label="r.group ? t('admin.guests.group') : undefined">{{ r.group }}</td>
             <td class="num" :data-label="t('admin.guests.maxAttendees')">{{ r.maxAttendees }}</td>
@@ -247,5 +248,7 @@ async function copy(url: string) {
 </template>
 
 <style scoped>
+.guest-link { display: block; word-break: break-all; color: var(--c-muted); }
+.guest-link:hover { color: var(--c-secondary); }
 .bulk { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
 </style>

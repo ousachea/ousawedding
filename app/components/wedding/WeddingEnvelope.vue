@@ -91,6 +91,8 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
         <div class="letter">
           <WeddingOrnament :motif="motif" kind="flower" />
           <span class="letter-mono">{{ monogram }}</span>
+          <!-- The guest's name on the letter too, read as it rises out of the envelope -->
+          <p v-if="guestName" class="letter-guest">{{ t('envelope.dear', { name: guestName }) }}</p>
           <p class="invite">{{ t('envelope.invite') }}</p>
         </div>
         <div class="pocket">
@@ -185,6 +187,7 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   transition: transform 0.7s var(--ease-out) 0.45s;
 }
 .letter-mono { font-family: var(--font-serif); font-size: 1.6rem; color: var(--c-gold-deep); letter-spacing: 0.08em; }
+.letter-guest { font-family: var(--font-serif); font-size: clamp(1.4rem, 6vw, 1.7rem); font-weight: 600; line-height: 1.3; color: var(--c-gold-deep); text-wrap: balance; }
 .opening .letter { transform: translateY(-50%); }
 .opening .envelope { animation: none; }
 @keyframes float {
@@ -281,6 +284,7 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   .seal { width: 96px; height: 96px; }
   .seal-mono { font-size: 1.25rem; }
   .letter-mono { font-size: 2.1rem; }
+  .letter-guest { font-size: 2.1rem; }
   .for-guest { font-size: 1.5rem; }
 }
 

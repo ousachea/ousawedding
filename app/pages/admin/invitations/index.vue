@@ -22,28 +22,30 @@ watch(id, load, { immediate: true })
 // or tracked; anyone with a link can see the name in it. Without NUXT_PUBLIC_SITE_URL the links would point
 // at this computer, so the page warns instead.
 const siteUrl = useRuntimeConfig().public.siteUrl
-const locale = ref<Locale>('km')
-const linkFor = (g: Guest) => (wedding.value ? inviteLink(wedding.value, g.name, siteUrl || location.origin, locale.value) : '')
+const locale = ref<Locale>('en')
+const linkFor = (name: string) => (wedding.value ? inviteLink(wedding.value, name, siteUrl || location.origin, locale.value) : '')
+// A link for any name typed in, without adding them to the guest list
+const customName = ref('')
 
 const device = ref<'mobile' | 'desktop'>('mobile')
 const previewUrl = computed(() => (wedding.value ? localePath(`/${wedding.value.slug}`) : ''))
 
-async function copy(g: Guest) {
+async function copy(name: string) {
   try {
-    await navigator.clipboard.writeText(linkFor(g))
+    await navigator.clipboard.writeText(linkFor(name))
     push(t('common.copied'))
   } catch {
-    window.prompt(t('common.copy'), linkFor(g))
+    window.prompt(t('common.copy'), linkFor(name))
   }
 }
 const canShare = ref(false)
 onMounted(() => (canShare.value = typeof navigator.share === 'function'))
-async function share(g: Guest) {
+async function share(name: string) {
   try {
-    await navigator.share({ title: wedding.value!.share[locale.value].title, url: linkFor(g) })
+    await navigator.share({ title: wedding.value!.share[locale.value].title, url: linkFor(name) })
   } catch {}
 }
-const qrFor = ref<Guest | null>(null)
+const qrFor = ref<string | null>(null)
 </script>
 
 <template>
@@ -78,6 +80,19 @@ const qrFor = ref<Guest | null>(null)
       <p class="muted small hint">{{ t('admin.invitations.linksHint') }}</p>
       <p v-if="!siteUrl" class="notice small" role="alert">{{ t('admin.invitations.noSiteUrl') }}</p>
 
+      <div class="custom">
+        <label for="custom-name">{{ t('admin.invitations.customName') }}</label>
+        <div class="custom-row">
+          <input id="custom-name" v-model.trim="customName" class="input" maxlength="120" :placeholder="t('admin.invitations.customPlaceholder')">
+          <template v-if="customName">
+            <button type="button" class="btn btn-primary btn-sm" @click="copy(customName)">{{ t('common.copy') }}</button>
+            <button v-if="canShare" type="button" class="btn btn-ghost btn-sm" @click="share(customName)">{{ t('admin.invitations.share') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="qrFor = customName">{{ t('admin.invitations.qr') }}</button>
+          </template>
+        </div>
+        <p v-if="customName" class="muted small link">{{ linkFor(customName) }}</p>
+      </div>
+
       <p v-if="loading && !rows.length" class="muted">{{ t('common.loading') }}</p>
       <div v-else-if="!rows.length" class="empty-state">
         <p>{{ t('admin.invitations.noGuests') }}</p>
@@ -93,12 +108,12 @@ const qrFor = ref<Guest | null>(null)
           </thead>
           <tbody>
             <tr v-for="g in rows" :key="g.id">
-              <td class="grow"><strong>{{ g.name }}</strong><p class="muted small link">{{ linkFor(g) }}</p></td>
+              <td class="grow"><strong>{{ g.name }}</strong><p class="muted small link">{{ linkFor(g.name) }}</p></td>
               <td>
                 <div class="row-actions">
-                  <button type="button" class="btn btn-ghost btn-sm" @click="copy(g)">{{ t('common.copy') }}</button>
-                  <button v-if="canShare" type="button" class="btn btn-ghost btn-sm" @click="share(g)">{{ t('admin.invitations.share') }}</button>
-                  <button type="button" class="btn btn-ghost btn-sm" @click="qrFor = g">{{ t('admin.invitations.qr') }}</button>
+                  <button type="button" class="btn btn-ghost btn-sm" @click="copy(g.name)">{{ t('common.copy') }}</button>
+                  <button v-if="canShare" type="button" class="btn btn-ghost btn-sm" @click="share(g.name)">{{ t('admin.invitations.share') }}</button>
+                  <button type="button" class="btn btn-ghost btn-sm" @click="qrFor = g.name">{{ t('admin.invitations.qr') }}</button>
                 </div>
               </td>
             </tr>
@@ -107,7 +122,7 @@ const qrFor = ref<Guest | null>(null)
       </div>
     </section>
 
-    <AdminModal :open="!!qrFor" :title="`${t('admin.invitations.qr')}: ${qrFor?.name ?? ''}`" @close="qrFor = null">
+    <AdminModal :open="!!qrFor" :title="`${t('admin.invitations.qr')}: ${qrFor ?? ''}`" @close="qrFor = null">
       <div v-if="qrFor" class="qr-box">
         <AdminQrCode :value="linkFor(qrFor)" :size="240" />
         <p class="muted small url">{{ linkFor(qrFor) }}</p>
@@ -127,6 +142,10 @@ const qrFor = ref<Guest | null>(null)
 .frame-wrap iframe { width: 100%; height: 100%; border: 0; }
 .lang-select { min-height: 36px; padding: 0.2rem 0.5rem; width: auto; }
 .link { word-break: break-all; }
+.custom { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-5); padding-bottom: var(--space-5); border-bottom: 1px solid var(--c-line-soft); }
+.custom label { font-weight: 500; }
+.custom-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.custom-row .input { flex: 1 1 14rem; }
 .qr-box { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
 .url { word-break: break-all; text-align: center; }
 </style>

@@ -40,6 +40,7 @@
     "open": "Open invitation",
     "skip": "Skip",
     "for": "Specially for {name}",
+    "dear": "Dear {name}",
     "invite": "You are warmly invited to celebrate our wedding"
   },
   "music": {
@@ -219,6 +220,8 @@
       "desktop": "Desktop",
       "openPreview": "Open in new tab",
       "links": "Personal invitation links",
+      "customName": "Link for any name",
+      "customPlaceholder": "e.g. Mr. & Mrs. Sok Dara",
       "linksHint": "Each link is the invitation with the guest's name on the envelope. Nothing is tracked, and anyone with a link can see the name in it.",
       "generate": "Create link",
       "generateMissing": "Create links for all guests without one",

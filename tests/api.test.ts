@@ -211,7 +211,7 @@ describe('exports and isolation', () => {
     assert.ok(csv.text.startsWith('name,'))
     assert.match(csv.text, /"'=HYPERLINK\(""http:\/\/x""\)"/)
     assert.match(csv.text, /គ្រួសារ/)
-    assert.match(csv.text, /\/our-wedding\?to=Partial%20Renamed/)
+    assert.match(csv.text, /\/en\/our-wedding\/\?to=Partial%20Renamed/)
   })
 
   test('records from one wedding cannot be edited through another', async () => {
