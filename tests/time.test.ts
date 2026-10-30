@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { zonedTimeToUtc, formatDate, formatTime, eventDisplay, weddingDates, shiftLocal, minutesBetween } from '../shared/utils/time.ts'
+import { zonedTimeToUtc, formatDate, formatTime, eventDisplay, weddingDates, shiftLocal, minutesBetween, localDateParts } from '../shared/utils/time.ts'
 
 test('Phnom Penh (UTC+7, no DST) converts to UTC', () => {
   assert.equal(zonedTimeToUtc('2027-02-14T07:00', 'Asia/Phnom_Penh').toISOString(), '2027-02-14T00:00:00.000Z')
@@ -43,4 +43,14 @@ test('Khmer times use Khmer digits and the time of day as a word', () => {
   assert.equal(eventDisplay(at(14), at(15), 'Asia/Phnom_Penh').km.time, '២:០០ – ៣:០០ រសៀល')
   assert.equal(eventDisplay(at(10), at(12), 'Asia/Phnom_Penh').km.time, '១០:០០ ព្រឹក – ១២:០០ ថ្ងៃត្រង់')
   assert.match(eventDisplay(at(14), at(15), 'Asia/Phnom_Penh').en.time, /^2:00\s–\s3:00\sPM$/)
+})
+
+test('written-out Khmer date parts match ICU, so browsers without Khmer data render what the server did', () => {
+  for (let i = 0; i < 400; i += 7) {
+    const date = new Date(Date.UTC(2027, 0, 1 + i, 3))
+    const icu = new Intl.DateTimeFormat('km-KH-u-nu-khmr', { timeZone: 'Asia/Phnom_Penh', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).formatToParts(date)
+    const p = (t: string) => icu.find(x => x.type === t)!.value
+    assert.deepEqual(localDateParts(date, 'km', 'Asia/Phnom_Penh'), { weekday: p('weekday'), day: p('day'), month: p('month'), year: p('year') })
+  }
+  assert.equal(localDateParts(new Date('2027-01-01T00:00:00Z'), 'en', 'Asia/Phnom_Penh').weekday, 'Friday')
 })

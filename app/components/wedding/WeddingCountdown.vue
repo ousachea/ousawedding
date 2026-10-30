@@ -24,25 +24,25 @@ const status = computed(() => {
 })
 
 // Month calendar of the wedding, in the wedding's timezone. Depends only on data, so it renders on the server too.
-const intlLocale = computed(() => (locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US'))
 const calendar = computed(() => {
   const [y, m, d] = dayKey(target.value).split('-').map(Number) as [number, number, number]
   const eventDays = new Set(props.eventDays.map(iso => dayKey(Date.parse(iso))))
   const pad = (n: number) => String(n).padStart(2, '0')
-  const num = new Intl.NumberFormat(intlLocale.value)
+  const km = locale.value === 'km'
   const days = Array.from({ length: new Date(Date.UTC(y, m, 0)).getUTCDate() }, (_, i) => ({
-    n: num.format(i + 1),
+    n: km ? kmDigits(i + 1) : String(i + 1),
     wedding: i + 1 === d,
     event: eventDays.has(`${y}-${pad(m)}-${pad(i + 1)}`),
   }))
   // Leading blanks so the 1st falls under its weekday (weeks start on Monday)
   const cells = [...Array<null>((new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7).fill(null), ...days]
-  // Khmer one-letter weekdays repeat (អ, ព, ស), so Khmer uses the short names
-  const weekday = new Intl.DateTimeFormat(intlLocale.value, { weekday: locale.value === 'km' ? 'short' : 'narrow', timeZone: 'UTC' })
+  // Khmer one-letter weekdays repeat (អ, ព, ស), so Khmer uses the short names. Khmer is written out, not
+  // taken from Intl, so browsers without Khmer date data still match the server.
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'narrow', timeZone: 'UTC' })
   return {
-    title: new Intl.DateTimeFormat(intlLocale.value, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(y, m - 1, 1)),
+    title: km ? `${KM_MONTHS[m - 1]} ${kmDigits(y)}` : new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(y, m - 1, 1)),
     // 2023-01-02 was a Monday
-    weekdays: Array.from({ length: 7 }, (_, i) => weekday.format(Date.UTC(2023, 0, 2 + i))),
+    weekdays: Array.from({ length: 7 }, (_, i) => (km ? KM_WEEKDAYS_SHORT[(i + 1) % 7]! : weekday.format(Date.UTC(2023, 0, 2 + i)))),
     weeks: Array.from({ length: Math.ceil(cells.length / 7) }, (_, i) => cells.slice(i * 7, i * 7 + 7)),
   }
 })
@@ -50,7 +50,7 @@ const calendar = computed(() => {
 const units = computed(() => {
   const diff = now.value === null ? null : Math.max(0, target.value - now.value)
   // Khmer digits on the Khmer page, matching the size of the Khmer letters
-  const digits = (str: string) => (locale.value === 'km' ? str.replace(/\d/g, d => '០១២៣៤៥៦៧៨៩'[Number(d)]!) : str)
+  const digits = (str: string) => (locale.value === 'km' ? kmDigits(str) : str)
   const v = (fn: (d: number) => number) => (diff === null ? '–' : digits(String(fn(diff)).padStart(2, '0')))
   return [
     { key: 'days', value: diff === null ? '–' : digits(String(Math.floor(diff / 86_400_000))) },

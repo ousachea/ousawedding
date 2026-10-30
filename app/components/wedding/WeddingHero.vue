@@ -11,13 +11,7 @@ const hasParents = computed(() => !!(w.value.names[locale.value].parents1 || w.v
 const photos = computed(() => w.value.partnerPhotos ?? { partner1: '', partner2: '' })
 
 // Floral style shows the date as month, then "weekday │ day │ year"
-const dateParts = computed(() => {
-  const parts = new Intl.DateTimeFormat(locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US', {
-    timeZone: w.value.timezone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  }).formatToParts(new Date(props.data.dateUtc))
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)?.value ?? ''
-  return { weekday: part('weekday'), day: part('day'), month: part('month'), year: part('year') }
-})
+const dateParts = computed(() => localDateParts(new Date(props.data.dateUtc), locale.value, w.value.timezone))
 
 const step = (i: number) => ({ '--i': i })
 

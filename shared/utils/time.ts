@@ -37,6 +37,23 @@ export function isValidTimeZone(timeZone: string): boolean {
 // Khmer uses Khmer digits: Latin digits look much smaller than Khmer letters beside them
 const intlLocale = { km: 'km-KH-u-nu-khmr', en: 'en-US' } as const
 
+// Khmer names and digits written out, for text the browser also renders: some browsers have no Khmer
+// date data in Intl and would print English instead, which breaks hydration. Same names as ICU's km locale.
+export const KM_MONTHS = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ']
+// Sunday first, like Date.getUTCDay()
+export const KM_WEEKDAYS = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍']
+export const KM_WEEKDAYS_SHORT = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហ', 'សុក្រ', 'សៅរ៍']
+export const kmDigits = (s: string | number) => String(s).replace(/\d/g, d => '០១២៣៤៥៦៧៨៩'[Number(d)]!)
+
+/** The calendar day of `date` in `timeZone`, with names in `locale`; the same in every browser. */
+export function localDateParts(date: Date, locale: 'km' | 'en', timeZone: string) {
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', { timeZone }).format(date).split('-').map(Number) as [number, number, number]
+  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay()
+  if (locale === 'km') return { weekday: KM_WEEKDAYS[day]!, day: kmDigits(d), month: KM_MONTHS[m - 1]!, year: kmDigits(y) }
+  const en = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US', { ...o, timeZone: 'UTC' }).format(Date.UTC(y, m - 1, d))
+  return { weekday: en({ weekday: 'long' }), day: String(d), month: en({ month: 'long' }), year: String(y) }
+}
+
 export function formatDate(date: Date, locale: 'km' | 'en', timeZone: string): string {
   return new Intl.DateTimeFormat(intlLocale[locale], {
     timeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',

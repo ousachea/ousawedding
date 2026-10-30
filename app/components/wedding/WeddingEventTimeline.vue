@@ -8,7 +8,8 @@ const w = computed(() => props.data.wedding)
 
 // Khmer digits on the Khmer page
 const intlLocale = computed(() => (locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US'))
-const num = (n: number) => new Intl.NumberFormat(intlLocale.value).format(n)
+// Written out rather than Intl, which some browsers lack Khmer data for (the server has it: hydration mismatch)
+const num = (n: number) => (locale.value === 'km' ? kmDigits(n) : String(n))
 
 // Time left until each item. Set only after mount (then every minute) so server and client HTML match.
 const now = ref<number | null>(null)
