@@ -1,5 +1,5 @@
 // Link previews (Messenger, Telegram, …) read the page without running it, so for a personal link (?to=Name)
-// the guest's name is written into the title tags as the page is served. Used by the Netlify and Vercel hooks.
+// the guest's name is written into the title tags as the page is served. Used by the Netlify edge function.
 
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
