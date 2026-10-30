@@ -1,5 +1,7 @@
 {
   "common": {
+    "updateAvailable": "A new version is available.",
+    "refresh": "Refresh",
     "save": "Save",
     "saving": "Saving…",
     "saved": "Saved",
