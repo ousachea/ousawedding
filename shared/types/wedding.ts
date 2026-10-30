@@ -32,6 +32,8 @@ export interface Wedding {
   timezone: string
   content: Record<Locale, { message: string, dressCode: string, instructions: string, story: string, thanks: string, apology: string }>
   coverImage: string
+  // Each partner's portrait; missing on weddings saved before it existed
+  partnerPhotos?: { partner1: string, partner2: string }
   // Point of the cover photo kept in view when it is cropped, as CSS object-position ("50% 20%"); missing = centre
   coverPosition?: string
   theme: ThemeConfig

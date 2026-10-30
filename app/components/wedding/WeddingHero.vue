@@ -7,6 +7,8 @@ const locale = useLocaleCode()
 const w = computed(() => props.data.wedding)
 const other = computed<Locale>(() => (locale.value === 'km' ? 'en' : 'km'))
 const floral = computed(() => w.value.theme.style === 'floral')
+const hasParents = computed(() => !!(w.value.names[locale.value].parents1 || w.value.names[locale.value].parents2))
+const photos = computed(() => w.value.partnerPhotos ?? { partner1: '', partner2: '' })
 
 // Floral style shows the date as month, then "weekday │ day │ year"
 const dateParts = computed(() => {
@@ -18,6 +20,30 @@ const dateParts = computed(() => {
 })
 
 const step = (i: number) => ({ '--i': i })
+
+// The Polaroids lean as the phone is tilted (the envelope tap asks iPhones for motion access).
+// Writes --tilt-x/--tilt-y on the hero once per frame; desktops send no events, so they stay still.
+const hero = ref<HTMLElement>()
+let frame = 0
+function onTilt(e: DeviceOrientationEvent) {
+  if (e.beta === null || e.gamma === null || frame) return
+  const clamp = (v: number) => Math.max(-25, Math.min(25, v))
+  // beta ~45° is how a phone is usually held, so that counts as level
+  const x = clamp(e.beta - 45) * -0.5
+  const y = clamp(e.gamma) * 0.6
+  frame = requestAnimationFrame(() => {
+    frame = 0
+    hero.value?.style.setProperty('--tilt-x', `${x}deg`)
+    hero.value?.style.setProperty('--tilt-y', `${y}deg`)
+  })
+}
+onMounted(() => {
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) addEventListener('deviceorientation', onTilt)
+})
+onBeforeUnmount(() => {
+  removeEventListener('deviceorientation', onTilt)
+  cancelAnimationFrame(frame)
+})
 
 // Specks of warm light drifting up through the hero: left %, top %, size px, duration s, delay s.
 // Fixed numbers so server and browser render the same markup.
@@ -31,6 +57,7 @@ const motes = [
 <template>
   <section
     id="home"
+    ref="hero"
     class="hero"
     :class="{ intro: introDelay !== null }"
     :style="{ '--intro-delay': `${introDelay ?? 0}ms` }"
@@ -54,11 +81,17 @@ const motes = [
         <p class="names-alt step" :lang="other" :style="step(5)">
           {{ w.names[other].partner1 }} &amp; {{ w.names[other].partner2 }}
         </p>
-        <div v-if="w.names[locale].parents1 || w.names[locale].parents2" class="parents step" :style="step(5)">
-          <p v-for="n in ([1, 2] as const)" :key="n">
-            <span class="parents-label">{{ t('hero.parentsOf', { name: w.names[locale][`partner${n}`] }) }}</span>
-            {{ w.names[locale][`parents${n}`] }}
-          </p>
+        <div v-if="hasParents || photos.partner1 || photos.partner2" class="parents step" :style="step(5)">
+          <div v-for="n in ([1, 2] as const)" :key="n">
+            <figure v-if="photos[`partner${n}`]" class="polaroid">
+              <img :src="photos[`partner${n}`]" alt="" width="240" height="240" loading="lazy">
+              <figcaption>{{ w.names[locale][`partner${n}`] }}</figcaption>
+            </figure>
+            <p v-if="hasParents">
+              <span class="parents-label">{{ t('hero.parentsOf', { name: w.names[locale][`partner${n}`] }) }}</span>
+              {{ w.names[locale][`parents${n}`] }}
+            </p>
+          </div>
         </div>
         <WeddingOrnament :motif="w.theme.motif" class="step draw" :style="step(6)" />
         <div v-if="floral" class="date-block step" :style="step(7)">
@@ -101,6 +134,18 @@ const motes = [
 .and { font-size: 0.45em; font-style: italic; color: var(--c-accent-ink); }
 .names-alt { font-family: var(--font-serif); font-size: 1.2rem; color: var(--c-muted); }
 .parents { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); width: min(100%, 30rem); margin-top: var(--space-2); text-align: center; white-space: pre-line; }
+/* Each partner's portrait as a Polaroid print: white card, deeper bottom edge with the name, tilted towards each other */
+.polaroid {
+  width: min(100%, 10rem); margin: 0 auto var(--space-4); padding: 8px 8px 0;
+  background: #fffdf9; border-radius: 2px; rotate: -3deg;
+  transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 0.2s ease-out;
+  box-shadow: 0 12px 24px -12px rgb(40 30 20 / 0.45), 0 1px 3px rgb(40 30 20 / 0.15);
+}
+.parents > :nth-child(2) .polaroid { rotate: 3deg; }
+.polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
+.polaroid figcaption { padding: 0.35rem 0.25rem 0.6rem; font-family: var(--font-script); font-size: 1.15rem; line-height: 1.3; color: #3a3330; white-space: normal; }
+.polaroid figcaption:lang(km) { font-family: var(--font-serif); font-size: 0.95rem; }
 .parents-label { display: block; font-size: 0.8rem; letter-spacing: 0.04em; color: var(--c-accent-ink); }
 .date { font-family: var(--font-serif); font-size: 1.4rem; color: var(--c-text); }
 .time { font-size: 1rem; color: var(--c-muted); margin-top: calc(-1 * var(--space-2)); }

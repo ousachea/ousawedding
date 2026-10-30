@@ -23,6 +23,8 @@ export const weddingSchema = z.object({
     en: z.object({ message: text(2000), dressCode: text(500), instructions: text(2000), story: text(4000), thanks: text(3000).default(''), apology: text(3000).default('') }),
   }),
   coverImage: url,
+  // Each partner's portrait, shown above their parents' names
+  partnerPhotos: z.object({ partner1: url, partner2: url }).default({ partner1: '', partner2: '' }),
   coverPosition: z.string().regex(/^\d{1,3}(\.\d)?% \d{1,3}(\.\d)?%$/).default('50% 50%'),
   theme: z.object({
     background: color, accent: color, secondary: color, tertiary: color, text: color,

@@ -41,6 +41,7 @@ export function sampleWedding(slug = 'our-wedding') {
       },
     },
     coverImage: '/sample/cover.svg',
+    partnerPhotos: { partner1: '', partner2: '' },
     theme: {
       background: '#F5F0F6', accent: '#C9A24A', secondary: '#5B2A86', tertiary: '#2D1640', text: '#2A1F33',
       headingFont: 'serif', motif: 'lotus', style: 'classic',

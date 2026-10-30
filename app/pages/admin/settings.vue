@@ -22,7 +22,7 @@ watch(wedding, (w, old) => {
   }
   const { id: _id, createdAt: _c, updatedAt: _u, isSample: _s, ...rest } = structuredClone(toRaw(w))
   // Times are entered in the admin's own timezone, taken from the browser
-  draft.value = { ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
+  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
 }, { immediate: true })
 
 const saving = ref(false)
@@ -89,6 +89,12 @@ const partner1 = nameField('partner1')
 const partner2 = nameField('partner2')
 const parents1 = nameField('parents1')
 const parents2 = nameField('parents2')
+
+// Partner photos are picked from the uploaded gallery images
+const images = ref<GalleryImage[]>([])
+watch(base, async () => { images.value = await api<GalleryImage[]>(`${base.value}/gallery`).catch(() => []) }, { immediate: true })
+const photos = computed(() => draft.value!.partnerPhotos!)
+const imageLabel = (img: GalleryImage) => img.caption.en || img.caption.km || img.url.split('/').pop()
 const shareField = (key: 'title' | 'description') => computed<Localized>({
   get: () => ({ km: draft.value!.share.km[key], en: draft.value!.share.en[key] }),
   set: (v) => {
@@ -120,6 +126,25 @@ const previewSection = ref('home')
         <AdminLocalizedField v-model="partner2" :label="t('admin.settings.partner2')" required />
         <AdminLocalizedField v-model="parents1" :label="t('admin.settings.parentsOf', { name: draft.names.en.partner1 })" multiline />
         <AdminLocalizedField v-model="parents2" :label="t('admin.settings.parentsOf', { name: draft.names.en.partner2 })" multiline />
+        <fieldset v-for="key in (['partner1', 'partner2'] as const)" :key="key" class="field photo-pick">
+          <legend>{{ t('admin.settings.photoOf', { name: draft.names.en[key] }) }}</legend>
+          <div class="photo-grid">
+            <label class="photo-opt none">
+              <input v-model="photos[key]" type="radio" :name="`photo-${key}`" value="" class="visually-hidden">
+              <span>{{ t('admin.settings.noPhoto') }}</span>
+            </label>
+            <!-- A photo set before (e.g. by URL) that is not in the gallery stays selectable -->
+            <label v-if="photos[key] && !images.some(img => img.url === photos[key])" class="photo-opt">
+              <input v-model="photos[key]" type="radio" :name="`photo-${key}`" :value="photos[key]" class="visually-hidden">
+              <img :src="photos[key]" alt="">
+            </label>
+            <label v-for="img in images" :key="img.id" class="photo-opt" :title="imageLabel(img)">
+              <input v-model="photos[key]" type="radio" :name="`photo-${key}`" :value="img.url" class="visually-hidden" :aria-label="imageLabel(img)">
+              <img :src="img.thumbUrl || img.url" alt="" loading="lazy">
+            </label>
+          </div>
+        </fieldset>
+        <p class="hint">{{ t('admin.settings.photoHint') }}</p>
         <div class="field">
           <label for="s-mono">{{ t('admin.settings.monogram') }}</label>
           <input id="s-mono" v-model="draft.monogram" maxlength="12">
@@ -225,6 +250,14 @@ const previewSection = ref('home')
 .music-upload:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
 .music-preview { width: 100%; max-width: 24rem; }
 .panel h2 { font-size: 1.3rem; }
+.photo-pick { border: 0; padding: 0; margin: 0; min-width: 0; }
+.photo-pick legend { padding: 0; margin-bottom: var(--space-2); font-weight: 500; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr)); gap: var(--space-2); }
+.photo-opt { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; overflow: hidden; cursor: pointer; background: var(--c-line-soft); outline: 2px solid transparent; outline-offset: 2px; transition: outline-color 0.15s; }
+.photo-opt img { width: 100%; height: 100%; object-fit: cover; }
+.photo-opt.none span { font-size: 0.75rem; text-align: center; padding: var(--space-1); }
+.photo-opt:has(input:checked) { outline-color: var(--c-secondary); }
+.photo-opt:has(input:focus-visible) { outline-color: var(--c-secondary); outline-style: dashed; }
 .narrow { max-width: 14rem; }
 .text-block { position: relative; }
 .move { position: absolute; top: -0.4rem; right: 0; display: flex; gap: var(--space-1); }

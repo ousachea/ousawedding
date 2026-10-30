@@ -38,7 +38,7 @@
         "apology": "We humbly ask the forgiveness of Samdech, Excellencies, Lok Chumteav, Neak Oknha, Oknha, Ladies and Gentlemen and all our guests of honour for not delivering this invitation by hand, and for any misspelling of names. Thank you in advance for your understanding!"
       }
     },
-    "coverImage": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/PCdsmlNN3kYPsBy3.webp",
+    "coverImage": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/B7EaFsin-1crFimM.webp",
     "theme": {
       "background": "#F7F5F2",
       "accent": "#9F86C9",
@@ -79,12 +79,16 @@
       }
     },
     "createdAt": "2026-10-26T23:31:19.332Z",
-    "updatedAt": "2026-10-27T14:47:33.060Z",
-    "coverPosition": "50.7% 3.3%",
+    "updatedAt": "2026-10-30T15:17:53.014Z",
+    "coverPosition": "50% 29.3%",
     "shareImage": {
-      "url": "/uploads/weddings/rgbke4AtHLhcB8ro/share/b2tpgZ_qEsY2IupV.jpg",
-      "cover": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/PCdsmlNN3kYPsBy3.webp",
-      "position": "53.1% 5%"
+      "url": "/uploads/weddings/rgbke4AtHLhcB8ro/share/zxWhPIx2rPMD2lXq.jpg",
+      "cover": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/B7EaFsin-1crFimM.webp",
+      "position": "50% 33.7%"
+    },
+    "partnerPhotos": {
+      "partner1": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/sKItN4CNm1cZo5mV.webp",
+      "partner2": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/HYl5Ray7YCSIVe88.webp"
     }
   }
 }

@@ -227,6 +227,8 @@ function remaining(e: Item) {
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='46'%3E%3Cg fill='%238fa886' opacity='.85'%3E%3Cpath d='M12 16C8 16 3 13 2 7C7 7 11 10 12 16Z'/%3E%3Cpath d='M12 39C16 39 21 36 22 30C17 30 13 33 12 39Z'/%3E%3C/g%3E%3C/svg%3E") repeat-y;
 }
 .bloom { display: none; }
+/* The vine is drawn after the items, so lift the flower and number above its leaves */
+.style-floral .bloom, .style-floral .dot { z-index: 1; }
 .style-floral .bloom {
   display: block; position: absolute; left: -10.5px; top: -10.5px; width: 48px; height: 48px;
   fill: color-mix(in srgb, var(--c-accent) 45%, #fff); stroke: var(--c-accent); stroke-width: 0.8;

@@ -66,10 +66,10 @@ function place(i: number) {
   const d = offset(i) + drag.value
   const a = Math.abs(d)
   const far = a > 3
-  // Shift (as a share of the photo's width), size and opacity for 0, 1, 2 and 3 places from the middle
+  // Shift (as a share of the photo's width) and opacity for 0, 1, 2 and 3 places from the middle; every photo is full size
   return {
     '--d': d,
-    'transform': far ? 'translate3d(0, 0, 0) scale(0.5)' : `translate3d(${Math.sign(d) * curve([0, 32, 59, 70], a)}%, 0, 0) scale(${curve([1, 0.82, 0.66, 0.5], a)})`,
+    'transform': far ? `translate3d(${Math.sign(d) * 324}%, 0, 0)` : `translate3d(${Math.sign(d) * curve([0, 108, 216, 324], a)}%, 0, 0)`,
     'zIndex': 10 - Math.min(Math.round(a), 3),
     'opacity': far ? 0 : curve([1, 0.9, 0.75, 0], a),
   }
@@ -95,8 +95,8 @@ function onSwipeStart(e: PointerEvent) {
   hold()
   swipeX = e.clientX
   swipeY = e.clientY
-  // Dragging 40% of a photo's width pulls the photos one place (the side photo sits about a third over)
-  placeWidth = ((stage.value?.querySelector('.slide') as HTMLElement | null)?.offsetWidth ?? 300) * 0.4
+  // Dragging one photo's width (plus the gap) pulls the photos one place
+  placeWidth = ((stage.value?.querySelector('.slide') as HTMLElement | null)?.offsetWidth ?? 300) * 1.08
   dragged = false
 }
 function onSwipeMove(e: PointerEvent) {
@@ -213,8 +213,7 @@ onBeforeUnmount(() => {
 .section-title { text-align: center; font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
 .carousel { margin-top: var(--space-5); overflow: hidden; }
 /* All photos share one grid cell, so the stage is as tall as the tallest; place() then moves each one.
-   With the middle photo 50vw wide, the outer pair (66% size, moved 59% of a width) end
-   (0.59 + 0.33) × 50vw = 46vw from the centre, inside the screen. */
+   Photos sit side by side at full size; with the middle one 50vw wide, its neighbours peek in at the edges. */
 .stage {
   display: grid;
   justify-items: center;

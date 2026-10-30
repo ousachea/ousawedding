@@ -6,6 +6,11 @@ export default defineEventHandler(async (event) => {
   await useDb().delete('gallery', item.id)
   // Clear every place that used it, so the invitation shows no broken image
   if (wedding.coverImage === item.url) await useDb().update('weddings', wedding.id, { coverImage: '', updatedAt: nowIso() })
+  const photos = wedding.partnerPhotos
+  if (photos && (photos.partner1 === item.url || photos.partner2 === item.url)) {
+    const clear = (u: string) => (u === item.url ? '' : u)
+    await useDb().update('weddings', wedding.id, { partnerPhotos: { partner1: clear(photos.partner1), partner2: clear(photos.partner2) }, updatedAt: nowIso() })
+  }
   const events = await useDb().where<WeddingEvent>('events', 'weddingId', wedding.id)
   await Promise.all(events.filter(e => e.imageUrl === item.url).map(e => useDb().update('events', e.id, { imageUrl: '', updatedAt: nowIso() })))
   return { ok: true }
