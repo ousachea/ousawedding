@@ -65,6 +65,7 @@ export const guestSchema = z.object({
   group: text(60),
   householdId: text(60).default(''),
   maxAttendees: z.number().int().min(1).max(20),
+  spouse: z.enum(['', 'wife', 'husband']).default(''),
   phone: text(40).default(''),
   email: z.union([z.literal(''), z.email()]).default(''),
   notes: text(1000).default(''),

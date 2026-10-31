@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { addGuestToTitles, withGuestName } from '../shared/guest-preview.ts'
+import { inviteLink, parseSpouse, withSpouse } from '../shared/utils/wedding.ts'
 
 const page = (lang: string) => `<html lang="${lang}"><head><title>Ousa &amp; Kanha</title><meta property="og:title" content="Ousa & Kanha"><meta name="twitter:title" content="Ousa & Kanha"><meta property="og:description" content="x"></head></html>`
 
@@ -26,4 +27,20 @@ test('only successful HTML responses are rewritten', async () => {
   assert.equal(html.headers.get('content-length'), null)
   const css = new Response('body{}', { headers: { 'content-type': 'text/css' } })
   assert.equal(await withGuestName(css, 'A'), css)
+})
+
+test('a spouse joins the name in the page language, on the letter and in link previews', () => {
+  assert.equal(withSpouse('Sok Dara', 'wife', 'en'), 'Sok Dara and wife')
+  assert.equal(withSpouse('Sok Dara', 'husband', 'km'), 'Sok Dara និងស្វាមី')
+  assert.equal(withSpouse('Sok Dara', '', 'en'), 'Sok Dara')
+  assert.match(addGuestToTitles(page('km'), 'Chea Phalla', 'wife'), /<title>សូមគោរពជូន Chea Phalla និងភរិយា \| /)
+  assert.match(addGuestToTitles(page('en'), 'Chea Phalla', 'husband'), /<title>Specially for Chea Phalla and husband \| /)
+})
+
+test('personal links carry the spouse, and only wife or husband is read back', () => {
+  assert.equal(inviteLink({ slug: 'w' }, 'Sok Dara', 'https://x.app/', 'en', 'wife'), 'https://x.app/w/?to=Sok%20Dara&with=wife')
+  assert.equal(inviteLink({ slug: 'w' }, 'Sok', 'https://x.app', 'km'), 'https://x.app/km/w/?to=Sok')
+  assert.equal(parseSpouse('husband'), 'husband')
+  assert.equal(parseSpouse('<script>'), '')
+  assert.equal(parseSpouse(['wife']), '')
 })

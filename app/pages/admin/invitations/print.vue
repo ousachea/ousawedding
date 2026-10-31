@@ -15,7 +15,7 @@ watch(id, async () => {
 // Language chosen on the Invitations page; links use the live site address
 const locale: Locale = useRoute().query.lang === 'en' ? 'en' : 'km'
 const siteUrl = useRuntimeConfig().public.siteUrl
-const linkFor = (g: Guest) => (wedding.value ? inviteLink(wedding.value, g.name, siteUrl || location.origin, locale) : '')
+const linkFor = (g: Guest) => (wedding.value ? inviteLink(wedding.value, g.name, siteUrl || location.origin, locale, g.spouse) : '')
 const printPage = () => window.print()
 </script>
 
@@ -33,7 +33,7 @@ const printPage = () => window.print()
       <article v-for="r in rows" :key="r.id" class="card">
         <WeddingOrnament :motif="wedding?.theme.motif" kind="flower" />
         <p class="couple" :lang="locale">{{ wedding?.names[locale].partner1 }} &amp; {{ wedding?.names[locale].partner2 }}</p>
-        <p class="guest">{{ r.name }}</p>
+        <p class="guest">{{ withSpouse(r.name, r.spouse, locale) }}</p>
         <AdminQrCode :value="linkFor(r)" :size="140" />
         <p class="url">{{ linkFor(r) }}</p>
       </article>

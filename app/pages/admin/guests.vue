@@ -60,13 +60,13 @@ function toggle(rowId: string) {
 }
 
 // Add / edit
-const emptyGuest = () => ({ name: '', side: 'both' as GuestSide, group: '', householdId: '', maxAttendees: 2, phone: '', email: '', notes: '' })
+const emptyGuest = () => ({ name: '', side: 'both' as GuestSide, group: '', householdId: '', maxAttendees: 2, spouse: '' as Spouse, phone: '', email: '', notes: '' })
 const editing = ref<{ id: string | null, data: ReturnType<typeof emptyGuest> } | null>(null)
 const saving = ref(false)
 const openNew = () => (editing.value = { id: null, data: emptyGuest() })
 const openEdit = (r: Row) => (editing.value = {
   id: r.id,
-  data: { name: r.name, side: r.side, group: r.group, householdId: r.householdId, maxAttendees: r.maxAttendees, phone: r.phone, email: r.email, notes: r.notes },
+  data: { name: r.name, side: r.side, group: r.group, householdId: r.householdId, maxAttendees: r.maxAttendees, spouse: r.spouse ?? '', phone: r.phone, email: r.email, notes: r.notes },
 })
 async function saveGuest() {
   if (!editing.value || saving.value) return
@@ -103,9 +103,9 @@ async function remove(r: Row) {
   await load()
 }
 
-// Personal links: the live site address plus the guest's name
+// Personal links: the live site address plus the guest's name (and spouse)
 const siteUrl = useRuntimeConfig().public.siteUrl
-const linkFor = (r: Row) => (wedding.value ? inviteLink(wedding.value, r.name, siteUrl || location.origin) : '')
+const linkFor = (r: Row) => (wedding.value ? inviteLink(wedding.value, r.name, siteUrl || location.origin, 'en', r.spouse) : '')
 async function copy(url: string) {
   try {
     await navigator.clipboard.writeText(url)
@@ -174,7 +174,7 @@ async function copy(url: string) {
           <tr v-for="r in visible" :key="r.id" :class="{ archived: r.archived }">
             <td><input type="checkbox" :checked="selected.has(r.id)" :aria-label="r.name" @change="toggle(r.id)"></td>
             <td class="grow">
-              <strong>{{ r.name }}</strong>
+              <strong>{{ withSpouse(r.name, r.spouse, 'en') }}</strong>
               <p class="muted small">{{ t(`admin.guests.sides.${r.side}`) }}<template v-if="r.phone"> · {{ r.phone }}</template></p>
               <a v-if="!r.archived" :href="linkFor(r)" target="_blank" rel="noopener" class="small guest-link">{{ linkFor(r) }}</a>
             </td>
@@ -203,6 +203,18 @@ async function copy(url: string) {
         <div class="field">
           <label for="g-name">{{ t('admin.guests.name') }} *</label>
           <input id="g-name" v-model="editing.data.name" required maxlength="120">
+        </div>
+        <!-- Invited with their wife or husband: the envelope then reads "… and wife" / "… and husband" -->
+        <div class="field">
+          <label class="check">
+            <input type="checkbox" :checked="!!editing.data.spouse" @change="editing.data.spouse = ($event.target as HTMLInputElement).checked ? 'wife' : ''">
+            {{ t('admin.guests.withSpouse') }}
+          </label>
+          <div v-if="editing.data.spouse" class="spouse" role="radiogroup" :aria-label="t('admin.guests.withSpouse')">
+            <label class="check"><input v-model="editing.data.spouse" type="radio" value="wife"> {{ t('admin.guests.wife') }}</label>
+            <label class="check"><input v-model="editing.data.spouse" type="radio" value="husband"> {{ t('admin.guests.husband') }}</label>
+          </div>
+          <p v-if="editing.data.spouse" class="muted small">{{ t('admin.guests.spouseShown', { name: withSpouse(editing.data.name || t('admin.guests.name'), editing.data.spouse, 'en') }) }}</p>
         </div>
         <div class="form-grid cols-2">
           <div class="field">
@@ -250,5 +262,6 @@ async function copy(url: string) {
 <style scoped>
 .guest-link { display: block; word-break: break-all; color: var(--c-muted); }
 .guest-link:hover { color: var(--c-secondary); }
+.spouse { display: flex; gap: var(--space-4); padding-left: 1.6rem; }
 .bulk { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
 </style>

@@ -1,3 +1,5 @@
+import type { Spouse } from '../types/wedding.ts'
+
 /** The invitation's free-text blocks, in their default page order. */
 export const TEXT_BLOCKS = ['story', 'thanks', 'apology'] as const
 
@@ -12,12 +14,19 @@ export const FONTS_KM = ['Moul', 'Battambang', 'Bayon', 'Koulen', 'Dangrek', 'Ha
 export const fontsHref = (families: readonly string[]) =>
   `https://fonts.googleapis.com/css2?${families.map(f => `family=${f.replace(/ /g, '+')}`).join('&')}&display=swap`
 
-/** A guest's personal invitation link: the live site address plus their name, which the envelope shows. */
-export function inviteLink(wedding: { slug: string }, guestName: string, siteUrl = '', locale: 'km' | 'en' = 'en') {
+/** A guest's personal invitation link: the live site address plus their name (and spouse), which the envelope shows. */
+export function inviteLink(wedding: { slug: string }, guestName: string, siteUrl = '', locale: 'km' | 'en' = 'en', spouse: Spouse = '') {
   const prefix = locale === 'km' ? '/km' : ''
   // Trailing slash: the static host serves the page there directly, without a redirect first
-  return `${siteUrl.replace(/\/$/, '')}${prefix}/${wedding.slug}/?to=${encodeURIComponent(guestName)}`
+  return `${siteUrl.replace(/\/$/, '')}${prefix}/${wedding.slug}/?to=${encodeURIComponent(guestName)}${spouse ? `&with=${spouse}` : ''}`
 }
+
+const SPOUSE_WORDS = { en: { wife: 'and wife', husband: 'and husband' }, km: { wife: 'និងភរិយា', husband: 'និងស្វាមី' } }
+/** A guest's name as the envelope addresses them: "Sok Dara and wife", "សុខ ដារ៉ា និងភរិយា". */
+export const withSpouse = (name: string, spouse: Spouse | undefined, locale: 'km' | 'en') =>
+  spouse ? `${name} ${SPOUSE_WORDS[locale][spouse]}` : name
+/** The spouse from a link's `with=` value; anything else means none. */
+export const parseSpouse = (v: unknown): Spouse => (v === 'wife' || v === 'husband' ? v : '')
 
 /**
  * What a shared link shows: the page title (browser tab, Google), the title chat apps show, and the description.

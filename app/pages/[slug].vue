@@ -80,12 +80,16 @@ onMounted(() => {
 })
 onBeforeUnmount(() => stopTilt())
 
-// Personal links carry the guest's name (?to=…). The page is the same static file for everyone,
-// so the name is read in the browser after it loads.
+// Personal links carry the guest's name (?to=…), and with=wife or with=husband when their spouse is invited
+// too. The page is the same static file for everyone, so they are read in the browser after it loads.
+// The envelope addresses the couple ("… and wife"); the RSVP form is filled with the guest's own name.
 const guestName = ref('')
+const guestSpouse = ref<Spouse>('')
+const addressedTo = computed(() => guestName.value && withSpouse(guestName.value, guestSpouse.value, loc.value))
 onMounted(() => {
   const to = route.query.to
   if (typeof to === 'string') guestName.value = to.trim().slice(0, 120)
+  guestSpouse.value = parseSpouse(route.query.with)
 })
 
 const introDelay = ref<number | null>(null)
@@ -243,7 +247,7 @@ useSeoMeta({
       v-if="!isPreview"
       :monogram="w.monogram"
       :motif="w.theme.motif"
-      :guest-name="guestName"
+      :guest-name="addressedTo"
       @revealing="introDelay = $event; startMusic()"
     />
 

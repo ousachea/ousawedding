@@ -2,6 +2,8 @@ export type Locale = 'km' | 'en'
 export type Localized = Record<Locale, string>
 
 export type GuestSide = 'bride' | 'groom' | 'both'
+// A guest invited with their wife or husband ('' = on their own)
+export type Spouse = '' | 'wife' | 'husband'
 export type AdminRole = 'owner' | 'editor'
 export type Motif = 'lotus' | 'kbach' | 'none'
 export type WeddingStyle = 'classic' | 'floral'
@@ -87,6 +89,8 @@ export interface Guest {
   group: string
   householdId: string
   maxAttendees: number
+  // Missing on guests saved before this existed (= on their own)
+  spouse?: Spouse
   phone: string
   email: string
   notes: string

@@ -150,8 +150,11 @@ describe('guests', () => {
   test('creates a guest with validation', async () => {
     const bad = await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: '', side: 'both', group: '', maxAttendees: 0 } })
     assert.equal(bad.status, 400)
-    const res = await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: 'Test Household', side: 'groom', group: 'Friends', maxAttendees: 2 } })
+    const badSpouse = await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: 'X', side: 'both', group: '', maxAttendees: 1, spouse: 'cousin' } })
+    assert.equal(badSpouse.status, 400)
+    const res = await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: 'Test Household', side: 'groom', group: 'Friends', maxAttendees: 2, spouse: 'wife' } })
     assert.equal(res.status, 200)
+    assert.equal(res.json.spouse, 'wife')
     guestId = res.json.id
   })
 
@@ -204,6 +207,7 @@ describe('wedding content', () => {
 describe('exports and isolation', () => {
   test('CSV export is UTF-8 with BOM, neutralises formulas and includes personal links', async () => {
     await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: '=HYPERLINK("http://x")', side: 'both', group: 'គ្រួសារ', maxAttendees: 1 } })
+    await call(`${api}/guests`, { method: 'POST', auth: true, body: { name: 'Mr Couple', side: 'both', group: '', maxAttendees: 2, spouse: 'wife' } })
     const csv = await call(`${api}/guests/export.csv`, { auth: true })
     // fetch's text() drops the BOM, so check the raw bytes
     const raw = Buffer.from(await (await fetch(`${BASE}${api}/guests/export.csv`, { headers: { cookie } })).arrayBuffer())
@@ -212,6 +216,7 @@ describe('exports and isolation', () => {
     assert.match(csv.text, /"'=HYPERLINK\(""http:\/\/x""\)"/)
     assert.match(csv.text, /គ្រួសារ/)
     assert.match(csv.text, /\.app\/our-wedding\/\?to=Partial%20Renamed/)
+    assert.match(csv.text, /,wife,.*\?to=Mr%20Couple&with=wife/)
   })
 
   test('records from one wedding cannot be edited through another', async () => {
