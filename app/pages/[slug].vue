@@ -18,6 +18,8 @@ const floral = computed(() => w.value.theme.style === 'floral')
 // a CSS variable on the page would make the browser restyle every element on every frame.
 // iOS only reports tilt after the visitor allows it, and the request must come from a tap, so it is asked
 // on the first tap (usually "Open invitation" on the envelope). Smoothed so the flowers drift, not jitter.
+// Only clusters on screen move, and none while the page scrolls (a hand scrolling tilts the phone too, and the
+// scroll should have the phone to itself); they glide back into place once it stops.
 const page = ref<HTMLElement>()
 let stopTilt = () => {}
 onMounted(() => {
@@ -26,12 +28,31 @@ onMounted(() => {
   let target = [0, 0]
   const now = [0, 0]
   let frame = 0
+  const shown = new Set<Element>()
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) en.isIntersecting ? shown.add(en.target) : shown.delete(en.target)
+  })
+  // Clusters come and go with content (e.g. the story), so look again whenever scrolling stops
+  const watchFlorals = () => page.value?.querySelectorAll('.florals').forEach(el => io.observe(el))
+  let scrolling: ReturnType<typeof setTimeout> | undefined
   const step = () => {
     for (const i of [0, 1]) now[i]! += (target[i]! - now[i]!) * 0.1
     const move = `translate3d(${(now[0]! * 14).toFixed(2)}px, ${(now[1]! * 10).toFixed(2)}px, 0)`
-    for (const el of page.value?.querySelectorAll<SVGElement>('.florals') ?? []) el.style.transform = move
-    frame = Math.abs(target[0]! - now[0]!) + Math.abs(target[1]! - now[1]!) > 0.002 ? requestAnimationFrame(step) : 0
+    for (const el of shown) (el as SVGElement).style.transform = move
+    frame = !scrolling && Math.abs(target[0]! - now[0]!) + Math.abs(target[1]! - now[1]!) > 0.002 ? requestAnimationFrame(step) : 0
   }
+  const onScroll = () => {
+    clearTimeout(scrolling)
+    cancelAnimationFrame(frame)
+    frame = 0
+    scrolling = setTimeout(() => {
+      scrolling = undefined
+      watchFlorals()
+      frame = requestAnimationFrame(step)
+    }, 150)
+  }
+  watchFlorals()
+  addEventListener('scroll', onScroll, { passive: true })
   // gamma: left/right tilt; beta: forward/back. Forward/back is measured from how the visitor is holding the
   // phone (the first reading, then slowly following it), so lying in bed or standing both start level.
   // Full effect at 20° of tilt.
@@ -40,7 +61,7 @@ onMounted(() => {
     if (e.gamma === null || e.beta === null) return
     level = level === null ? e.beta : level + (e.beta - level) * 0.02
     target = [clamp(e.gamma / 20), clamp((e.beta - level) / 20)]
-    frame ||= requestAnimationFrame(step)
+    if (!scrolling) frame ||= requestAnimationFrame(step)
   }
   const start = () => addEventListener('deviceorientation', onTilt)
   // Called on DeviceOrientationEvent itself: Safari rejects a detached call ("Illegal invocation")
@@ -51,7 +72,10 @@ onMounted(() => {
   stopTilt = () => {
     removeEventListener('deviceorientation', onTilt)
     removeEventListener('click', askOnTap)
+    removeEventListener('scroll', onScroll)
+    clearTimeout(scrolling)
     cancelAnimationFrame(frame)
+    io.disconnect()
   }
 })
 onBeforeUnmount(() => stopTilt())
