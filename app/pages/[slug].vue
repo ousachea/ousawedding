@@ -1,4 +1,10 @@
 <script setup lang="ts">
+// Switching language changes the address (/km/…) but not the page: one key for both languages keeps this page,
+// with its opened envelope, the music and the scroll position, and just swaps the words
+definePageMeta({
+  key: route => `wedding-${route.params.slug}`,
+  scrollToTop: (to, from) => to.params.slug !== from.params.slug,
+})
 const route = useRoute()
 const { t, locale } = useI18n()
 const L = useLocalized()
