@@ -171,6 +171,8 @@ const motes = [
 .style-floral .hero { padding-top: clamp(9.5rem, 40vw, 14rem); }
 .style-floral .hero-inner { grid-template-columns: 1fr; }
 .style-floral .names { font-family: var(--font-script); font-size: clamp(3rem, 13vw, 5rem); line-height: 1.15; }
+/* Room for Khmer marks above and below the letters */
+.style-floral .names:lang(km) { line-height: 1.6; }
 .style-floral .and { font-family: var(--font-serif); font-size: 0.32em; }
 .date-block { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); margin-block: var(--space-3); }
 .db-month { font-family: var(--font-serif); font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; font-size: 0.85rem; }
@@ -224,6 +226,8 @@ const motes = [
     background-clip: text;
     color: transparent;
   }
+  /* Khmer marks above and below the line stay inside the painted area too */
+  .name:lang(km) { padding-block: 0.15em; }
 }
 /* Soft warm light behind the names */
 .names { position: relative; }

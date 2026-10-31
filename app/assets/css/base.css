@@ -29,6 +29,10 @@ body {
 /* Khmer stacks vowels and subscripts above and below the line, so it needs more leading */
 :lang(km) body, :lang(km) { line-height: 1.9; }
 :lang(km) h1, :lang(km) h2, :lang(km) h3 { line-height: 1.6; }
+/* Spacing between letters can pull Khmer vowels and subscripts away from their consonant, so Khmer never gets
+   any (whatever a component sets). Most Khmer display fonts (e.g. Fasthand, Moul) come in one weight with no
+   italic: no fake bold or slanted letters, a bold or italic style simply shows the regular font. */
+:lang(km) { letter-spacing: 0 !important; font-synthesis: none; }
 
 h1, h2, h3 {
   font-family: var(--font-heading);
