@@ -60,8 +60,8 @@ onBeforeUnmount(() => {
             :aria-current="current === s.id ? 'location' : undefined"
             @click="open = false"
           >
-            <span class="tab-label">{{ s.label }}</span>
             <WeddingIcon :name="s.icon" class="tab-icon" />
+            <span class="tab-label">{{ s.label }}</span>
           </a>
         </li>
       </ul>
@@ -80,14 +80,14 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Sticky at the end of the page, lifted off the bottom edge, in the corner. The blur behind the button
+/* Sticky at the end of the page, lifted off the bottom edge, in the bottom-left corner. The blur behind the button
    and the list keeps the gold icons readable over photos and text. */
 .dock {
   position: sticky;
   bottom: max(1rem, env(safe-area-inset-bottom));
   z-index: var(--z-nav);
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   padding-inline: 1rem;
   /* Only the button and the open list take taps */
   pointer-events: none;
@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
 /* The list grows up and out of the button's corner */
 .menu {
   position: absolute;
-  right: 0;
+  left: 0;
   bottom: calc(100% + 0.6rem);
   min-width: 11rem;
   margin: 0;
@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(14px) saturate(1.4);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.35);
-  transform-origin: 100% 100%;
+  transform-origin: 0 100%;
   opacity: 0;
   scale: 0.9;
   visibility: hidden;
@@ -142,11 +142,10 @@ onBeforeUnmount(() => {
 .tab {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 0.75rem;
   /* At least a 44px tap target */
   min-height: 2.9rem;
-  padding: 0.25rem 0.9rem 0.25rem 1.1rem;
+  padding: 0.25rem 1.1rem 0.25rem 0.9rem;
   border-radius: 999px;
   color: var(--c-gold);
   text-decoration: none;
