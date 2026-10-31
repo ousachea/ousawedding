@@ -2,7 +2,8 @@
 // Butterflies wandering over the whole page, each with its own pastel tint. Like the petals, a layer fixed
 // to the screen that taps go straight through. Colours and paths are random per visit, so they are
 // created in the browser only (the server renders the empty layer) and skipped when motion is reduced.
-// On phones and tablets they come to the visitor's finger while it touches the screen, then wander off again.
+// On phones and tablets they come to the visitor's finger while it rests on the screen, then wander off again.
+// A finger that moves is scrolling, so they leave it alone: chasing it would keep the phone busy mid-scroll.
 type Butterfly = { id: number, size: number, hue: number, sat: number, flap: number }
 const flock = ref<Butterfly[]>([])
 const els = new Map<number, HTMLElement>()
@@ -88,9 +89,18 @@ function chase(x: number, y: number) {
     flights.set(b.id, anim)
   }
 }
-const onTouch = (e: TouchEvent) => {
+let start: [number, number] | null = null
+const onTouchStart = (e: TouchEvent) => {
   const t = e.touches[0]
-  if (t) chase(t.clientX, t.clientY)
+  if (!t) return
+  start = [t.clientX, t.clientY]
+  chase(t.clientX, t.clientY)
+}
+const onTouchMove = (e: TouchEvent) => {
+  const t = e.touches[0]
+  if (!t || !start) return
+  if (Math.hypot(t.clientX - start[0], t.clientY - start[1]) > 10) start = null
+  else chase(t.clientX, t.clientY)
 }
 // After the finger lifts, a short pause, then off they go from wherever they are
 function release() {
@@ -117,16 +127,16 @@ onMounted(async () => {
   // Start anywhere on screen, a little apart in time so they don't all turn at once
   for (const b of flock.value) setTimeout(() => fly(b, [rand(0, 1) * innerWidth, rand(0.1, 0.9) * innerHeight]), b.id * 700)
   // Passive: only watching, so scrolling and taps work as normal
-  addEventListener('touchstart', onTouch, { passive: true })
-  addEventListener('touchmove', onTouch, { passive: true })
+  addEventListener('touchstart', onTouchStart, { passive: true })
+  addEventListener('touchmove', onTouchMove, { passive: true })
   addEventListener('touchend', release, { passive: true })
   addEventListener('touchcancel', release, { passive: true })
 })
 onBeforeUnmount(() => {
   stopped = true
   clearTimeout(resume)
-  removeEventListener('touchstart', onTouch)
-  removeEventListener('touchmove', onTouch)
+  removeEventListener('touchstart', onTouchStart)
+  removeEventListener('touchmove', onTouchMove)
   removeEventListener('touchend', release)
   removeEventListener('touchcancel', release)
   for (const a of flights.values()) a.cancel()
@@ -142,19 +152,22 @@ onBeforeUnmount(() => {
       class="butterfly"
       :style="{ '--size': `${b.size}px`, '--h': b.hue, '--s': `${b.sat}%`, '--flap': `${b.flap}s` }"
     >
-      <svg class="bob" viewBox="-20 -18 40 34">
-        <!-- Each side is one wing pair; they fold toward the body to flap -->
-        <g v-for="side in ['l', 'r']" :key="side" class="wing" :class="side">
+      <div class="bob">
+        <!-- Each side is one wing pair in its own <svg>; they fold toward the body to flap. Whole elements
+             move on the graphics chip, while shapes moving inside one <svg> are redrawn every frame on iPhone. -->
+        <svg v-for="side in ['l', 'r']" :key="side" class="wing" :class="side" viewBox="-20 -18 40 34">
           <g :transform="side === 'r' ? 'scale(-1 1)' : undefined">
             <path class="upper" d="M0 -2 C-5 -13 -18 -16 -18 -6 C-18 1 -9 3 0 0 Z" />
             <path class="lower" d="M0 1 C-7 2 -15 6 -12.5 12 C-9.5 16.5 -3 10.5 0 3 Z" />
             <circle cx="-11" cy="-7" r="2.2" class="spot" />
             <circle cx="-8" cy="8" r="1.4" class="spot" />
           </g>
-        </g>
-        <ellipse class="body" cx="0" cy="1" rx="1.3" ry="7" />
-        <path class="feelers" d="M-0.6 -5.5 C-2 -10 -4 -12.5 -5.5 -13.5 M0.6 -5.5 C2 -10 4 -12.5 5.5 -13.5" />
-      </svg>
+        </svg>
+        <svg viewBox="-20 -18 40 34">
+          <ellipse class="body" cx="0" cy="1" rx="1.3" ry="7" />
+          <path class="feelers" d="M-0.6 -5.5 C-2 -10 -4 -12.5 -5.5 -13.5 M0.6 -5.5 C2 -10 4 -12.5 5.5 -13.5" />
+        </svg>
+      </div>
     </div>
   </div>
 </template>
@@ -171,7 +184,8 @@ onBeforeUnmount(() => {
   opacity: 0.85;
   will-change: transform;
 }
-.bob { display: block; width: 100%; height: auto; overflow: visible; animation: bob 1.6s ease-in-out infinite alternate; }
+.bob { position: relative; aspect-ratio: 40 / 34; animation: bob 1.6s ease-in-out infinite alternate; }
+.bob svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 
 /* Pastel tint per butterfly, lighter at the wing tips */
 .upper { fill: hsl(var(--h) var(--s) 74%); }
@@ -181,8 +195,8 @@ onBeforeUnmount(() => {
 .body { fill: hsl(var(--h) 25% 22%); }
 .feelers { fill: none; stroke: hsl(var(--h) 25% 22%); stroke-width: 0.6; stroke-linecap: round; }
 
-/* Hinged on the body: with view-box, the origin is measured from the drawing's (0, 0), where the body is */
-.wing { transform-box: view-box; transform-origin: 0 0; animation: flap var(--flap) ease-in-out infinite alternate; }
+/* Hinged on the body, which runs down the middle of the drawing */
+.wing { transform-origin: 50% 0; animation: flap var(--flap) ease-in-out infinite alternate; }
 
 @keyframes flap { from { transform: scaleX(1); } to { transform: scaleX(0.25); } }
 @keyframes bob { from { translate: 0 -3px; } to { translate: 0 3px; } }
