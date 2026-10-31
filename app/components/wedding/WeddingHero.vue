@@ -128,10 +128,11 @@ const motes = [
 :lang(km) .names { font-size: clamp(2.1rem, 8.5vw, 3.6rem); }
 .and { font-size: 0.45em; font-style: italic; color: var(--c-accent-ink); }
 .names-alt { font-family: var(--font-serif); font-size: 1.2rem; color: var(--c-muted); }
-.parents { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); width: min(100%, 30rem); margin-top: var(--space-2); text-align: center; white-space: pre-line; }
+/* Wider than the text column on phones (nearly edge to edge), so the two Polaroids can be as big as possible */
+.parents { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); width: min(calc(100vw - 1.25rem), 36rem); margin-top: var(--space-2); text-align: center; white-space: pre-line; }
 /* Each partner's portrait as a Polaroid print: white card, deeper bottom edge with the name, tilted towards each other */
 .polaroid {
-  width: min(100%, 10rem); margin: 0 auto var(--space-4); padding: 8px 8px 0;
+  width: min(100%, 13rem); margin: 0 auto var(--space-4); padding: 8px 8px 0;
   background: #fffdf9; border-radius: 2px; rotate: -3deg;
   transition: transform 0.2s ease-out;
   box-shadow: 0 12px 24px -12px rgb(40 30 20 / 0.45), 0 1px 3px rgb(40 30 20 / 0.15);
