@@ -101,8 +101,8 @@ onBeforeUnmount(() => {
 .fab {
   display: grid;
   place-items: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 4rem;
+  height: 4rem;
   border: 1px solid color-mix(in srgb, var(--c-gold) 55%, transparent);
   border-radius: 50%;
   background: color-mix(in srgb, var(--c-bg) 55%, transparent);
@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
   transition: transform 0.2s var(--ease-out);
 }
 .fab:active { transform: scale(0.94); }
-.fab-icon { font-size: 1.5rem; stroke-width: 1.6; }
+.fab-icon { font-size: 1.75rem; stroke-width: 1.6; }
 
 /* The list grows up and out of the button's corner */
 .menu {
