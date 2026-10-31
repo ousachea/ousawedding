@@ -16,7 +16,8 @@ const dateParts = computed(() => localDateParts(new Date(props.data.dateUtc), lo
 const step = (i: number) => ({ '--i': i })
 
 // The Polaroids lean as the phone is tilted (the envelope tap asks iPhones for motion access).
-// Writes --tilt-x/--tilt-y on the hero once per frame; desktops send no events, so they stay still.
+// Sets each Polaroid's transform directly once per frame: a CSS variable on the hero would make the browser
+// restyle everything in it on every frame. Desktops send no events, so they stay still.
 const hero = ref<HTMLElement>()
 let frame = 0
 function onTilt(e: DeviceOrientationEvent) {
@@ -27,8 +28,8 @@ function onTilt(e: DeviceOrientationEvent) {
   const y = clamp(e.gamma) * 0.6
   frame = requestAnimationFrame(() => {
     frame = 0
-    hero.value?.style.setProperty('--tilt-x', `${x}deg`)
-    hero.value?.style.setProperty('--tilt-y', `${y}deg`)
+    const lean = `perspective(600px) rotateX(${x}deg) rotateY(${y}deg)`
+    for (const el of hero.value?.querySelectorAll<HTMLElement>('.polaroid') ?? []) el.style.transform = lean
   })
 }
 onMounted(() => {
@@ -132,7 +133,6 @@ const motes = [
 .polaroid {
   width: min(100%, 10rem); margin: 0 auto var(--space-4); padding: 8px 8px 0;
   background: #fffdf9; border-radius: 2px; rotate: -3deg;
-  transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
   transition: transform 0.2s ease-out;
   box-shadow: 0 12px 24px -12px rgb(40 30 20 / 0.45), 0 1px 3px rgb(40 30 20 / 0.15);
 }

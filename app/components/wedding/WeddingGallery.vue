@@ -163,7 +163,9 @@ onBeforeUnmount(() => {
         >
           <button type="button" class="thumb" :tabindex="offset(i) === 0 ? undefined : -1" :aria-label="t('gallery.open', { n: i + 1 })" @click="tap(i)">
             <span class="pic">
+              <!-- Only photos within three places load: each full-size photo is ~12 MB decoded, and all of them at once crash iPhone Safari -->
               <img
+                v-if="Math.abs(offset(i)) <= 3"
                 :src="img.url"
                 :srcset="img.thumbUrl && img.thumbUrl !== img.url ? `${img.thumbUrl} 427w, ${img.url} ${img.width}w` : undefined"
                 sizes="(min-width: 760px) 18rem, 50vw"
