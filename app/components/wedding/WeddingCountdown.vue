@@ -103,8 +103,8 @@ const units = computed(() => {
         </tbody>
       </table>
       <p v-reveal="240" class="legend" aria-hidden="true">
-        <span><span class="key wedding" />{{ t('countdown.weddingDay') }}</span>
         <span v-if="calendar.weeks.flat().some(d => d?.event && !d.wedding)"><span class="key event" />{{ t('countdown.ceremonyDay') }}</span>
+        <span><span class="key wedding" />{{ t('countdown.weddingDay') }}</span>
       </p>
       <!-- One calendar file with every schedule item at its own time (works with phone, Outlook and Google calendars) -->
       <p v-reveal="280" class="add-cal">
