@@ -29,6 +29,8 @@
   },
   "nav": {
     "label": "Invitation sections",
+    "open": "Open the sections menu",
+    "close": "Close the sections menu",
     "home": "Home",
     "schedule": "Schedule",
     "story": "Our story",
