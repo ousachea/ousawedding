@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="km">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khmer font test</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Great+Vibes&family=Fasthand&family=Noto+Serif+Khmer:wght@400;600&family=Battambang&family=Kantumruy+Pro&family=Moul&display=swap">
+<style>
+  body { margin: 0; padding: 16px; font: 15px/1.5 system-ui, sans-serif; background: #fbf7f0; color: #2b2622; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.note { margin: 0 0 16px; color: #6b625a; }
+  .row { display: grid; grid-template-columns: 2.2rem 1fr; gap: 8px; align-items: baseline; padding: 10px 0; border-top: 1px solid #e6ddd0; }
+  .tag { font: 700 18px system-ui, sans-serif; color: #a0612f; }
+  .how { display: block; font: 12px system-ui, sans-serif; color: #8a7f74; margin-bottom: 2px; }
+  .sample { font-size: 26px; line-height: 1.9; letter-spacing: 0; }
+  .gold { background: linear-gradient(105deg, #8a6420, #d9b867 50%, #8a6420); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0.15em 0.12em; }
+</style>
+</head>
+<body>
+<h1>Khmer font test</h1>
+<p class="note" lang="en">Look for dotted circles ◌ and note the letters (A, B, C …) of the rows that show them.</p>
+<div id="rows"></div>
+<script>
+  const text = 'ជូនចំពោះ ជា​ ឧស្សា និង នាក់​ កញ្ញា​ · លោក​ស្រី ឧកញ៉ា · សម្លៀកបំពាក់ប្រពៃណីខ្មែរ · មុនម៉ោង ១៥ នាទី។ · ក្តីស្រលាញ់ ជ្រាលជ្រៅ'
+  const rows = [
+    ['Fasthand on its own', "'Fasthand'"],
+    ['Fasthand after an English font (how the site does it)', "'Cormorant Garamond', 'Fasthand', serif"],
+    ['Fasthand after the script font (the names)', "'Great Vibes', 'Fasthand', cursive"],
+    ['Fasthand in gold foil (the names)', "'Great Vibes', 'Fasthand', cursive", 'gold'],
+    ['Fasthand with the hidden word-break spaces removed', "'Fasthand'", '', text.replace(/​/g, '')],
+    ['Fasthand with letter spacing (as before the last fix)', "'Fasthand'", '', null, '0.04em'],
+    ['Noto Serif Khmer (the default)', "'Noto Serif Khmer'"],
+    ['Battambang', "'Battambang'"],
+    ['Kantumruy Pro', "'Kantumruy Pro'"],
+    ['Moul', "'Moul'"],
+  ]
+  const box = document.getElementById('rows')
+  rows.forEach(([how, family, cls, sample, spacing], i) => {
+    const row = document.createElement('div')
+    row.className = 'row'
+    row.innerHTML = `<span class="tag">${String.fromCharCode(65 + i)}</span><div><span class="how" lang="en"></span><span class="sample"></span></div>`
+    row.querySelector('.how').textContent = how
+    const s = row.querySelector('.sample')
+    s.textContent = sample ?? text
+    s.style.fontFamily = family
+    if (cls) s.classList.add(cls)
+    if (spacing) s.style.letterSpacing = spacing
+    box.append(row)
+  })
+</script>
+</body>
+</html>
