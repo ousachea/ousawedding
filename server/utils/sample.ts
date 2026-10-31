@@ -46,7 +46,7 @@ export function sampleWedding(slug = 'our-wedding') {
       background: '#F5F0F6', accent: '#C9A24A', secondary: '#5B2A86', tertiary: '#2D1640', text: '#2A1F33',
       headingFont: 'serif', motif: 'lotus', style: 'classic',
     },
-    defaultLocale: 'km',
+    defaultLocale: 'en',
     rsvp: { deadline: '2027-01-25T23:59', formUrl: '' },
     privacy: { allowIndexing: false },
     textOrder: ['story', 'thanks', 'apology'],

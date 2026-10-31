@@ -6,8 +6,8 @@ const { t } = useI18n()
 const { wedding } = useCurrentWedding()
 
 const frame = ref<HTMLIFrameElement>()
-const locale = ref<Locale>('km')
-const src = computed(() => wedding.value && `${locale.value === 'en' ? '/en' : ''}/${wedding.value.slug}?preview=1`)
+const locale = ref<Locale>('en')
+const src = computed(() => wedding.value && `${locale.value === 'km' ? '/km' : ''}/${wedding.value.slug}?preview=1`)
 function send() {
   if (!props.draft) return
   frame.value?.contentWindow?.postMessage({ type: 'wedding-preview', draft: JSON.parse(JSON.stringify(props.draft)), section: props.section }, location.origin)

@@ -80,15 +80,15 @@ describe('public invitation', () => {
     assert.equal((await call('/api/public/weddings/nope')).status, 404)
   })
 
-  test('server HTML is noindex, Khmer by default, English under /en', async () => {
-    const km = await call('/our-wedding')
-    assert.equal(km.status, 200)
-    assert.match(km.text, /<html[^>]*lang="km"/)
-    assert.match(km.text, /name="robots" content="noindex, nofollow"/)
-    assert.match(km.text, /Ousa Chea/)
-    const en = await call('/en/our-wedding')
+  test('server HTML is noindex, English by default, Khmer under /km', async () => {
+    const en = await call('/our-wedding')
+    assert.equal(en.status, 200)
     assert.match(en.text, /<html[^>]*lang="en"/)
+    assert.match(en.text, /name="robots" content="noindex, nofollow"/)
+    assert.match(en.text, /Ousa Chea/)
     assert.match(en.text, /Wedding schedule/)
+    const km = await call('/km/our-wedding')
+    assert.match(km.text, /<html[^>]*lang="km"/)
   })
 
   test('root redirects to the default wedding', async () => {
@@ -103,7 +103,7 @@ describe('public invitation', () => {
     const res = await call('/wedding/our-wedding?to=Sok')
     assert.equal(res.status, 301)
     assert.match(res.headers.get('location') ?? '', /\/our-wedding\?to=Sok$/)
-    assert.match((await call('/en/wedding/our-wedding')).headers.get('location') ?? '', /\/en\/our-wedding$/)
+    assert.match((await call('/en/our-wedding?to=Sok')).headers.get('location') ?? '', /\/our-wedding\?to=Sok$/)
   })
 
   test('calendar files hold the whole schedule in the wedding timezone, per language', async () => {
@@ -211,7 +211,7 @@ describe('exports and isolation', () => {
     assert.ok(csv.text.startsWith('name,'))
     assert.match(csv.text, /"'=HYPERLINK\(""http:\/\/x""\)"/)
     assert.match(csv.text, /គ្រួសារ/)
-    assert.match(csv.text, /\/en\/our-wedding\/\?to=Partial%20Renamed/)
+    assert.match(csv.text, /\.app\/our-wedding\/\?to=Partial%20Renamed/)
   })
 
   test('records from one wedding cannot be edited through another', async () => {

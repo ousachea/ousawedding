@@ -6,7 +6,7 @@ function weddingRoutes() {
   try {
     slugs = Object.values(JSON.parse(readFileSync('content/weddings.json', 'utf8')) as Record<string, { slug: string }>).map(w => w.slug)
   } catch {}
-  return ['/', ...slugs.flatMap(s => [`/${s}`, `/en/${s}`, `/api/public/weddings/${s}/events/all.ics`, `/api/public/weddings/${s}/events/all-en.ics`])]
+  return ['/', ...slugs.flatMap(s => [`/${s}`, `/km/${s}`, `/api/public/weddings/${s}/events/all.ics`, `/api/public/weddings/${s}/events/all-en.ics`])]
 }
 
 export default defineNuxtConfig({
@@ -43,23 +43,25 @@ export default defineNuxtConfig({
 
   i18n: {
     locales: [
-      { code: 'km', language: 'km-KH', name: 'ខ្មែរ', file: 'km.json' },
       { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
+      { code: 'km', language: 'km-KH', name: 'ខ្មែរ', file: 'km.json' },
     ],
-    defaultLocale: 'km',
+    defaultLocale: 'en',
     strategy: 'prefix_except_default',
     detectBrowserLanguage: false,
   },
 
   routeRules: {
     // The admin is English only
-    '/admin': { redirect: '/en/admin' },
-    '/en/admin': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
-    '/admin/**': { redirect: '/en/admin/**' },
-    '/en/admin/**': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
-    // Old invitation links (query string, e.g. ?invite=, is kept)
+    '/admin': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/admin/**': { ssr: false, headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/km/admin': { redirect: '/admin' },
+    '/km/admin/**': { redirect: '/admin/**' },
+    '/en/admin': { redirect: '/admin' },
+    '/en/admin/**': { redirect: '/admin/**' },
+    // Old invitation links (query string, e.g. ?invite=, is kept). English used to live under /en.
     '/wedding/**': { redirect: { to: '/**', statusCode: 301 } },
-    '/en/wedding/**': { redirect: { to: '/en/**', statusCode: 301 } },
+    '/en/**': { redirect: { to: '/**', statusCode: 301 } },
   },
 
   // The published site is static: every invitation page is built ahead of time from content/.

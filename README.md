@@ -2,7 +2,7 @@
 
 A Khmer and English wedding invitation website, published as a **static site** (no server, no database). Built with Nuxt 4. You edit everything in an admin dashboard that runs only on your computer; pushing your changes rebuilds the site on Vercel or Netlify.
 
-- Invitation: `/<slug>` (Khmer) and `/en/<slug>` (English), e.g. `/ousa-kanha`. The site root opens the default wedding; old `/wedding/<slug>` links redirect.
+- Invitation: `/<slug>` (English) and `/km/<slug>` (Khmer), e.g. `/ousa-kanha`. The site root opens the default wedding; old `/wedding/<slug>` links redirect.
 - Personal link: `/<slug>?to=<guest name>`: the envelope greets the guest by name.
 - RSVP: a "Reply now" button that opens your Google Form (or any form) until the deadline.
 - Admin (on your computer only): `http://localhost:8000/admin`
@@ -138,7 +138,7 @@ content/                           The published wedding content
 tests/                             node:test suites
 ```
 
-Wedding content is stored in both languages; interface text is in the locale files. Khmer is the default language, and English lives under `/en`.
+Wedding content is stored in both languages; interface text is in the locale files. English is the default language, and Khmer lives under `/km`; old `/en/` links redirect.
 
 ### Privacy
 

@@ -6,7 +6,7 @@ const isDev = import.meta.dev
 <template>
   <div>
     <slot />
-    <NuxtLink v-if="isDev && !$route.query.preview" to="/en/admin" class="dev-admin btn btn-primary">Admin</NuxtLink>
+    <NuxtLink v-if="isDev && !$route.query.preview" to="/admin" class="dev-admin btn btn-primary">Admin</NuxtLink>
   </div>
 </template>
 

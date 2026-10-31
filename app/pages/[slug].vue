@@ -182,7 +182,7 @@ useHead(() => ({
     // The same invitation in the other language
     { rel: 'alternate', hreflang: 'km', href: `${siteUrl}${switchLocalePath('km')}` },
     { rel: 'alternate', hreflang: 'en', href: `${siteUrl}${switchLocalePath('en')}` },
-    { rel: 'alternate', hreflang: 'x-default', href: `${siteUrl}${switchLocalePath('km')}` },
+    { rel: 'alternate', hreflang: 'x-default', href: `${siteUrl}${switchLocalePath('en')}` },
     ...(pickedFonts.value.length ? [{ rel: 'stylesheet', href: fontsHref(pickedFonts.value) }] : []),
   ],
   // Tints the mobile browser bar to match

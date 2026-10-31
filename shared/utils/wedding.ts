@@ -14,7 +14,7 @@ export const fontsHref = (families: readonly string[]) =>
 
 /** A guest's personal invitation link: the live site address plus their name, which the envelope shows. */
 export function inviteLink(wedding: { slug: string }, guestName: string, siteUrl = '', locale: 'km' | 'en' = 'en') {
-  const prefix = locale === 'en' ? '/en' : ''
+  const prefix = locale === 'km' ? '/km' : ''
   // Trailing slash: the static host serves the page there directly, without a redirect first
   return `${siteUrl.replace(/\/$/, '')}${prefix}/${wedding.slug}/?to=${encodeURIComponent(guestName)}`
 }
