@@ -25,8 +25,10 @@ const siteUrl = useRuntimeConfig().public.siteUrl
 const locale = ref<Locale>('en')
 type Who = { name: string, spouse?: Spouse }
 const linkFor = (who: Who) => (wedding.value ? inviteLink(wedding.value, who.name, siteUrl || location.origin, locale.value, who.spouse) : '')
-// A link for any name typed in, without adding them to the guest list
+// A link for any name typed in (with their spouse, if ticked), without adding them to the guest list
 const customName = ref('')
+const customSpouse = ref<Spouse>('')
+const custom = computed<Who>(() => ({ name: customName.value, spouse: customSpouse.value }))
 
 const device = ref<'mobile' | 'desktop'>('mobile')
 const previewUrl = computed(() => (wedding.value ? localePath(`/${wedding.value.slug}`) : ''))
@@ -86,12 +88,23 @@ const qrFor = ref<Who | null>(null)
         <div class="custom-row">
           <input id="custom-name" v-model.trim="customName" class="input" maxlength="120" :placeholder="t('admin.invitations.customPlaceholder')">
           <template v-if="customName">
-            <button type="button" class="btn btn-primary btn-sm" @click="copy({ name: customName })">{{ t('common.copy') }}</button>
-            <button v-if="canShare" type="button" class="btn btn-ghost btn-sm" @click="share({ name: customName })">{{ t('admin.invitations.share') }}</button>
-            <button type="button" class="btn btn-ghost btn-sm" @click="qrFor = { name: customName }">{{ t('admin.invitations.qr') }}</button>
+            <button type="button" class="btn btn-primary btn-sm" @click="copy(custom)">{{ t('common.copy') }}</button>
+            <button v-if="canShare" type="button" class="btn btn-ghost btn-sm" @click="share(custom)">{{ t('admin.invitations.share') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="qrFor = custom">{{ t('admin.invitations.qr') }}</button>
           </template>
         </div>
-        <p v-if="customName" class="muted small link">{{ linkFor({ name: customName }) }}</p>
+        <div class="spouse">
+          <label class="check">
+            <input type="checkbox" :checked="!!customSpouse" @change="customSpouse = ($event.target as HTMLInputElement).checked ? 'wife' : ''">
+            {{ t('admin.guests.withSpouse') }}
+          </label>
+          <template v-if="customSpouse">
+            <label class="check"><input v-model="customSpouse" type="radio" value="wife"> {{ t('admin.guests.wife') }}</label>
+            <label class="check"><input v-model="customSpouse" type="radio" value="husband"> {{ t('admin.guests.husband') }}</label>
+          </template>
+        </div>
+        <p v-if="customName && customSpouse" class="muted small">{{ t('admin.guests.spouseShown', { name: withSpouse(customName, customSpouse, locale) }) }}</p>
+        <p v-if="customName" class="muted small link">{{ linkFor(custom) }}</p>
       </div>
 
       <p v-if="loading && !rows.length" class="muted">{{ t('common.loading') }}</p>
@@ -147,6 +160,7 @@ const qrFor = ref<Who | null>(null)
 .custom label { font-weight: 500; }
 .custom-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .custom-row .input { flex: 1 1 14rem; }
+.spouse { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
 .qr-box { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
 .url { word-break: break-all; text-align: center; }
 </style>
