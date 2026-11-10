@@ -7,6 +7,7 @@ const locale = useLocaleCode()
 const w = computed(() => props.data.wedding)
 const other = computed<Locale>(() => (locale.value === 'km' ? 'en' : 'km'))
 const floral = computed(() => w.value.theme.style === 'floral')
+const ruby = computed(() => w.value.theme.style === 'ruby')
 const hasParents = computed(() => !!(w.value.names[locale.value].parents1 || w.value.names[locale.value].parents2))
 const photos = computed(() => w.value.partnerPhotos ?? { partner1: '', partner2: '' })
 
@@ -89,7 +90,7 @@ const motes = [
           </div>
         </div>
         <WeddingOrnament :motif="w.theme.motif" class="step draw" :style="step(6)" />
-        <div v-if="floral" class="date-block step" :style="step(7)">
+        <div v-if="floral || ruby" class="date-block step" :style="step(7)">
           <p class="db-month">{{ dateParts.month }}</p>
           <p class="db-row"><span>{{ dateParts.weekday }}</span><span class="db-day">{{ dateParts.day }}</span><span>{{ dateParts.year }}</span></p>
           <p class="time tabular">{{ data.display[locale].time }}</p>
@@ -106,9 +107,11 @@ const motes = [
       </div>
       <div v-if="w.coverImage" class="photo step-photo">
         <span class="halo" aria-hidden="true" />
+        <WeddingFlorals v-if="ruby" variant="garland" class="garland garland-top" />
         <span class="frame">
           <img :src="w.coverImage" :style="{ objectPosition: w.coverPosition }" :alt="`${w.names[locale].partner1} & ${w.names[locale].partner2}`" width="800" height="1000" fetchpriority="high">
         </span>
+        <WeddingFlorals v-if="ruby" variant="garland" flip :seed="1" class="garland garland-bottom" />
       </div>
     </div>
     <a href="#schedule" class="scroll-cue" :aria-label="t('hero.details')">
@@ -191,6 +194,23 @@ const motes = [
 .style-floral .frame {
   mask: var(--torn-top) top / 100% 18px no-repeat, linear-gradient(#000 0 0) center / 100% calc(100% - 34px) no-repeat, var(--torn-bottom) bottom / 100% 18px no-repeat;
 }
+
+/* Ruby style: a serif title, red handwritten names, the photo as a plain rectangle with flowers across its top and bottom edges, a ruled date */
+.style-ruby .hero { padding-top: var(--space-7); }
+.style-ruby .hero-inner { grid-template-columns: 1fr; }
+.style-ruby .eyebrow { font-family: var(--font-serif); font-size: 1.7rem; letter-spacing: 0; text-transform: none; color: var(--c-text); }
+.style-ruby .names { font-family: var(--font-script); font-weight: 400; font-size: clamp(3rem, 12vw, 4.4rem); line-height: 1.15; color: var(--c-secondary); }
+.style-ruby .names:lang(km) { line-height: 1.6; }
+.style-ruby .and { font-family: var(--font-serif); font-size: 0.32em; color: var(--c-text); }
+.style-ruby .photo { width: min(100%, 22rem); padding: 0; border: 0; border-radius: 0; margin-block: var(--space-5); }
+.style-ruby .halo { display: none; }
+.style-ruby .frame, .style-ruby .photo img { border-radius: 0; outline: 0; }
+.garland { position: absolute; left: 50%; width: 92%; translate: -50% 0; z-index: 1; pointer-events: none; }
+.garland-top { top: -2.6rem; }
+.garland-bottom { bottom: -2.6rem; }
+.style-ruby .db-day { color: var(--c-secondary); }
+.style-ruby .db-row > span:not(.db-day) { font-family: var(--font-script); text-transform: none; font-size: 1.6rem; letter-spacing: 0; border-color: var(--c-secondary); color: var(--c-secondary); }
+.style-ruby .db-month { display: none; }
 
 /* Two columns from tablet portrait (e.g. 800px wide) upwards */
 @media (min-width: 760px) {

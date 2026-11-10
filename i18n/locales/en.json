@@ -290,7 +290,8 @@
       "style": "Style",
       "styles": {
         "classic": "Classic (gold & lotus)",
-        "floral": "Floral watercolour (lavender & paper)"
+        "floral": "Floral watercolour (lavender & paper)",
+        "ruby": "Ruby red (embossed red & white paper)"
       },
       "styleHint": "Choosing a style also sets its colours; you can change them below.",
       "dateHint": "The big day. The schedule and RSVP deadline move with it.",

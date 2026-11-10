@@ -271,4 +271,22 @@ function remaining(e: Item) {
   .style-floral .item:nth-child(even) .actions { justify-content: flex-end; }
   .style-floral .item:nth-child(even) .venue { flex-direction: row-reverse; }
 }
+
+/* Ruby style: each event is a red embossed arch (photo on top, handwritten title, white button) */
+.style-ruby .timeline::before, .style-ruby .dot { display: none; }
+.style-ruby .item { padding: 0 var(--space-3) var(--space-6); }
+.style-ruby .day-title { font-family: var(--font-script); font-weight: 400; font-size: 2rem; color: var(--c-secondary); }
+.style-ruby .card { background: var(--emboss), var(--c-secondary); color: #fff; border: 0; border-radius: 12rem 12rem 7rem 7rem; text-align: center; box-shadow: 0 18px 30px -18px rgb(80 0 10 / 0.7); }
+.style-ruby .card-img { aspect-ratio: 1; }
+.style-ruby .card-body { align-items: center; padding: var(--space-5) var(--space-5) 4rem; }
+.style-ruby .when, .style-ruby .desc, .style-ruby .venue-icon { color: #fff; justify-content: center; }
+.style-ruby .when { font-size: 1.1rem; }
+.style-ruby .event-title { flex-direction: column; font-family: var(--font-script); font-weight: 400; font-size: 2.6rem; line-height: 1.2; }
+.style-ruby .event-title:lang(km) { font-size: 1.6rem; line-height: 1.6; }
+.style-ruby .event-icon { font-size: 2.2rem; color: #fff; }
+.style-ruby .desc { opacity: 0.9; }
+.style-ruby .venue { justify-content: center; text-align: center; text-transform: uppercase; letter-spacing: 0.04em; }
+.style-ruby .venue-text { display: flex; flex-direction: column; }
+.style-ruby .left { background: rgb(255 255 255 / 0.18); }
+.style-ruby .actions .btn { background: #fff; border-color: #fff; color: var(--c-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
 </style>

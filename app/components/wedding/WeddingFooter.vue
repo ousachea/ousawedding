@@ -34,4 +34,9 @@ const locale = useLocaleCode()
 .style-floral .footer { background: transparent; color: var(--c-text); }
 .style-floral .rings { color: var(--c-secondary); }
 .style-floral .names { font-family: var(--font-script); font-size: clamp(2.6rem, 11vw, 3.6rem); }
+
+/* Ruby style: white handwriting straight on the red page */
+.style-ruby .footer { background: transparent; color: #fff; }
+.style-ruby .rings, .style-ruby .footer :deep(.ornament) { color: #fff; }
+.style-ruby .names { font-family: var(--font-script); font-size: clamp(2.6rem, 11vw, 3.6rem); }
 </style>

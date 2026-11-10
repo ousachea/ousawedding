@@ -211,3 +211,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .wedding.style-floral .section-title:lang(km) { font-size: 1.4rem; letter-spacing: 0.02em; text-transform: none; }
 .wedding.style-floral .section-icon { color: var(--c-secondary); }
 .wedding.style-floral .section-icon::before { display: none; }
+
+/* Ruby style: the page is embossed red, and the invitation is a sheet of white linen paper laid on it.
+   The textures are SVG lighting filters (no image files). Section-specific touches live in each component. */
+.wedding.themed.style-ruby {
+  --emboss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='3' seed='4'/%3E%3CfeDiffuseLighting lighting-color='%23a8101f' surfaceScale='7'%3E%3CfeDistantLight azimuth='225' elevation='55'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23f)'/%3E%3C/svg%3E");
+  --linen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .7' numOctaves='2' seed='2'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.2'%3E%3CfeDistantLight azimuth='225' elevation='72'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E");
+  background: var(--emboss), var(--c-secondary);
+}
+.wedding.style-ruby main { max-width: 34rem; margin: var(--space-6) auto; background: var(--linen), #fdfbf8; box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.55); }
+.wedding.style-ruby .btn { border-radius: 999px; }
+.wedding.style-ruby .btn-primary { background: var(--c-secondary); }
+.wedding.style-ruby .section-title { font-family: var(--font-script); font-weight: 400; font-size: clamp(2.2rem, 8vw, 3rem); color: var(--c-secondary); }
+.wedding.style-ruby .section-title:lang(km) { font-size: 1.6rem; line-height: 1.6; }
+.wedding.style-ruby .section-icon { color: var(--c-secondary); }
+.wedding.style-ruby .section-icon::before { display: none; }

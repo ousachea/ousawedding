@@ -10,6 +10,7 @@ const DEFAULT_THEME: ThemeConfig = { background: '#F5F0F6', accent: '#C9A24A', s
 const STYLE_THEMES: Record<WeddingStyle, ThemeConfig> = {
   classic: DEFAULT_THEME,
   floral: { background: '#F7F5F2', accent: '#9F86C9', secondary: '#7D5BAA', tertiary: '#5A4675', text: '#3A3242', headingFont: 'serif', motif: 'none', style: 'floral' },
+  ruby: { background: '#8B0F1A', accent: '#C8364A', secondary: '#8B0F1A', tertiary: '#8B0F1A', text: '#2E1A1C', headingFont: 'serif', motif: 'none', style: 'ruby' },
 }
 // Fonts are not part of a style, so they are kept
 const setStyle = (s: WeddingStyle) => (theme.value = { ...STYLE_THEMES[s], fontEn: theme.value?.fontEn, fontKm: theme.value?.fontKm })
@@ -54,6 +55,7 @@ async function save() {
                 <select id="s-style" :value="theme.style ?? 'classic'" @change="setStyle(($event.target as HTMLSelectElement).value as WeddingStyle)">
                   <option value="classic">{{ t('admin.settings.styles.classic') }}</option>
                   <option value="floral">{{ t('admin.settings.styles.floral') }}</option>
+                  <option value="ruby">{{ t('admin.settings.styles.ruby') }}</option>
                 </select>
                 <p class="hint">{{ t('admin.settings.styleHint') }}</p>
               </div>

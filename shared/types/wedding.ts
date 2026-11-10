@@ -6,7 +6,7 @@ export type GuestSide = 'bride' | 'groom' | 'both'
 export type Spouse = '' | 'wife' | 'husband'
 export type AdminRole = 'owner' | 'editor'
 export type Motif = 'lotus' | 'kbach' | 'none'
-export type WeddingStyle = 'classic' | 'floral'
+export type WeddingStyle = 'classic' | 'floral' | 'ruby'
 export type TextBlock = 'story' | 'thanks' | 'apology'
 export type EventIcon = 'calendar' | 'rings' | 'lotus' | 'incense' | 'knot' | 'scissors' | 'gift' | 'food' | 'guests' | 'music' | 'heart' | 'camera' | 'dress' | 'clock'
 

@@ -30,7 +30,7 @@ export const weddingSchema = z.object({
     background: color, accent: color, secondary: color, tertiary: color, text: color,
     headingFont: z.enum(['serif', 'sans']),
     motif: z.enum(['lotus', 'kbach', 'none']),
-    style: z.enum(['classic', 'floral']).default('classic'),
+    style: z.enum(['classic', 'floral', 'ruby']).default('classic'),
     fontEn: z.enum(['', ...FONTS_EN]).default(''),
     fontKm: z.enum(['', ...FONTS_KM]).default(''),
   }),

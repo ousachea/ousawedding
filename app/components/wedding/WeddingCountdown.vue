@@ -172,6 +172,23 @@ const units = computed(() => {
 .add-cal .btn:hover { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
 @media (min-width: 760px) { .calendar td { width: 3.2rem; height: 3rem; } .day { width: 2.8rem; height: 2.8rem; } }
 
+/* Ruby style: a red embossed panel with a stadium-shaped foot, big white digits separated by colons */
+.style-ruby .countdown { margin: var(--space-6) var(--space-3); padding-bottom: 7rem; background: var(--emboss), var(--c-secondary); border-radius: 1.5rem 1.5rem 12rem 12rem; }
+.style-ruby .section-icon { color: #fff; }
+.style-ruby .title, .style-ruby .calendar caption { color: #fff; font-family: var(--font-script); font-weight: 400; font-size: 2rem; }
+.style-ruby .title:lang(km) { font-size: 1.5rem; line-height: 1.6; }
+.style-ruby .units { gap: 1rem; }
+.style-ruby .unit { position: relative; border: 0; padding-inline: 0; }
+.style-ruby .unit:not(:last-child)::after {
+  content: ':'; position: absolute; right: -0.5rem; top: var(--space-3); translate: 50% 0;
+  font-family: var(--font-serif); font-size: clamp(2.2rem, 10vw, 3.2rem); line-height: 1.1; color: #fff;
+}
+.style-ruby .num { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+.style-ruby .day.wedding { color: var(--c-secondary); }
+.style-ruby .day.wedding::before, .style-ruby .key.wedding { background: #fff; }
+.style-ruby .add-cal .btn { background: #fff; border-color: #fff; color: var(--c-secondary); }
+.style-ruby .add-cal .btn:hover { background: #fff; }
+
 /* Floral style: on the paper, large lavender digits separated by colons */
 .style-floral .countdown { background: transparent; color: var(--c-text); }
 .style-floral .section-icon { color: var(--c-secondary); }

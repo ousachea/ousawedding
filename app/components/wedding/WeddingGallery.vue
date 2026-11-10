@@ -268,6 +268,10 @@ onBeforeUnmount(() => {
 }
 
 /* Floral frame: printed photos on white paper, tilted left and right, straightening when centred */
+/* Ruby frame: arched photos on white paper, a thin red line round them */
+.style-ruby .thumb { padding: 8px; background: #fff; border: 1px solid var(--c-secondary); border-radius: 999px 999px 4px 4px; box-shadow: var(--shadow-sm); }
+.style-ruby .pic { border-radius: 999px 999px 0 0; }
+
 .style-floral .thumb {
   padding: 8px 8px 24px; border-radius: 2px; background: #fffdf9;
   box-shadow: 0 10px 22px -12px rgb(60 40 80 / 0.45), 0 1px 2px rgb(60 40 80 / 0.12);
