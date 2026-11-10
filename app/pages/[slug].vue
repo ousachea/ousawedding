@@ -164,11 +164,10 @@ const themeStyle = computed(() => {
 const blockTitle = { story: 'story.title', thanks: 'thanks.title', apology: 'thanks.apologyTitle' } as const
 const textBlocks = computed(() => (w.value.textOrder ?? TEXT_BLOCKS)
   .map(key => ({ key, text: L({ km: w.value.content.km[key], en: w.value.content.en[key] }) }))
-  .filter(b => b.text))
+  .filter(b => b.key !== 'story' && b.text))
 
 const sections = computed(() => [
   { id: 'schedule', label: t('nav.schedule'), icon: 'calendar' as const },
-  ...(L({ km: w.value.content.km.story, en: w.value.content.en.story }) ? [{ id: 'story', label: t('nav.story'), icon: 'heart' as const }] : []),
   ...(data.value!.gallery.length ? [{ id: 'gallery', label: t('nav.gallery'), icon: 'camera' as const }] : []),
   { id: 'rsvp', label: t('nav.rsvp'), icon: 'envelope' as const },
 ])

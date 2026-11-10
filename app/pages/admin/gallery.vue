@@ -158,16 +158,16 @@ async function move(index: number, step: number) {
 .upload { cursor: pointer; }
 .upload.busy { opacity: 0.7; cursor: progress; }
 .upload:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
-.grid { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.grid { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); align-items: start; }
 .item { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
 .item.hidden .thumb img { opacity: 0.45; }
 .thumb { position: relative; }
-.thumb img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-sm); }
+.thumb img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); } /* natural aspect ratio from the width/height attributes */
 .uses { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .uses .badge { white-space: normal; }
 /* Cover: cropped 4:5 like on the invitation, with the chosen point marked */
 .cover-crop { display: block; width: 100%; padding: 0; border: 0; cursor: crosshair; background: none; }
-.cover-crop img { aspect-ratio: 4 / 5; }
+.cover-crop img { aspect-ratio: 4 / 5; object-fit: cover; }
 .focus { position: absolute; width: 18px; height: 18px; translate: -50% -50%; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4); pointer-events: none; }
 .linked h2 { font-size: 1.1rem; margin-bottom: var(--space-3); }
 .linked ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
