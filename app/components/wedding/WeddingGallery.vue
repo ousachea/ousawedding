@@ -275,7 +275,7 @@ onBeforeUnmount(() => {
 }
 .style-floral .slide:not(.current) .thumb { rotate: calc(var(--d) * 2deg); }
 .style-floral .slide.current .thumb { rotate: 0deg; }
-.style-floral .pic { border-radius: 0; }.thumb img { width: 100%; max-height: 62svh; object-fit: cover; transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
+.style-floral .pic { border-radius: 0; }.thumb img { display: block; width: 100%; height: auto; /* natural aspect ratio, never cropped (slide width already keeps a 2:3 portrait on screen) */ transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
 @media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
 .slide:not(.current) .thumb { cursor: pointer; }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }
