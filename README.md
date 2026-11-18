@@ -1,23 +1,25 @@
 # ousawedding
 
-A Khmer and English wedding invitation website, published as a **static site** (no server, no database). Built with Nuxt 4. You edit everything in an admin dashboard that runs only on your computer; pushing your changes rebuilds the site on Vercel or Netlify.
+A Khmer and English wedding invitation website, published as a **static site** on Netlify (no server, no database; one small function sends RSVP alerts). Built with Nuxt 4. You edit everything in an admin dashboard that runs only on your computer; pushing your changes rebuilds the site on Netlify.
 
 - Invitation: `/<slug>` (English) and `/km/<slug>` (Khmer), e.g. `/ousa-kanha`. The site root opens the default wedding; old `/wedding/<slug>` links redirect.
-- Personal link: `/<slug>?to=<guest name>`: the envelope greets the guest by name.
-- RSVP: a "Reply now" button that opens your Google Form (or any form) until the deadline.
+- Personal link: `/<slug>/<GuestName>`, e.g. `/ousa-kanha/MrCheaOusa`: the envelope and letter greet the guest by name (see *Personal links*).
+- RSVP: a form on the invitation that sends each reply to you on Telegram, or a "Reply now" button to your own form (e.g. a Google Form), until the deadline.
 - Admin (on your computer only): `http://localhost:8000/admin`
 
 ## Live site
 
-- **https://ousawedding.vercel.app**: Vercel builds the static site from this repository on every push (Netlify works the same way; see *Publish*).
+- **https://ousawedding.netlify.app**: Netlify builds the static site from this repository on every push (see *Publish*).
 - **GitHub Pages:** https://ousachea.github.io/ousawedding/ shows the earlier one-page invitation and no longer updates.
 
 ## What guests see
 
 - **Envelope:** a purple envelope with gold trim and a gold foil seal. Opening it raises the letter ("You are warmly invited to celebrate our wedding"), then shows the invitation from the top. The page can't scroll behind it (iPhone included). The same tap goes fullscreen where the browser allows it (Android, iPad) and asks iPhone for motion access, for the tilting flowers.
 - **Cover:** the couple's names, date and cover photo, with flowers in the corners that sway and lean as the phone tilts.
-- **Schedule:** grouped by day, one column on phones. The line draws down with the reader and each item's dot fills in as it is reached. Dress code with the wedding colours (the theme's purples and gold), guest information and a contact number.
-- **Gallery:** a stack of up to five photos, all inside the screen, that plays on its own and loops. Swipe or tap a side photo to move; tap the middle one for full screen.
+- **Schedule:** grouped by day, one column on phones. The line draws down with the reader and each item's dot fills in as it is reached. Below it, three cards of equal height: dress code with the wedding colours (the theme's purples and gold), guest information, and the contact numbers as call buttons.
+- **Gallery:** a stack of up to five photos, all inside the screen, that plays non-stop while on screen. Swipe or tap a side photo to move; tap the middle one for full screen.
+- **Reply:** "Can you make it?" as two cards (yes / no). Saying yes opens a guest counter; typing a name opens an optional phone number. Each reply is sent to the couple on Telegram, and the guest sees an animated thank-you.
+- **Wedding gift:** the couple's KHQR codes, one row per bank with its logo. Tapping a bank opens its code (gold corners, a scan line) and closes the others; all close once the section is scrolled away. The code tilts under the finger, opens large when tapped, and can be saved to the phone's photos to scan from a banking app.
 - **Around the page:** falling petals, butterflies in random pastel tints that gather around a finger on phones and tablets, and still greenery down both sides.
 - **Navigation:** a slim top bar (monogram, music, language) and a floating gold bottom bar with an icon per section. Both tuck away while scrolling down and come back when scrolling up.
 - Visitors who turn on *reduce motion* get the same page without the animations.
@@ -89,7 +91,7 @@ When there is no content yet, the app starts with sample content.
 
 ## Publish
 
-Commit and push the content; Vercel or Netlify rebuilds the static site (about a minute):
+Commit and push the content; Netlify rebuilds the static site (about a minute):
 
 ```sh
 git add content public/uploads
@@ -97,17 +99,56 @@ git commit -m "Update invitation"
 git push
 ```
 
-`npm run build` generates every page into static files (Vercel detects this automatically; `netlify.toml` tells Netlify to publish `dist/`). The live address, used in share previews, personal links and calendar files, defaults to `https://ousawedding.vercel.app` in `nuxt.config.ts`; set `NUXT_PUBLIC_SITE_URL` on the host to use another. No other settings or secrets are needed.
+`npm run build` generates every page into static files (`netlify.toml` tells Netlify to publish `dist/`). The live address, used in share previews, personal links and calendar files, is the one Netlify gives the build (`https://ousawedding.netlify.app` otherwise, in `nuxt.config.ts`); set `NUXT_PUBLIC_SITE_URL` on Netlify to use another. The only secrets are the two Telegram settings below.
 
-Uploaded photos are named by a unique ID and never change, so `vercel.json` and `netlify.toml` let browsers cache them for a year; pages are always re-checked, so changes show up straight away.
+Uploaded photos are named by a unique ID and never change, so `netlify.toml` lets browsers cache them for a year; pages are always re-checked, so changes show up straight away.
 
 ### RSVP replies
 
-Create a Google Form (name, attending, number of guests, message…), paste its link in **Settings → RSVP**, and replies collect in the form's Google Sheet. The invitation shows the button until the RSVP deadline.
+The invitation has its own form (name, attending, number of guests, optional phone and message). Each reply is sent to you on Telegram by `netlify/functions/rsvp.ts` (on the dev server, `server/api/rsvp.post.ts`). Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env` and in Netlify (Site configuration → Environment variables): create a bot with @BotFather, send it a message, then find your chat ID at `https://api.telegram.org/bot<token>/getUpdates`.
+
+To use a Google Form instead, paste its link in **Settings → RSVP**; the invitation then shows a button to it. Either way, replies close at the RSVP deadline.
 
 ### Personal links
 
-**Invitations** lists a link and QR code per guest (Khmer or English), with printable cards. A link is just the invitation address plus the guest's name, so nothing is tracked and anyone with a link can see the name in it.
+**Invitations** lists a link and QR code per guest (Khmer or English), with printable cards, and builds a link for any name you type. A link is just the invitation address plus the guest's name, so nothing is tracked and anyone with a link can see the name in it.
+
+You can also type a link by hand: add the guest's name after the address, without spaces. Add `/km` before the wedding for the Khmer invitation.
+
+```
+https://ousawedding.netlify.app/ousa-kanha/MrCheaOusa
+https://ousawedding.netlify.app/km/ousa-kanha/MrCheaOusa
+```
+
+The name is split at each capital letter (`CheaOusa` → Chea Ousa); a dash or underscore also works (`chea-ousa`). Khmer names are shown exactly as typed. A title at the start is written out in the invitation's language:
+
+| Type in the link | English invitation | Khmer invitation |
+|---|---|---|
+| `MrCheaOusa` | Mr. Chea Ousa | លោក Chea Ousa |
+| `MrsCheaOusa` | Mrs. Chea Ousa | លោកស្រី Chea Ousa |
+| `MrAndMrsCheaOusa` | Mr. & Mrs. Chea Ousa | លោក និងលោកស្រី Chea Ousa |
+| `MsChea` | Ms. Chea | អ្នកនាង Chea |
+| `MissSokha` | Miss Sokha | កញ្ញា Sokha |
+| `DrSokDara` | Dr. Sok Dara | បណ្ឌិត Sok Dara |
+| `HECheaOusa` | H.E. Chea Ousa | ឯកឧត្តម Chea Ousa |
+| `HEAndLokChumteavCheaOusa` | H.E. & Lok Chumteav Chea Ousa | ឯកឧត្តម និងលោកជំទាវ Chea Ousa |
+| `LokChumteavSokha` | Lok Chumteav Sokha | លោកជំទាវ Sokha |
+| `OknhaSokDara` | Oknha Sok Dara | អ្នកឧកញ៉ា Sok Dara |
+| `OknhaAndLokChumteavSokDara` | Oknha & Lok Chumteav Sok Dara | អ្នកឧកញ៉ា និងលោកជំទាវ Sok Dara |
+| `SamdechSokDara` | Samdech Sok Dara | សម្តេច Sok Dara |
+| `LokKruSokha` | Lok Kru Sokha | លោកគ្រូ Sokha |
+| `NeakKruDara` | Neak Kru Dara | អ្នកគ្រូ Dara |
+
+Tips:
+
+- Start the name with a capital after the title (`MrSokha`, not `Mrsokha`), or use dashes (`mr-sokha`).
+- For couples write `MrAndMrs`, not `Mr&Mrs`: a `&` can break a link.
+- The title also shows in chat-app link previews. The RSVP form is filled with the name alone.
+- Titles and spacing are in `guestNameFromLink` (`shared/utils/wedding.ts`); the short address is a redirect in `netlify.toml` (and `server/middleware/guest-path.ts` on the dev server).
+
+### Wedding gift (KHQR)
+
+In **Settings → Wedding gift**, add up to four KHQR images (from your banking app: receive money, save the QR) with the account name and bank. Each upload is cropped to the code alone, so every code shows at the same size. Banks named ABA, ACLEDA or Canadia show their logo (`public/banks/`). The section is hidden until a code is added.
 
 ### Checks
 

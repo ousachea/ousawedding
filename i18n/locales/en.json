@@ -35,7 +35,8 @@
     "schedule": "Schedule",
     "story": "Our story",
     "gallery": "Gallery",
-    "rsvp": "RSVP"
+    "rsvp": "Reply",
+    "gift": "Gift"
   },
   "envelope": {
     "label": "Wedding invitation envelope",
@@ -52,7 +53,7 @@
   "hero": {
     "parentsOf": "Parents of {name}",
     "invite": "Wedding invitation",
-    "rsvp": "RSVP now",
+    "rsvp": "Will you join us?",
     "details": "View details",
     "and": "&"
   },
@@ -94,13 +95,28 @@
     "alt": "{names}, photo {n} of {total}"
   },
   "rsvp": {
-    "title": "RSVP",
+    "title": "Will you join us?",
     "deadline": "Kindly reply by {date}",
-    "closed": "RSVPs closed on {date}. Please contact the couple if your plans have changed.",
+    "closed": "Replies closed on {date}. Please contact the couple if your plans have changed.",
     "greeting": "Dear {name}",
-    "intro": "Please let us know whether you can join us.",
+    "intro": "We'd love to celebrate with you.",
     "reply": "Reply now",
-    "noForm": "Please reply to the couple directly."
+    "name": "Your name",
+    "attending": "Can you make it?",
+    "yes": "Yes, I'll be there",
+    "no": "Sorry, I can't come",
+    "guests": "How many of you are coming?",
+    "message": "A note for the couple (optional)",
+    "send": "Send reply",
+    "failed": "Your reply couldn't be sent. Please try again, or contact the couple directly.",
+    "thanksYes": "Thank you! We can't wait to celebrate with you.",
+    "thanksNo": "Thank you for letting us know. You'll be missed.",
+    "messageHint": "Wishes, a song request, anything…",
+    "sending": "Sending",
+    "fewer": "One fewer guest",
+    "more": "One more guest",
+    "phone": "Phone number",
+    "optional": "(optional)"
   },
   "footer": {
     "thanks": "With love and gratitude"
@@ -155,7 +171,7 @@
       "general": "Open RSVP form",
       "daysLeft": "Days to go",
       "publishTitle": "Publish your changes",
-      "publishHint": "Edits are saved on this computer (content/ and public/uploads/). To update the live invitation, commit and push them; Vercel or Netlify rebuilds the site in about a minute. The guest list stays on this computer and is never published.",
+      "publishHint": "Edits are saved on this computer (content/ and public/uploads/). To update the live invitation, commit and push them; Netlify rebuilds the site in about a minute. The guest list stays on this computer and is never published.",
       "repliesTitle": "RSVP replies",
       "repliesHint": "Guests reply through your form; open its responses (or linked Google Sheet) to see who is coming.",
       "openForm": "Open the form",
@@ -249,7 +265,7 @@
       },
       "deadline": "RSVP deadline",
       "noGuests": "Add guests first, then create their invitation links.",
-      "noSiteUrl": "Set NUXT_PUBLIC_SITE_URL in .env to your live address (e.g. https://ousawedding.vercel.app) and restart; until then these links point at this computer."
+      "noSiteUrl": "Set NUXT_PUBLIC_SITE_URL in .env to your live address (e.g. https://ousawedding.netlify.app) and restart; until then these links point at this computer."
     },
     "events": {
       "icon": "Icon",
@@ -381,7 +397,12 @@
       "backupHint": "Includes guests, invitations, RSVPs, events and gallery records. Photos stay in Firebase Storage.",
       "version": "Version",
       "rsvpForm": "RSVP form link",
-      "rsvpFormHint": "Create a Google Form (or any form) and paste its link. The invitation shows a \"Reply now\" button until the deadline; replies collect in the form's Google Sheet."
+      "rsvpFormHint": "Create a Google Form (or any form) and paste its link. The invitation shows a \"Reply now\" button until the deadline; replies collect in the form's Google Sheet.",
+      "gifts": "Wedding gift (KHQR)",
+      "giftsHint": "Upload the KHQR image from your banking app (e.g. ABA → Receive money → Save). Guests can scan it or save it to their photos. Up to 4.",
+      "giftName": "Account name",
+      "giftBank": "Bank",
+      "giftAdd": "Add KHQR image"
     },
     "assets": {
       "title": "Assets",
@@ -405,5 +426,17 @@
       "deleteConfirmUnused": "Delete this image?",
       "empty": "No images yet."
     }
+  },
+  "gift": {
+    "title": "Wedding gift",
+    "intro": "Your presence is the greatest gift of all. If you'd like to bless us with a gift, you can scan a KHQR code below with any banking app.",
+    "save": "Save QR to photos",
+    "hint": "Reading this on your phone? Save the QR, then open your banking app and scan it from your photos.",
+    "enlarge": "Show the QR for {name} larger",
+    "alt": "KHQR code for {name}",
+    "close": "Close",
+    "show": "Show QR",
+    "hide": "Hide",
+    "tapHint": "Tap the code to see it larger"
   }
 }

@@ -89,12 +89,14 @@ onBeforeUnmount(() => stopTilt())
 // Personal links carry the guest's name (?to=…), and with=wife or with=husband when their spouse is invited
 // too. The page is the same static file for everyone, so they are read in the browser after it loads.
 // The envelope addresses the couple ("… and wife"); the RSVP form is filled with the guest's own name.
-const guestName = ref('')
+// The name as typed in the link; shown with its title in the page's language ("Mr." / "លោក")
+const linkName = ref('')
+const guestName = computed(() => linkName.value && guestNameFromLink(linkName.value, loc.value))
 const guestSpouse = ref<Spouse>('')
 const addressedTo = computed(() => guestName.value && withSpouse(guestName.value, guestSpouse.value, loc.value))
 onMounted(() => {
   const to = route.query.to
-  if (typeof to === 'string') guestName.value = to.trim().slice(0, 120)
+  if (typeof to === 'string') linkName.value = to
   guestSpouse.value = parseSpouse(route.query.with)
 })
 
@@ -170,6 +172,7 @@ const sections = computed(() => [
   { id: 'schedule', label: t('nav.schedule'), icon: 'calendar' as const },
   ...(data.value!.gallery.length ? [{ id: 'gallery', label: t('nav.gallery'), icon: 'camera' as const }] : []),
   { id: 'rsvp', label: t('nav.rsvp'), icon: 'envelope' as const },
+  ...(w.value.gifts?.length ? [{ id: 'gift', label: t('nav.gift'), icon: 'gift' as const }] : []),
 ])
 
 // Share previews and search settings. Uses only public wedding fields, never guest data.
@@ -283,7 +286,8 @@ useSeoMeta({
       <WeddingFlorals v-if="floral" class="fl-garland" variant="garland" />
       <WeddingGallery v-if="data!.gallery.length" :images="data!.gallery" :motif="w.theme.motif" :names="names" />
       <WeddingFlorals v-if="floral" class="fl-sprig fl-right" variant="sprig" :seed="1" flip />
-      <WeddingRsvpForm :data="data!" :guest-name="guestName" />
+      <WeddingRsvpForm :data="data!" :guest-name="linkName && guestNameFromLink(linkName, loc, false)" />
+      <WeddingGift v-if="w.gifts?.length" :data="data!" />
 
     </main>
 

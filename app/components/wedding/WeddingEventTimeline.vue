@@ -5,6 +5,7 @@ const { t } = useI18n()
 const locale = useLocaleCode()
 const L = useLocalized()
 const w = computed(() => props.data.wedding)
+const phones = computed(() => w.value.contact.phone.split(',').map(p => p.trim()).filter(Boolean))
 
 // Khmer digits on the Khmer page
 const intlLocale = computed(() => (locale.value === 'km' ? 'km-KH-u-nu-khmr' : 'en-US'))
@@ -117,29 +118,38 @@ function remaining(e: Item) {
       </div>
 
       <div v-if="w.content[locale].dressCode || w.content[locale].instructions || w.contact.phone || w.contact.email" class="info">
+        <!-- Every card has the same parts (badge, title, rule, text, then a foot pinned to the bottom),
+             so side by side they line up row for row -->
         <div v-if="w.content[locale].dressCode" v-reveal class="info-card">
-          <WeddingIcon name="dress" class="info-icon" />
+          <span class="info-badge"><WeddingIcon name="dress" /></span>
           <h3>{{ t('events.dressCode') }}</h3>
-          <p>{{ w.content[locale].dressCode }}</p>
-          <p class="colours-label">{{ t('events.colours') }}</p>
-          <!-- Visual only: the dress code text above says what to wear -->
-          <ul class="colours" aria-hidden="true">
-            <li v-for="c in colours" :key="c" :class="{ gold: c === 'var(--c-gold)' }" :style="{ '--swatch': c }" />
-          </ul>
+          <span class="info-rule" aria-hidden="true" />
+          <p class="info-text">{{ w.content[locale].dressCode }}</p>
+          <div class="info-foot">
+            <p class="colours-label">{{ t('events.colours') }}</p>
+            <!-- Visual only: the dress code text above says what to wear -->
+            <ul class="colours" aria-hidden="true">
+              <li v-for="c in colours" :key="c" :class="{ gold: c === 'var(--c-gold)' }" :style="{ '--swatch': c }" />
+            </ul>
+          </div>
         </div>
         <div v-if="w.content[locale].instructions" v-reveal="100" class="info-card">
-          <WeddingIcon name="info" class="info-icon" />
+          <span class="info-badge"><WeddingIcon name="info" /></span>
           <h3>{{ t('events.instructions') }}</h3>
-          <p>{{ w.content[locale].instructions }}</p>
+          <span class="info-rule" aria-hidden="true" />
+          <p class="info-text">{{ w.content[locale].instructions }}</p>
         </div>
         <div v-if="w.contact.phone || w.contact.email" v-reveal="200" class="info-card">
-          <WeddingIcon name="phone" class="info-icon" />
+          <span class="info-badge"><WeddingIcon name="phone" /></span>
           <h3>{{ t('events.contact', { name: w.contact.name }) }}</h3>
-          <p>
-            <a v-if="w.contact.phone" :href="`tel:${w.contact.phone.replace(/\s/g, '')}`" class="tabular">{{ w.contact.phone }}</a>
-            <template v-if="w.contact.phone && w.contact.email"><br></template>
-            <a v-if="w.contact.email" :href="`mailto:${w.contact.email}`">{{ w.contact.email }}</a>
-          </p>
+          <span class="info-rule" aria-hidden="true" />
+          <!-- Several numbers can be given, separated by commas; each is its own call button -->
+          <div class="info-foot calls">
+            <a v-for="phone in phones" :key="phone" :href="`tel:${phone.replace(/\s/g, '')}`" class="call tabular">
+              <WeddingIcon name="phone" class="call-icon" />{{ phone }}
+            </a>
+            <a v-if="w.contact.email" :href="`mailto:${w.contact.email}`" class="call">{{ w.contact.email }}</a>
+          </div>
         </div>
       </div>
     </div>
@@ -203,12 +213,46 @@ function remaining(e: Item) {
 .venue-text span { color: var(--c-muted); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); align-items: flex-start; }
 
-.info { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); max-width: 52rem; margin: var(--space-6) auto 0; }
-.info-card { padding: var(--space-5); border: 1px solid var(--c-line); border-radius: var(--radius-lg); text-align: center; }
-.info-icon { font-size: 30px; color: var(--c-accent-ink); margin: 0 auto var(--space-2); display: block; }
-.info-card h3 { font-size: 1.25rem; margin-bottom: var(--space-2); color: var(--c-secondary); }
-.info-card a { color: var(--c-secondary); }
-.colours-label { margin-top: var(--space-3); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
+/* One column on phones; from tablet width three equal columns of equal height (never 2 + 1) */
+.info { display: grid; gap: var(--space-4); max-width: 30rem; margin: var(--space-7) auto 0; }
+@media (min-width: 760px) { .info { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 58rem; } }
+.info-card {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+}
+/* A gold hairline across the top of each card */
+.info-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, transparent, var(--c-gold), transparent); }
+@media (hover: hover) { .info-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); } }
+.info-badge {
+  display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin-bottom: var(--space-3);
+  border-radius: 50%; font-size: 1.6rem; color: var(--c-secondary);
+  background: color-mix(in srgb, var(--c-secondary) 9%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--c-secondary) 4%, transparent);
+}
+/* The badge pops in as the card comes into view */
+@media (prefers-reduced-motion: no-preference) { .info-card.revealed .info-badge { animation: badge 0.7s 0.2s var(--ease-out) backwards; } }
+@keyframes badge { from { transform: scale(0.4) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.12); } }
+.info-card h3 { font-size: 1.3rem; color: var(--c-secondary); text-wrap: balance; }
+.info-rule { width: 2.5rem; height: 2px; margin: var(--space-3) auto; border-radius: 2px; background: var(--c-gold); opacity: 0.7; }
+.info-text { color: var(--c-text); text-wrap: pretty; }
+/* Swatches and call buttons sit at the bottom, level across the row */
+.info-foot { margin-top: auto; padding-top: var(--space-4); width: 100%; }
+.calls { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.call {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-width: 11rem; padding: 0.55rem 1.1rem; border-radius: 999px;
+  color: var(--c-secondary); text-decoration: none; font-weight: 500;
+  border: 1px solid color-mix(in srgb, var(--c-secondary) 30%, transparent);
+  transition: background-color 0.2s, color 0.2s, transform 0.15s;
+}
+.call:hover { background: var(--c-secondary); color: var(--c-on-secondary); }
+.call:active { transform: scale(0.96); }
+.call-icon { font-size: 0.95rem; }
+.colours-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
 .colours-label:lang(km) { font-size: 0.85rem; letter-spacing: 0; text-transform: none; }
 .colours { display: flex; justify-content: center; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
 /* A thin ring keeps light colours visible against the card */

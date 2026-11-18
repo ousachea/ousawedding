@@ -22,7 +22,7 @@ watch(wedding, (w, old) => {
   }
   const { id: _id, createdAt: _c, updatedAt: _u, isSample: _s, ...rest } = structuredClone(toRaw(w))
   // Times are entered in the admin's own timezone, taken from the browser
-  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
+  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, gifts: [], ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
 }, { immediate: true })
 
 const saving = ref(false)
@@ -89,6 +89,62 @@ const partner1 = nameField('partner1')
 const partner2 = nameField('partner2')
 const parents1 = nameField('parents1')
 const parents2 = nameField('parents2')
+
+// Banks' KHQR images differ in framing (header, name, borders), so each is cut down to the code alone,
+// square on white: every code then shows at the same size. Returns null when no code is found.
+async function cropQr(file: File): Promise<Blob | null> {
+  const bmp = await createImageBitmap(file)
+  const { width: w, height: h } = bmp
+  const src = Object.assign(document.createElement('canvas'), { width: w, height: h })
+  const ctx = src.getContext('2d')!
+  ctx.drawImage(bmp, 0, 0)
+  const px = ctx.getImageData(0, 0, w, h).data
+  // Black only: the red KHQR header and grey text don't count
+  const dark = (x: number, y: number) => { const i = (y * w + x) * 4; return px[i]! < 80 && px[i + 1]! < 80 && px[i + 2]! < 80 }
+  // The longest stretch of lines with enough black, bridging small gaps: the code
+  const block = (n: number, busy: (i: number) => boolean) => {
+    const gap = Math.max(4, n * 0.02)
+    let best = [0, -1]; let start = -1; let last = -1
+    for (let i = 0; i < n; i++) {
+      if (!busy(i)) continue
+      if (start < 0 || i - last > gap) start = i
+      last = i
+      if (last - start > best[1]! - best[0]!) best = [start, last]
+    }
+    return best as [number, number]
+  }
+  const [y0, y1] = block(h, (y) => { let c = 0; for (let x = 0; x < w; x += 2) if (dark(x, y)) c++; return c > w * 0.03 })
+  const [x0, x1] = block(w, (x) => { let c = 0; for (let y = y0; y <= y1; y += 2) if (dark(x, y)) c++; return c > (y1 - y0) * 0.03 })
+  const side = Math.max(x1 - x0, y1 - y0)
+  if (side < 100) return null
+  const out = Object.assign(document.createElement('canvas'), { width: 600, height: 600 })
+  const o = out.getContext('2d')!
+  o.fillStyle = '#fff'
+  o.fillRect(0, 0, 600, 600)
+  const pad = 600 * 0.07
+  o.drawImage(src, (x0 + x1 - side) / 2, (y0 + y1 - side) / 2, side, side, pad, pad, 600 - 2 * pad, 600 - 2 * pad)
+  return new Promise(resolve => out.toBlob(resolve, 'image/png'))
+}
+
+// KHQR codes for gifts: the image is uploaded straight away, the name and bank are saved with the form
+const uploadingGift = ref(false)
+async function uploadGift(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || !draft.value) return
+  uploadingGift.value = true
+  try {
+    const form = new FormData()
+    form.append('image', await cropQr(file).catch(() => null) ?? file)
+    const { url } = await api<{ url: string }>(`${base.value}/gift-qr`, { method: 'POST', body: form })
+    draft.value.gifts!.push({ id: Math.random().toString(36).slice(2, 10), name: '', bank: '', image: url })
+  } catch {
+    // the error toast is shown by api()
+  } finally {
+    uploadingGift.value = false
+  }
+}
 
 // Partner photos are picked from the uploaded gallery images
 const images = ref<GalleryImage[]>([])
@@ -207,6 +263,29 @@ const previewSection = ref('home')
         <label class="check"><input v-model="draft.privacy.allowIndexing" type="checkbox"> {{ t('admin.settings.allowIndexing') }}</label>
       </section>
 
+      <section class="panel form-grid" @focusin="previewSection = 'gift'">
+        <h2>{{ t('admin.settings.gifts') }}</h2>
+        <p class="hint">{{ t('admin.settings.giftsHint') }}</p>
+        <div v-for="(g, i) in draft.gifts" :key="g.id" class="gift-row">
+          <img :src="g.image" alt="" class="gift-thumb">
+          <div class="form-grid">
+            <div class="field">
+              <label :for="`g-name-${g.id}`">{{ t('admin.settings.giftName') }}</label>
+              <input :id="`g-name-${g.id}`" v-model="g.name" maxlength="120" required>
+            </div>
+            <div class="field">
+              <label :for="`g-bank-${g.id}`">{{ t('admin.settings.giftBank') }}</label>
+              <input :id="`g-bank-${g.id}`" v-model="g.bank" maxlength="80" placeholder="ABA, ACLEDA, Wing…">
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" @click="draft.gifts!.splice(i, 1)">{{ t('common.delete') }}</button>
+        </div>
+        <label v-if="draft.gifts!.length < 4" class="btn btn-ghost btn-sm music-upload" :class="{ busy: uploadingGift }">
+          <input type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" :disabled="uploadingGift" @change="uploadGift">
+          {{ uploadingGift ? t('admin.settings.musicUploading') : `+ ${t('admin.settings.giftAdd')}` }}
+        </label>
+      </section>
+
       <section class="panel form-grid" @focusin="previewSection = 'contact'">
         <h2>{{ t('admin.settings.contact') }}</h2>
         <div class="form-grid cols-3">
@@ -259,6 +338,9 @@ const previewSection = ref('home')
 .photo-opt:has(input:checked) { outline-color: var(--c-secondary); }
 .photo-opt:has(input:focus-visible) { outline-color: var(--c-secondary); outline-style: dashed; }
 .narrow { max-width: 14rem; }
+.gift-row { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: var(--space-3) var(--space-4); align-items: start; padding-block: var(--space-3); border-top: 1px solid var(--c-line-soft); }
+.gift-row > .btn { grid-column: 2; justify-self: start; }
+.gift-thumb { width: 6rem; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius); background: #fff; border: 1px solid var(--c-line); }
 .text-block { position: relative; }
 .move { position: absolute; top: -0.4rem; right: 0; display: flex; gap: var(--space-1); }
 .editor { display: grid; gap: var(--space-5); align-items: start; }

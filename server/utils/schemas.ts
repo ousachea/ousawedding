@@ -41,6 +41,7 @@ export const weddingSchema = z.object({
   textOrder: z.array(z.enum(TEXT_BLOCKS)).length(TEXT_BLOCKS.length).refine(o => new Set(o).size === o.length, 'Each block once').default([...TEXT_BLOCKS]),
   musicUrl: url,
   contact: z.object({ name: text(120), phone: text(40), email: z.union([z.literal(''), z.email()]) }),
+  gifts: z.array(z.object({ id: z.string().regex(/^[\w-]{1,40}$/), name: text(120), bank: text(80), image: url })).max(4).default([]),
   share: z.object({
     km: z.object({ title: text(120), description: text(300) }),
     en: z.object({ title: text(120), description: text(300) }),

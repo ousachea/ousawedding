@@ -117,18 +117,20 @@ function onSwipeEnd() {
   drag.value = 0
 }
 
-// Autoplay: one photo every few seconds while the gallery is on screen. Touching it pauses for a few seconds.
+// Autoplay, non-stop: one photo every few seconds whenever any of the gallery is on screen (with reduced
+// motion too: the photos then change without sliding). Touching it holds it briefly, so a swipe isn't undone;
+// it waits while a photo is open full screen.
 const stage = ref<HTMLElement>()
 let autoplay: ReturnType<typeof setInterval> | undefined
 let holdUntil = 0
 let onScreen = false
 let seen: IntersectionObserver | undefined
 function hold() {
-  holdUntil = Date.now() + 4000
+  holdUntil = Date.now() + 2000
 }
 onMounted(() => {
-  if (!loops.value || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  seen = new IntersectionObserver(([en]) => (onScreen = !!en?.isIntersecting), { threshold: 0.5 })
+  if (!loops.value) return
+  seen = new IntersectionObserver(([en]) => (onScreen = !!en?.isIntersecting))
   if (stage.value) seen.observe(stage.value)
   autoplay = setInterval(() => {
     if (onScreen && !document.hidden && Date.now() > holdUntil && !dialog.value?.open) step(1)

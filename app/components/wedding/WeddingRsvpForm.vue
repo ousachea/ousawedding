@@ -44,6 +44,30 @@ function onVisible() {
     setTimeout(burst, 300)
   }
 }
+
+// The built-in form, used when no outside form is set: each reply is sent to the couple on Telegram
+const choices = [
+  { key: 'yes', value: true, icon: 'heart' },
+  { key: 'no', value: false, icon: 'envelope' },
+] as const
+const form = reactive({ name: props.guestName ?? '', phone: '', attending: null as boolean | null, guests: 1, message: '', website: '' })
+const hasName = computed(() => form.name.trim().length > 0)
+const sending = ref(false)
+const failed = ref(false)
+const sent = ref<'' | 'yes' | 'no'>('')
+async function submit() {
+  sending.value = true
+  failed.value = false
+  try {
+    await $fetch('/api/rsvp', { method: 'POST', body: form })
+    burst()
+    sent.value = form.attending ? 'yes' : 'no'
+  } catch {
+    failed.value = true
+  } finally {
+    sending.value = false
+  }
+}
 onMounted(() => document.addEventListener('visibilitychange', onVisible))
 onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible))
 </script>
@@ -66,7 +90,69 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
           <p v-if="w.rsvp.formUrl" class="center">
             <a ref="button" :href="w.rsvp.formUrl" target="_blank" rel="noopener" class="btn btn-primary" @click="onReply">{{ t('rsvp.reply') }} ↗</a>
           </p>
-          <p v-else class="center muted">{{ t('rsvp.noForm') }}</p>
+          <div v-else-if="sent" class="thanks" role="status">
+            <!-- A ring draws itself round, then the icon pops in -->
+            <span class="thanks-mark">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" /></svg>
+              <WeddingIcon :name="sent === 'yes' ? 'heart' : 'envelope'" />
+            </span>
+            <p class="thanks-title">{{ t(sent === 'yes' ? 'rsvp.thanksYes' : 'rsvp.thanksNo') }}</p>
+          </div>
+          <form v-else class="form" @submit.prevent="submit">
+            <fieldset class="field">
+              <legend class="question">{{ t('rsvp.attending') }}</legend>
+              <div class="choices">
+                <label v-for="c in choices" :key="c.key" class="choice" :class="{ on: form.attending === c.value }">
+                  <input v-model="form.attending" type="radio" name="attending" :value="c.value" required class="visually-hidden">
+                  <span class="choice-icon"><WeddingIcon :name="c.icon" /></span>
+                  <span class="choice-label">{{ t(`rsvp.${c.key}`) }}</span>
+                  <span class="choice-check" aria-hidden="true">✓</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="field">
+              <label for="rsvp-name">{{ t('rsvp.name') }}</label>
+              <input id="rsvp-name" v-model="form.name" required maxlength="120" autocomplete="name">
+            </div>
+
+            <!-- Optional phone, offered once the guest has written their name -->
+            <div class="expand" :class="{ open: hasName }" :inert="!hasName">
+              <div class="field">
+                <label for="rsvp-phone">{{ t('rsvp.phone') }} <span class="optional">{{ t('rsvp.optional') }}</span></label>
+                <div class="with-icon">
+                  <WeddingIcon name="phone" class="field-icon" />
+                  <input id="rsvp-phone" v-model="form.phone" type="tel" maxlength="40" autocomplete="tel" inputmode="tel" placeholder="012 345 678" class="tabular">
+                </div>
+              </div>
+            </div>
+
+            <!-- Opens smoothly once the guest says they're coming -->
+            <div class="expand" :class="{ open: form.attending }" :inert="!form.attending">
+              <div class="field">
+                <span id="rsvp-guests-label" class="label">{{ t('rsvp.guests') }}</span>
+                <div class="stepper" role="group" aria-labelledby="rsvp-guests-label">
+                  <button type="button" class="step" :disabled="form.guests <= 1" :aria-label="t('rsvp.fewer')" @click="form.guests--">−</button>
+                  <output class="count tabular" aria-live="polite"><span :key="form.guests">{{ form.guests }}</span></output>
+                  <button type="button" class="step" :disabled="form.guests >= 20" :aria-label="t('rsvp.more')" @click="form.guests++">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="rsvp-message">{{ t('rsvp.message') }}</label>
+              <textarea id="rsvp-message" v-model="form.message" rows="3" maxlength="1000" :placeholder="t('rsvp.messageHint')" />
+            </div>
+            <!-- Hidden from people; spam bots fill it in -->
+            <input v-model="form.website" class="trap" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <p v-if="failed" class="center error" role="alert">{{ t('rsvp.failed') }}</p>
+            <p class="center">
+              <button ref="button" type="submit" class="btn btn-primary send" :disabled="sending">
+                <template v-if="sending">{{ t('rsvp.sending') }}<span class="dots" aria-hidden="true"><i /><i /><i /></span></template>
+                <template v-else>{{ t('rsvp.send') }}</template>
+              </button>
+            </p>
+          </form>
         </template>
       </div>
     </div>
@@ -91,6 +177,105 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 .muted { color: var(--c-muted); }
 .deadline { color: var(--c-muted); }
 .greeting { text-align: center; font-family: var(--font-serif); font-size: 1.5rem; color: var(--c-secondary); }
+.form { display: flex; flex-direction: column; gap: var(--space-5); }
+.field { display: flex; flex-direction: column; gap: var(--space-2); border: 0; padding: 0; margin: 0; min-width: 0; }
+.field label, .label { font-weight: 600; }
+.field input:not([type="radio"]), .field textarea {
+  width: 100%; padding: 0.75rem 0.9rem;
+  background: var(--c-bg); border: 1px solid var(--c-line); border-radius: var(--radius);
+  /* 16px or more, so iPhone doesn't zoom in on focus */
+  font-size: max(1rem, 16px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus-visible, .field textarea:focus-visible {
+  outline: none; border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 22%, transparent);
+}
+.field textarea { resize: vertical; }
+.question { padding: 0; margin-bottom: var(--space-3); width: 100%; text-align: center; font-family: var(--font-serif); font-size: 1.35rem; color: var(--c-secondary); }
+
+/* Yes / no as two cards side by side */
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.choice {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-5) var(--space-3);
+  text-align: center; line-height: 1.3; cursor: pointer;
+  background: var(--c-bg); border: 1.5px solid var(--c-line); border-radius: var(--radius-lg);
+  transition: border-color 0.25s, background-color 0.25s, transform 0.25s var(--ease-out), box-shadow 0.25s;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) { .choice:hover { border-color: var(--c-accent); transform: translateY(-2px); box-shadow: var(--shadow); } }
+.choice:active { transform: scale(0.97); }
+.choice:focus-within { border-color: var(--c-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 22%, transparent); }
+.choice-icon {
+  display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%;
+  font-size: 1.5rem; color: var(--c-secondary);
+  background: color-mix(in srgb, var(--c-secondary) 8%, transparent);
+  transition: background-color 0.25s, color 0.25s;
+}
+.choice-label { font-weight: 600; }
+.choice-check {
+  position: absolute; top: var(--space-2); right: var(--space-2);
+  display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  font-size: 0.8rem; font-weight: 700; color: var(--c-on-secondary); background: var(--c-secondary);
+  opacity: 0; transform: scale(0.4); transition: opacity 0.2s, transform 0.3s var(--ease-out);
+}
+.choice.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 6%, var(--c-bg)); box-shadow: var(--shadow); }
+.choice.on .choice-icon { background: var(--c-secondary); color: var(--c-on-secondary); animation: pop 0.45s var(--ease-out); }
+.choice.on .choice-check { opacity: 1; transform: scale(1); }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.25) rotate(-8deg); } 100% { transform: scale(1); } }
+
+/* Guest count opens below once "yes" is picked */
+.expand { display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: calc(var(--space-5) * -1); transition: grid-template-rows 0.4s var(--ease-out), opacity 0.3s, margin-top 0.4s var(--ease-out); }
+.expand > * { overflow: hidden; }
+.expand.open { grid-template-rows: 1fr; opacity: 1; margin-top: 0; }
+/* The field inside also slides down into place as it opens */
+.expand .field { transform: translateY(-10px); transition: transform 0.45s var(--ease-out); }
+.expand.open .field { transform: none; }
+.optional { font-weight: 400; color: var(--c-muted); }
+.with-icon { position: relative; }
+.with-icon .field-icon { position: absolute; left: 0.9rem; top: 50%; translate: 0 -50%; color: var(--c-muted); pointer-events: none; transition: color 0.2s; }
+.with-icon input { padding-left: 2.6rem; }
+.with-icon:focus-within .field-icon { color: var(--c-accent); }
+/* Room for the focus ring, which the opening animation's overflow would otherwise cut off */
+.expand > * { padding: 3px; margin: -3px; }
+.stepper { display: flex; align-items: center; gap: var(--space-4); }
+.step {
+  width: 2.75rem; height: 2.75rem; border-radius: 50%;
+  font-size: 1.4rem; line-height: 1; cursor: pointer;
+  color: var(--c-secondary); background: var(--c-bg); border: 1.5px solid var(--c-line);
+  transition: border-color 0.2s, transform 0.15s;
+}
+.step:hover:not(:disabled) { border-color: var(--c-secondary); }
+.step:active:not(:disabled) { transform: scale(0.9); }
+.step:disabled { opacity: 0.35; cursor: not-allowed; }
+.count { min-width: 2ch; text-align: center; font-family: var(--font-serif); font-size: 1.9rem; color: var(--c-secondary); }
+/* Each new number remounts (keyed), so it bumps in */
+.count span { display: inline-block; animation: bump 0.3s var(--ease-out); }
+@keyframes bump { from { transform: translateY(-40%) scale(0.7); opacity: 0; } }
+
+.send { min-width: 11rem; }
+.dots { display: inline-flex; gap: 3px; margin-left: 4px; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot 1s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.15s; }
+.dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot { 0%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.error { color: var(--c-danger); animation: shake 0.4s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* Thank-you: a ring draws round, the icon pops in, then the words rise */
+.thanks { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding-block: var(--space-4); text-align: center; }
+.thanks-mark { position: relative; display: grid; place-items: center; width: 5rem; height: 5rem; font-size: 2rem; color: var(--c-secondary); }
+.thanks-mark svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.thanks-mark circle { fill: none; stroke: var(--c-accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 183; stroke-dashoffset: 183; animation: draw 0.9s var(--ease-out) forwards; }
+.thanks-mark > :not(svg) { animation: pop-in 0.5s 0.6s var(--ease-out) backwards; }
+.thanks-title { font-family: var(--font-serif); font-size: 1.35rem; color: var(--c-secondary); max-width: 24rem; animation: rise 0.6s 0.8s var(--ease-out) backwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes pop-in { from { transform: scale(0); opacity: 0; } 70% { transform: scale(1.2); } }
+@keyframes rise { from { transform: translateY(12px); opacity: 0; } }
 </style>
 
 <style>

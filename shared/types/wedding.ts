@@ -25,6 +25,16 @@ export interface ThemeConfig {
   fontKm?: string
 }
 
+export interface GiftQr {
+  id: string
+  // Account holder shown under the code, e.g. "Ousa"
+  name: string
+  // Bank or app, e.g. "ABA"
+  bank: string
+  // Uploaded KHQR image
+  image: string
+}
+
 export interface Wedding {
   id: string
   slug: string
@@ -54,6 +64,8 @@ export interface Wedding {
   textOrder?: TextBlock[]
   musicUrl: string
   contact: { name: string, phone: string, email: string }
+  // KHQR codes guests can scan to send a gift (bank transfer); missing on weddings saved before it existed
+  gifts?: GiftQr[]
   share: Record<Locale, { title: string, description: string }>
   // Link-preview image: `cover` cropped to 1200×630 around `position` (object-position). Used only while the
   // cover photo is still `cover`; otherwise previews show the whole cover. Set by the share-image upload.

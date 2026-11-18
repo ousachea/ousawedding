@@ -67,7 +67,7 @@
     "musicUrl": "/uploads/weddings/rgbke4AtHLhcB8ro/music/q8r-mayBSfKMVE9C.mp3",
     "contact": {
       "name": "Ousa & Kanha",
-      "phone": "+855 92 850 751",
+      "phone": "092 850 751, 096 498 9948",
       "email": ""
     },
     "share": {
@@ -81,7 +81,7 @@
       }
     },
     "createdAt": "2026-10-26T23:31:19.332Z",
-    "updatedAt": "2026-10-31T06:26:27.360Z",
+    "updatedAt": "2026-11-18T07:10:44.978Z",
     "coverPosition": "50% 29.3%",
     "shareImage": {
       "url": "/uploads/weddings/rgbke4AtHLhcB8ro/share/zxWhPIx2rPMD2lXq.jpg",
@@ -91,6 +91,26 @@
     "partnerPhotos": {
       "partner1": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/sKItN4CNm1cZo5mV.webp",
       "partner2": "/uploads/weddings/rgbke4AtHLhcB8ro/gallery/HYl5Ray7YCSIVe88.webp"
-    }
+    },
+    "gifts": [
+      {
+        "id": "ousa1",
+        "name": "CHEA OUSA",
+        "bank": "Canadia Bank",
+        "image": "/uploads/weddings/rgbke4AtHLhcB8ro/gifts/qr-ousa-1.png"
+      },
+      {
+        "id": "ousa2",
+        "name": "CHEA OUSA",
+        "bank": "ACLEDA Bank",
+        "image": "/uploads/weddings/rgbke4AtHLhcB8ro/gifts/qr-ousa-2.png"
+      },
+      {
+        "id": "be8ilrkd",
+        "name": "CHEA OUSA",
+        "bank": "ABA",
+        "image": "/uploads/weddings/rgbke4AtHLhcB8ro/gifts/s-8-cUJ4JyuXpvj4.png"
+      }
+    ]
   }
 }
