@@ -91,7 +91,6 @@ const L = useLocalized()
 <template>
   <div class="admin-page">
     <div class="page-head">
-      <h1>{{ t('admin.nav.events') }}</h1>
       <div class="page-actions">
         <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
         <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
@@ -170,6 +169,7 @@ const L = useLocalized()
         <button type="submit" form="event-form" class="btn btn-primary" :disabled="saving || endError">{{ saving ? t('common.saving') : t('common.save') }}</button>
       </template>
     </AdminModal>
+    <AdminStepNav />
   </div>
 </template>
 

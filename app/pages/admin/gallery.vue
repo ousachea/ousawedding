@@ -87,7 +87,6 @@ async function move(index: number, step: number) {
 <template>
   <div class="admin-page">
     <div class="page-head">
-      <h1>{{ t('admin.nav.gallery') }}</h1>
       <label class="btn btn-primary upload" :class="{ busy: progress }">
         <input type="file" accept="image/jpeg,image/png,image/webp" multiple class="visually-hidden" :disabled="!!progress" @change="upload">
         {{ progress ? t('admin.gallery.uploading', progress) : `+ ${t('admin.gallery.upload')}` }}
@@ -151,6 +150,7 @@ async function move(index: number, step: number) {
         </li>
       </ul>
     </section>
+    <AdminStepNav />
   </div>
 </template>
 

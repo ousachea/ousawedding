@@ -98,6 +98,12 @@ onMounted(() => {
   const to = route.query.to
   if (typeof to === 'string') linkName.value = to
   guestSpouse.value = parseSpouse(route.query.with)
+  // Tell the couple on Telegram that this guest opened their link, once per browser (not in the admin preview)
+  if (!linkName.value || route.query.preview === '1') return
+  const key = `opened:${slug}:${linkName.value}`
+  try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1') } catch {}
+  const name = withSpouse(guestNameFromLink(linkName.value, 'en'), guestSpouse.value, 'en')
+  $fetch('/api/opened', { method: 'POST', body: { name, lang: loc.value } }).catch(() => {})
 })
 
 const introDelay = ref<number | null>(null)

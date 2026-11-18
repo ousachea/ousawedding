@@ -4,6 +4,7 @@ const { t } = useI18n()
 const { base, wedding, loadWedding } = useCurrentWedding()
 const api = useAdminApi()
 const { push } = useToasts()
+const { continueIf } = useAdminSteps()
 
 const DEFAULT_THEME: ThemeConfig = { background: '#F5F0F6', accent: '#C9A24A', secondary: '#5B2A86', tertiary: '#2D1640', text: '#2A1F33', headingFont: 'serif', motif: 'lotus', style: 'classic' }
 // Choosing a style also applies its colours (still editable below)
@@ -25,7 +26,7 @@ watch(wedding, (w) => { if (w) theme.value = structuredClone(toRaw(w).theme) }, 
 const previewDraft = computed(() => wedding.value && theme.value && { ...wedding.value, theme: theme.value })
 
 const saving = ref(false)
-async function save() {
+async function save(e?: Event) {
   if (!theme.value || saving.value) return
   saving.value = true
   try {
@@ -35,15 +36,12 @@ async function save() {
   } finally {
     saving.value = false
   }
+  await continueIf(e)
 }
 </script>
 
 <template>
   <div v-if="theme" class="admin-page">
-    <div class="page-head">
-      <h1>{{ t('admin.nav.theme') }}</h1>
-      <button type="submit" form="theme-form" class="btn btn-primary" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button>
-    </div>
     <div class="editor">
       <AdminPreview :draft="previewDraft" section="home" />
       <form id="theme-form" @submit.prevent="save">
@@ -100,6 +98,7 @@ async function save() {
             </div>
           </div>
         </section>
+        <AdminStepNav form="theme-form" :saving="saving" />
       </form>
     </div>
   </div>

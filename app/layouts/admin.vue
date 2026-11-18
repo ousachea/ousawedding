@@ -1,42 +1,18 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const { me } = useAdminSession()
-const { list, id, wedding, select, loadList, loadWedding } = useCurrentWedding()
+const { list, id, wedding, select, loadList } = useCurrentWedding()
 const { toasts } = useToasts()
 const { state: confirmState } = useConfirm()
 const { push } = useToasts()
 const api = useAdminApi()
 const menuOpen = ref(false)
 
-// The big day: every date of the wedding (schedule, RSVP deadline, countdown) follows it
-const bigDay = ref('')
-watch(wedding, w => (bigDay.value = w?.date ?? ''), { immediate: true })
-const savingDate = ref(false)
-async function saveDate() {
-  if (!wedding.value || savingDate.value) return
-  savingDate.value = true
-  try {
-    // Times are entered in the admin's own timezone, taken from the browser
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || wedding.value.timezone
-    await api(`/api/admin/weddings/${wedding.value.id}`, { method: 'PATCH', body: { date: bigDay.value, timezone } })
-    await Promise.all([loadWedding(), loadList()])
-    push(t('common.saved'))
-  } finally {
-    savingDate.value = false
-  }
-}
-
-const links = computed(() => [
-  { to: '/admin', label: t('admin.nav.dashboard') },
-  { to: '/admin/guests', label: t('admin.nav.guests') },
-  { to: '/admin/invitations', label: t('admin.nav.invitations') },
-  { to: '/admin/events', label: t('admin.nav.events') },
-  { to: '/admin/gallery', label: t('admin.nav.gallery') },
-  { to: '/admin/theme', label: t('admin.nav.theme') },
-  { to: '/admin/settings', label: t('admin.nav.settings') },
-])
+const { steps, index: stepIndex, step } = useAdminSteps()
+const isOverview = computed(() => route.path.replace(/\/$/, '') === localePath('/admin'))
+const dateLabel = computed(() => wedding.value ? new Date(wedding.value.date).toLocaleDateString(locale.value === 'km' ? 'km-KH' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '')
 watch(() => route.path, () => (menuOpen.value = false))
 
 onMounted(() => { if (!list.value.length) loadList() })
@@ -68,44 +44,55 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
   <div class="admin">
     <aside class="side" :class="{ open: menuOpen }">
       <div class="side-head">
-        <span class="brand">{{ t('admin.title') }}</span>
+        <NuxtLink :to="localePath('/admin')" class="couple">
+          <span v-if="wedding" class="couple-names">{{ wedding.names.en.partner1 }} &amp; {{ wedding.names.en.partner2 }}</span>
+          <span v-else class="couple-names">{{ t('admin.title') }}</span>
+          <span v-if="wedding" class="couple-date">{{ dateLabel }}</span>
+        </NuxtLink>
         <button type="button" class="btn btn-ghost btn-sm menu-btn" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen">
           {{ t('admin.nav.menu') }}
         </button>
       </div>
       <div class="side-body">
-        <div class="field wedding-select">
-          <label for="wedding-select">{{ t('admin.wedding.select') }}</label>
-          <select v-if="list.length" id="wedding-select" :value="id" @change="select(($event.target as HTMLSelectElement).value)">
-            <option v-for="w in list" :key="w.id" :value="w.id">{{ w.names.en.partner1 }} & {{ w.names.en.partner2 }} · {{ w.date.slice(0, 10) }}</option>
-          </select>
-          <p v-else class="muted small">{{ t('admin.wedding.none') }}</p>
-          <button v-if="me?.role === 'owner'" type="button" class="btn btn-ghost btn-sm" @click="createWedding">+ {{ t('admin.wedding.create') }}</button>
-        </div>
-        <form v-if="wedding" class="field big-day" @submit.prevent="saveDate">
-          <label for="big-day">{{ t('admin.settings.date') }}</label>
-          <input id="big-day" v-model="bigDay" type="datetime-local" required>
-          <p class="hint">{{ t('admin.settings.dateHint') }}</p>
-          <button v-if="bigDay !== wedding.date" type="submit" class="btn btn-primary btn-sm" :disabled="savingDate">
-            {{ savingDate ? t('common.saving') : t('common.save') }}
-          </button>
-        </form>
-        <nav class="links" :aria-label="t('admin.nav.menu')">
-          <NuxtLink v-for="l in links" :key="l.to" :to="localePath(l.to)" class="link" :class="{ active: route.path === localePath(l.to) }">
-            {{ l.label }}
-          </NuxtLink>
-        </nav>
+        <NuxtLink :to="localePath('/admin')" class="overview-link" :class="{ active: isOverview }">{{ t('admin.nav.overview') }}</NuxtLink>
+        <!-- The steps are done in order, so they are numbered and joined by a thread -->
+        <ol class="steps" :aria-label="t('admin.nav.steps')">
+          <li v-for="(s, i) in steps" :key="s.key">
+            <NuxtLink :to="localePath(s.to)" class="step" :class="{ active: i === stepIndex }" :aria-current="i === stepIndex ? 'step' : undefined">
+              <span class="dot">{{ i + 1 }}</span>
+              <span class="step-text">
+                <span class="step-title">{{ t(`admin.steps.${s.key}.title`) }}</span>
+                <span class="step-hint">{{ t(`admin.steps.${s.key}.short`) }}</span>
+              </span>
+            </NuxtLink>
+          </li>
+        </ol>
         <div class="side-foot">
-          <a v-if="wedding" :href="localePath(`/${wedding.slug}`)" target="_blank" rel="noopener" class="link">{{ t('admin.nav.viewSite') }} ↗</a>
+          <a v-if="wedding" :href="localePath(`/${wedding.slug}`)" target="_blank" rel="noopener" class="btn btn-outline btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
+          <div v-if="list.length > 1 || me?.role === 'owner'" class="field wedding-select">
+            <label for="wedding-select">{{ t('admin.wedding.select') }}</label>
+            <select v-if="list.length" id="wedding-select" :value="id" @change="select(($event.target as HTMLSelectElement).value)">
+              <option v-for="w in list" :key="w.id" :value="w.id">{{ w.names.en.partner1 }} & {{ w.names.en.partner2 }} · {{ w.date.slice(0, 10) }}</option>
+            </select>
+            <button v-if="me?.role === 'owner'" type="button" class="btn btn-ghost btn-sm" @click="createWedding">+ {{ t('admin.wedding.create') }}</button>
+          </div>
           <p v-if="me" class="muted small">{{ me.email }}</p>
-          <button type="button" class="btn btn-outline btn-sm" @click="logout">{{ t('admin.nav.logout') }}</button>
+          <button type="button" class="btn btn-ghost btn-sm" @click="logout">{{ t('admin.nav.logout') }}</button>
         </div>
       </div>
     </aside>
 
     <main class="content">
-      <slot v-if="wedding" />
+      <template v-if="wedding">
+        <header v-if="step" class="step-head">
+          <p class="step-count">{{ t('admin.stepOf', { n: stepIndex + 1, total: steps.length }) }}</p>
+          <h1>{{ t(`admin.steps.${step.key}.title`) }}</h1>
+          <p class="step-lead">{{ t(`admin.steps.${step.key}.hint`) }}</p>
+        </header>
+        <slot />
+      </template>
       <p v-else-if="list.length" class="muted">{{ t('common.loading') }}</p>
+      <p v-else class="muted">{{ t('admin.wedding.none') }}</p>
     </main>
 
     <div class="toasts" role="status" aria-live="polite">
@@ -127,34 +114,53 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 <style src="~/assets/css/admin.css"></style>
 
 <style scoped>
-.admin { min-height: 100dvh; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; }
+.admin { min-height: 100dvh; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; background: var(--c-bg); }
 .side { background: var(--c-surface); border-bottom: 1px solid var(--c-line-soft); }
-.side-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); padding-top: max(var(--space-3), env(safe-area-inset-top)); }
-.brand { font-family: var(--font-heading); font-weight: 600; font-size: 1.3rem; color: var(--c-secondary); }
-.side-body { display: none; flex-direction: column; gap: var(--space-5); padding: var(--space-2) var(--space-4) var(--space-5); }
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); padding-top: max(var(--space-3), env(safe-area-inset-top)); }
+/* The couple's names in the invitation's serif: the one place the admin borrows the invitation's voice */
+.couple { display: flex; flex-direction: column; text-decoration: none; color: var(--c-secondary); min-width: 0; }
+.couple-names { font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; line-height: 1.15; }
+.couple-date { font-size: 0.82rem; color: var(--c-muted); }
+.side-body { display: none; flex-direction: column; gap: var(--space-4); padding: var(--space-2) var(--space-4) var(--space-5); }
 .side.open .side-body { display: flex; animation: drop 0.2s var(--ease-out); }
 @keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
-/* Tablet portrait: the menu opens as two columns to use the width */
-@media (min-width: 640px) and (max-width: 959px) {
-  .side.open .side-body { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
-  .side-foot { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; }
-}
-.wedding-select { gap: var(--space-2); }
-.big-day { gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--c-line); border-radius: var(--radius); background: color-mix(in srgb, var(--c-accent) 8%, var(--c-surface)); }
-.big-day label { font-weight: 600; }
-.links { display: flex; flex-direction: column; gap: 2px; }
-.link { padding: 0.55rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--c-text); }
-.link:hover { background: var(--c-line-soft); }
-.link.active { background: color-mix(in srgb, var(--c-secondary) 9%, transparent); color: var(--c-secondary); font-weight: 500; }
-.side-foot { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
-.content { padding: var(--space-5) max(1rem, env(safe-area-inset-right)) var(--space-7) max(1rem, env(safe-area-inset-left)); min-width: 0; }
+
+.overview-link { padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--c-text); font-weight: 500; }
+.overview-link:hover { background: var(--c-line-soft); }
+.overview-link.active { background: color-mix(in srgb, var(--c-secondary) 9%, transparent); color: var(--c-secondary); }
+
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.steps li { position: relative; }
+/* The gold thread joining one step's dot to the next */
+.steps li:not(:last-child)::after { content: ''; position: absolute; left: calc(0.75rem + 0.9rem - 1px); top: 2.6rem; bottom: -0.35rem; width: 2px; background: var(--c-line); }
+.step { display: flex; align-items: flex-start; gap: var(--space-3); padding: 0.55rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--c-text); }
+.step:hover { background: var(--c-line-soft); }
+.dot { flex: none; display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; border: 2px solid var(--c-accent); background: var(--c-surface); color: var(--c-accent-ink); font-size: 0.85rem; font-weight: 600; font-variant-numeric: tabular-nums; position: relative; z-index: 1; }
+.step-text { display: flex; flex-direction: column; padding-top: 0.15rem; min-width: 0; }
+.step-title { font-weight: 500; }
+.step-hint { font-size: 0.8rem; color: var(--c-muted); }
+.step.active { background: color-mix(in srgb, var(--c-secondary) 8%, transparent); }
+.step.active .dot { background: var(--c-secondary); border-color: var(--c-secondary); color: var(--c-on-secondary); }
+.step.active .step-title { color: var(--c-secondary); font-weight: 600; }
+.step:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
+
+.side-foot { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--c-line-soft); }
+.wedding-select { gap: var(--space-2); width: 100%; }
+
+.content { padding: var(--space-5) max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left)); min-width: 0; }
+.step-head { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-5); max-width: 44rem; }
+.step-count { font-size: 0.85rem; font-weight: 500; color: var(--c-accent-ink); }
+.step-head h1 { font-family: var(--font-serif); font-size: clamp(2rem, 5vw, 2.6rem); font-weight: 600; line-height: 1.1; color: var(--c-secondary); }
+.step-lead { color: var(--c-muted); max-width: 38rem; }
 
 @media (min-width: 960px) {
-  .admin { grid-template-columns: 16rem 1fr; grid-template-rows: 1fr; }
-  .side { border-bottom: 0; border-right: 1px solid var(--c-line-soft); position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
+  .admin { grid-template-columns: 17.5rem 1fr; grid-template-rows: 1fr; }
+  .side { border-bottom: 0; border-right: 1px solid var(--c-line-soft); position: sticky; top: 0; height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; }
+  .side-head { padding: var(--space-5) var(--space-4) var(--space-4); }
   .menu-btn { display: none; }
-  .side-body { display: flex; }
-  .content { padding: var(--space-6) var(--space-6) var(--space-7); max-width: 80rem; }
+  .side-body { display: flex; flex: 1; }
+  .side-foot { margin-top: auto; }
+  .content { padding: var(--space-6) var(--space-6) 0; max-width: 80rem; }
 }
 
 .toasts { position: fixed; z-index: var(--z-toast); right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--space-2); max-width: min(24rem, calc(100vw - 2rem)); }

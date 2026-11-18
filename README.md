@@ -3,7 +3,7 @@
 A wedding invitation website in Khmer and English, built with Nuxt 4.
 
 - **Live site:** https://theab-online.netlify.app. Netlify rebuilds it on every push.
-- **Admin:** http://localhost:8000/admin. It only runs on your computer.
+- **Admin:** http://localhost:8000/admin. It only runs on your computer and walks you through seven steps: couple, schedule, photos, words and music, look, replies and gifts, share.
 
 ## Run it
 
@@ -35,17 +35,17 @@ git push
 
 ## RSVP
 
-Guests reply on the invitation, and each reply is sent to you on Telegram.
+Guests reply on the invitation, and each reply is sent to you on Telegram. You also get a message the first time a guest opens their personal link (once per phone or browser).
 
 1. Create a bot with @BotFather and send it a message.
 2. Find your chat ID at `https://api.telegram.org/bot<token>/getUpdates`.
 3. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env` and in Netlify (Site configuration → Environment variables).
 
-To use a Google Form instead, paste its link in **Settings → RSVP**. Replies close at the RSVP deadline.
+To use a Google Form instead, paste its link in step 6, **Replies and gifts**. Replies close at the RSVP deadline.
 
 ## Personal links
 
-**Invitations** in the admin gives each guest a link and QR code. You can also type one: add the name after the address, with no spaces. Add `/km` for Khmer.
+Step 7, **Share**, makes a link for any name. You can also type one: add the name after the address, with no spaces. Add `/km` for Khmer.
 
 ```
 https://theab-online.netlify.app/ousa-kanha/MrCheaOusa
@@ -75,7 +75,7 @@ Use `MrAndMrs`, not `Mr&Mrs`, because a `&` can break the link.
 
 ## Wedding gift
 
-Add up to four KHQR images in **Settings → Wedding gift**. The section stays hidden until you add one.
+Add up to four KHQR images in step 6, **Replies and gifts**. The section stays hidden until you add one.
 
 ## Checks
 
@@ -88,5 +88,5 @@ npm run build
 ## Privacy and backups
 
 - The repository is public. Only what the invitation shows is committed.
-- Pages are hidden from search engines unless you turn indexing on in Settings.
-- Your content is in git. **Settings → Backup** downloads everything, including the guest list, so keep that file private.
+- Pages are hidden from search engines unless you turn indexing on in step 7, **Share**.
+- Your content is in git. **Share → Download backup** downloads everything, including the guest list, so keep that file private.

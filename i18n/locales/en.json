@@ -137,7 +137,9 @@
       "settings": "Settings",
       "viewSite": "View invitation",
       "logout": "Sign out",
-      "menu": "Menu"
+      "menu": "Menu",
+      "overview": "Overview",
+      "steps": "Steps"
     },
     "login": {
       "title": "Sign in",
@@ -171,7 +173,7 @@
       "general": "Open RSVP form",
       "daysLeft": "Days to go",
       "publishTitle": "Publish your changes",
-      "publishHint": "Edits are saved on this computer (content/ and public/uploads/). To update the live invitation, commit and push them; Netlify rebuilds the site in about a minute. The guest list stays on this computer and is never published.",
+      "publishHint": "Your edits are saved on this computer. To update the live invitation, run these commands; Netlify rebuilds the site in about a minute.",
       "repliesTitle": "RSVP replies",
       "repliesHint": "Guests reply through your form; open its responses (or linked Google Sheet) to see who is coming.",
       "openForm": "Open the form",
@@ -332,7 +334,7 @@
       "cover": "Cover photo URL",
       "photoOf": "Photo of {name}",
       "noPhoto": "No photo",
-      "photoHint": "Upload photos on the Gallery page, then choose them here.",
+      "photoHint": "Optional. Choose from the photos you uploaded in the Photos step.",
       "coverHint": "Or choose one on the Gallery page.",
       "theme": "Theme",
       "background": "Background",
@@ -397,12 +399,15 @@
       "backupHint": "Includes guests, invitations, RSVPs, events and gallery records. Photos stay in Firebase Storage.",
       "version": "Version",
       "rsvpForm": "RSVP form link",
-      "rsvpFormHint": "Create a Google Form (or any form) and paste its link. The invitation shows a \"Reply now\" button until the deadline; replies collect in the form's Google Sheet.",
+      "rsvpFormHint": "Leave empty to use the reply form on the invitation; each reply is sent to you on Telegram. Paste a Google Form link to use that instead.",
       "gifts": "Wedding gift (KHQR)",
       "giftsHint": "Upload the KHQR image from your banking app (e.g. ABA → Receive money → Save). Guests can scan it or save it to their photos. Up to 4.",
       "giftName": "Account name",
       "giftBank": "Bank",
-      "giftAdd": "Add KHQR image"
+      "giftAdd": "Add KHQR image",
+      "dateLabel": "Date and time",
+      "photos": "Photos of the couple",
+      "musicLink": "Music link"
     },
     "assets": {
       "title": "Assets",
@@ -425,6 +430,71 @@
       "deleteConfirm": "Delete this image? It is used in: {places}. Those places will show no image.",
       "deleteConfirmUnused": "Delete this image?",
       "empty": "No images yet."
+    },
+    "stepOf": "Step {n} of {total}",
+    "stepNav": {
+      "back": "Back",
+      "next": "Next: {step}",
+      "saveNext": "Save and continue",
+      "done": "Back to overview"
+    },
+    "steps": {
+      "couple": {
+        "title": "The couple",
+        "short": "Names, parents, date",
+        "hint": "Who is getting married and when. Everything else on the invitation follows this date."
+      },
+      "schedule": {
+        "title": "Schedule",
+        "short": "Ceremonies and times",
+        "hint": "Add each part of the day in order, with the place and a map link."
+      },
+      "photos": {
+        "title": "Photos",
+        "short": "Gallery and cover",
+        "hint": "Upload your photos, then pick the cover. Guests see the gallery as a stack they can swipe."
+      },
+      "words": {
+        "title": "Words and music",
+        "short": "Message, story, song",
+        "hint": "What the invitation says, in Khmer and English, and the song that plays when it opens."
+      },
+      "look": {
+        "title": "Look",
+        "short": "Style, colours, fonts",
+        "hint": "Pick a style. You can change its colours and fonts and see the result on the right."
+      },
+      "replies": {
+        "title": "Replies and gifts",
+        "short": "RSVP, KHQR, contact",
+        "hint": "When guests should reply by, where gifts can be sent, and who to call with questions."
+      },
+      "share": {
+        "title": "Share",
+        "short": "Guest links, publish",
+        "hint": "Make a link for each guest, check how it looks in chat apps, then publish your changes."
+      }
+    },
+    "overview": {
+      "title": "Your invitation",
+      "countdown": "Your wedding is today, {date}. | 1 day until your wedding on {date}. | {n} days until your wedding on {date}.",
+      "continue": "Continue with {step}",
+      "review": "Review your invitation",
+      "items": "Nothing added yet | 1 item | {n} items",
+      "photos": "No photos yet | 1 photo | {n} photos",
+      "withMusic": "Text and music set",
+      "noMusic": "Text set, no music",
+      "replyBy": "Replies close {date}",
+      "done": "Done",
+      "todo": "To do",
+      "edit": "Edit"
+    },
+    "share": {
+      "linkTitle": "Guest links",
+      "linkHint": "Type a guest’s name to get their personal link. The invitation greets them by name, and a title like Mr or Mrs is translated.",
+      "guestName": "Guest name",
+      "copy": "Copy link",
+      "copied": "Link copied"
     }
   },
   "gift": {
