@@ -14,8 +14,8 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   // Look for a newer deploy every 10 minutes (default: hourly); AppUpdateBanner then offers a refresh
   experimental: { checkOutdatedBuildInterval: 10 * 60_000 },
-  // Reachable from other devices on the same network (e.g. a tablet)
-  devServer: { port: 8000, host: '0.0.0.0' },
+  // Localhost only; run `npm run dev -- --host` to test from a tablet on the same network
+  devServer: { port: 8000, host: 'localhost' },
   modules: ['@nuxtjs/i18n'],
   css: ['~/assets/css/tokens.css', '~/assets/css/base.css'],
 
@@ -33,7 +33,7 @@ export default defineNuxtConfig({
       // The live address, used in personal invitation links, QR codes and share previews.
       // Netlify's build sets URL to the site's address, so link previews point at the live site; never
       // http://localhost. NUXT_PUBLIC_SITE_URL overrides it.
-      siteUrl: process.env.URL ?? 'https://ousawedding.netlify.app',
+      siteUrl: process.env.URL ?? 'https://theab-online.netlify.app',
       defaultWeddingSlug: 'ousa-kanha',
       version: process.env.npm_package_version ?? '',
       commit: (process.env.COMMIT_REF ?? '').slice(0, 7),
