@@ -1,0 +1,5 @@
+# Short personal links with the guest's name typed in: /ousa-kanha/MrCheaOusa opens /ousa-kanha/?to=MrCheaOusa.
+# Here rather than in netlify.toml: Netlify reads this file first, and Nuxt appends a catch-all
+# (/* /404.html 404) to it that would win otherwise. Real files (pages, scripts, photos) are served first.
+/km/:slug/:name  /km/:slug/?to=:name  301
+/:slug/:name     /:slug/?to=:name     301

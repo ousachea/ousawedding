@@ -3,18 +3,6 @@
   command = "npm run build"
   publish = "dist"
 
-# Short personal links with the guest's name typed in: /ousa-kanha/CheaOusa opens /ousa-kanha/?to=CheaOusa.
-# Only where no real file exists (pages, scripts and photos are served first).
-[[redirects]]
-  from = "/km/:slug/:name"
-  to = "/km/:slug/?to=:name"
-  status = 301
-
-[[redirects]]
-  from = "/:slug/:name"
-  to = "/:slug/?to=:name"
-  status = 301
-
 # Uploaded photos are named by a unique ID and never change, so browsers can keep them for a year
 [[headers]]
   for = "/uploads/*"

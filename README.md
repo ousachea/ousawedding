@@ -144,7 +144,7 @@ Tips:
 - Start the name with a capital after the title (`MrSokha`, not `Mrsokha`), or use dashes (`mr-sokha`).
 - For couples write `MrAndMrs`, not `Mr&Mrs`: a `&` can break a link.
 - The title also shows in chat-app link previews. The RSVP form is filled with the name alone.
-- Titles and spacing are in `guestNameFromLink` (`shared/utils/wedding.ts`); the short address is a redirect in `netlify.toml` (and `server/middleware/guest-path.ts` on the dev server).
+- Titles and spacing are in `guestNameFromLink` (`shared/utils/wedding.ts`); the short address is a redirect in `public/_redirects` (and `server/middleware/guest-path.ts` on the dev server).
 
 ### Wedding gift (KHQR)
 
