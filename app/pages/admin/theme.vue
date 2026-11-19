@@ -20,10 +20,9 @@ useHead({ link: [{ rel: 'stylesheet', href: fontsHref([...FONTS_EN, ...FONTS_KM]
 
 const colorKeys = ['background', 'accent', 'secondary', 'tertiary', 'text'] as const
 
-// Editable copy of the theme; the preview shows the saved wedding wearing it
+// Editable copy of the theme, saved with the form
 const theme = ref<ThemeConfig | null>(null)
 watch(wedding, (w) => { if (w) theme.value = structuredClone(toRaw(w).theme) }, { immediate: true })
-const previewDraft = computed(() => wedding.value && theme.value && { ...wedding.value, theme: theme.value })
 
 const saving = ref(false)
 async function save(e?: Event) {
@@ -43,7 +42,6 @@ async function save(e?: Event) {
 <template>
   <div v-if="theme" class="admin-page">
     <div class="editor">
-      <AdminPreview :draft="previewDraft" section="home" />
       <form id="theme-form" @submit.prevent="save">
         <section class="panel form-grid">
           <div class="theme">
@@ -105,11 +103,7 @@ async function save(e?: Event) {
 </template>
 
 <style scoped>
-.editor { display: grid; gap: var(--space-5); align-items: start; }
-@media (min-width: 1100px) {
-  .editor { grid-template-columns: minmax(0, 1fr) 380px; }
-  .preview { grid-column: 2; grid-row: 1; }
-}
+.editor { display: grid; gap: var(--space-5); align-items: start; max-width: 52rem; }
 .font-sample { margin-top: var(--space-1); font-size: 1.6rem; line-height: 1.4; }
 .colors { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
 .color input[type='color'] { padding: 2px; cursor: pointer; }

@@ -98,8 +98,8 @@ onMounted(() => {
   const to = route.query.to
   if (typeof to === 'string') linkName.value = to
   guestSpouse.value = parseSpouse(route.query.with)
-  // Tell the couple on Telegram that this guest opened their link, once per browser (not in the admin preview)
-  if (!linkName.value || route.query.preview === '1') return
+  // Tell the couple on Telegram that this guest opened their link, once per browser
+  if (!linkName.value) return
   const key = `opened:${slug}:${linkName.value}`
   try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1') } catch {}
   const name = withSpouse(guestNameFromLink(linkName.value, 'en'), guestSpouse.value, 'en')
@@ -110,38 +110,6 @@ const introDelay = ref<number | null>(null)
 // Runs inside the tap that opens the envelope, so the browser lets the music start (see WeddingMusic)
 const startMusic = () => window.dispatchEvent(new Event('wedding:open'))
 
-// Inside the admin settings preview: show unsaved edits sent by the parent page (same origin only)
-const isPreview = route.query.preview === '1'
-let shownSection = ''
-let saved: PublicWedding | null = null
-function onPreviewMessage(e: MessageEvent) {
-  if (e.origin !== location.origin || e.source !== window.parent || e.data?.type !== 'wedding-preview') return
-  const { draft, section } = e.data as { draft: PublicWedding['wedding'], section: string }
-  saved ??= data.value!
-  try {
-    const dates = weddingDates(draft.date, draft.rsvp.deadline, draft.timezone)
-    // The schedule follows the big day, as it will once saved
-    const shift = Date.parse(dates.dateUtc) - Date.parse(saved.dateUtc)
-    const events = saved.events.map((e) => {
-      const start = new Date(Date.parse(e.startUtc) + shift)
-      const end = new Date(Date.parse(e.endUtc) + shift)
-      return { ...e, startUtc: start.toISOString(), endUtc: end.toISOString(), display: eventDisplay(start, end, draft.timezone) }
-    })
-    data.value = { ...saved, ...dates, events, wedding: { ...saved.wedding, ...draft } }
-  } catch {
-    // A half-typed date can't be formatted yet; keep the last good preview
-  }
-  // Scroll once per section, after the edit renders (the story section only exists once it has text)
-  nextTick(() => {
-    const el = section !== shownSection && document.getElementById(section)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      shownSection = section
-    }
-  })
-}
-onMounted(() => { if (isPreview) addEventListener('message', onPreviewMessage) })
-onBeforeUnmount(() => removeEventListener('message', onPreviewMessage))
 
 
 function displayFonts(th: ThemeConfig) {
@@ -258,7 +226,6 @@ useSeoMeta({
 <template>
   <div ref="page" class="wedding themed" :class="`style-${w.theme.style ?? 'classic'}`" :style="themeStyle">
     <WeddingEnvelope
-      v-if="!isPreview"
       :monogram="w.monogram"
       :motif="w.theme.motif"
       :guest-name="addressedTo"
@@ -269,7 +236,7 @@ useSeoMeta({
 
     <WeddingGreenery />
     <WeddingPetals v-if="w.theme.motif !== 'none' || floral" />
-    <WeddingButterflies v-if="!isPreview" />
+    <WeddingButterflies />
     <WeddingNavigation :music-url="w.musicUrl" :monogram="w.monogram" />
 
     <main>

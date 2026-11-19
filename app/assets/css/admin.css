@@ -51,3 +51,13 @@
   .data-table .row-actions { justify-content: flex-start; }
   .data-table td[data-label]::before { content: attr(data-label) ': '; color: var(--c-muted); font-size: 0.8rem; }
 }
+
+/* Touch screens (tablets, phones): every control at least a fingertip (44px) tall and wide, with room
+   between neighbours. A mouse keeps the compact sizes above. */
+@media (pointer: coarse) {
+  .admin .btn-sm { min-height: 44px; min-width: 44px; padding-inline: 1rem; font-size: 0.95rem; }
+  .admin .check { align-items: center; min-height: 44px; gap: var(--space-3); }
+  .admin .check input { width: 1.45rem; height: 1.45rem; margin-top: 0; }
+  .admin .row-actions, .admin .page-actions, .admin .toolbar { gap: var(--space-2); }
+  .admin summary { padding-block: 0.65rem; }
+}

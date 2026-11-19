@@ -120,14 +120,19 @@ async function move(index: number, step: number) {
           <li v-for="u in usesOf(img.url, img)" :key="u" class="badge responded">{{ u }}</li>
           <li v-if="!usesOf(img.url, img).length" class="badge">{{ t('admin.assets.unused') }}</li>
         </ul>
-        <form class="form-grid" @submit.prevent="saveText(img)">
-          <AdminLocalizedField v-model="img.caption" :label="t('admin.gallery.caption')" />
-          <AdminLocalizedField v-model="img.alt" :label="t('admin.gallery.alt')" />
-          <div class="actions">
-            <button type="submit" class="btn btn-outline btn-sm">{{ t('common.save') }}</button>
-            <label class="check small"><input type="checkbox" :checked="img.visible" @change="patch(img, { visible: !img.visible })"> {{ t('admin.gallery.visible') }}</label>
-          </div>
-        </form>
+        <label class="check small"><input type="checkbox" :checked="img.visible" @change="patch(img, { visible: !img.visible })"> {{ t('admin.gallery.visible') }}</label>
+        <!-- Folded away so the photos stay easy to scan; marked when something is filled in -->
+        <details class="text">
+          <summary>
+            {{ t('admin.gallery.text') }}
+            <span v-if="img.caption.en || img.caption.km || img.alt.en || img.alt.km" class="filled">✓</span>
+          </summary>
+          <form class="form-grid" @submit.prevent="saveText(img)">
+            <AdminLocalizedField v-model="img.caption" :label="t('admin.gallery.caption')" />
+            <AdminLocalizedField v-model="img.alt" :label="t('admin.gallery.alt')" />
+            <div><button type="submit" class="btn btn-outline btn-sm">{{ t('common.save') }}</button></div>
+          </form>
+        </details>
         <div class="row-actions">
           <template v-if="filter === 'all'">
             <button type="button" class="btn btn-ghost btn-sm" :disabled="i === 0" :aria-label="t('admin.gallery.moveUp')" @click="move(i, -1)">←</button>
@@ -173,6 +178,8 @@ async function move(index: number, step: number) {
 .linked ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .linked li { display: flex; align-items: center; gap: var(--space-3); }
 .linked img { width: 4rem; height: 3rem; object-fit: cover; border-radius: var(--radius-sm); }
-.actions { display: flex; align-items: center; gap: var(--space-3); }
+.text summary { cursor: pointer; font-weight: 500; color: var(--c-secondary); }
+.text[open] summary { margin-bottom: var(--space-3); }
+.filled { margin-left: var(--space-1); color: #2F7A50; }
 .row-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; }
 </style>

@@ -46,7 +46,7 @@ const nextStep = computed(() => steps.find(s => !status.value[s.key]?.done) ?? n
         <NuxtLink :to="localePath((nextStep ?? steps[0]).to)" class="btn btn-primary">
           {{ nextStep ? t('admin.overview.continue', { step: t(`admin.steps.${nextStep.key}.title`) }) : t('admin.overview.review') }}
         </NuxtLink>
-        <a :href="localePath(`/${wedding.slug}`)" target="_blank" rel="noopener" class="btn btn-ghost">{{ t('admin.nav.viewSite') }} ↗</a>
+        <a :href="localePath(`/${wedding.slug}`)" target="wedding-invitation" class="btn btn-ghost">{{ t('admin.nav.viewSite') }} ↗</a>
       </div>
     </header>
 

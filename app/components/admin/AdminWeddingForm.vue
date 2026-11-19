@@ -156,8 +156,6 @@ const shareField = (key: 'title' | 'description') => computed<Localized>({
 const shareTitle = shareField('title')
 const shareDescription = shareField('description')
 
-// The section of the invitation the preview scrolls to, following what is being edited
-const previewSection = ref<string>(({ couple: 'home', words: 'home', replies: 'rsvp', share: 'home' } as const)[props.part])
 
 // A personal link for any name: the address plus the name, spaces as dashes (see README, Personal links)
 const site = (config.siteUrl || (import.meta.client ? location.origin : '')).replace(/\/$/, '')
@@ -173,11 +171,9 @@ async function copyLink() {
 
 <template>
   <div v-if="draft" class="editor">
-    <AdminPreview :draft="draft" :section="previewSection" />
-
     <form id="step-form" class="sections" @submit.prevent="save">
       <template v-if="part === 'couple'">
-        <section class="panel form-grid" @focusin="previewSection = 'home'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.couple') }}</h2>
           <AdminLocalizedField v-model="partner1" :label="t('admin.settings.partner1')" required />
           <AdminLocalizedField v-model="partner2" :label="t('admin.settings.partner2')" required />
@@ -189,7 +185,7 @@ async function copyLink() {
           </div>
         </section>
 
-        <section class="panel form-grid" @focusin="previewSection = 'home'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.date') }}</h2>
           <div class="field narrow">
             <label for="s-date">{{ t('admin.settings.dateLabel') }}</label>
@@ -205,7 +201,7 @@ async function copyLink() {
           </div>
         </section>
 
-        <section class="panel form-grid" @focusin="previewSection = 'home'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.photos') }}</h2>
           <p class="hint">{{ t('admin.settings.photoHint') }}</p>
           <fieldset v-for="key in (['partner1', 'partner2'] as const)" :key="key" class="field photo-pick">
@@ -230,11 +226,11 @@ async function copyLink() {
       </template>
 
       <template v-else-if="part === 'words'">
-        <section class="panel form-grid" @focusin="previewSection = 'home'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.content') }}</h2>
           <AdminLocalizedField v-model="message" :label="t('admin.settings.message')" multiline />
           <!-- Shown on the page in this order -->
-          <div v-for="(key, i) in textOrder" :key="key" class="text-block" @focusin.stop="previewSection = key">
+          <div v-for="(key, i) in textOrder" :key="key" class="text-block">
             <AdminLocalizedField :model-value="textFields[key].value" :label="t(textLabel[key])" multiline @update:model-value="textFields[key].value = $event" />
             <div class="move">
               <button type="button" class="btn btn-ghost btn-sm" :disabled="i === 0" :aria-label="`${t('admin.settings.moveUp')}: ${t(textLabel[key])}`" @click="moveText(i, -1)">↑</button>
@@ -260,7 +256,7 @@ async function copyLink() {
       </template>
 
       <template v-else-if="part === 'replies'">
-        <section class="panel form-grid" @focusin="previewSection = 'rsvp'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.rsvp') }}</h2>
           <div class="field narrow">
             <label for="s-deadline">{{ t('admin.invitations.deadline') }}</label>
@@ -273,7 +269,7 @@ async function copyLink() {
           </div>
         </section>
 
-        <section class="panel form-grid" @focusin="previewSection = 'gift'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.gifts') }}</h2>
           <p class="hint">{{ t('admin.settings.giftsHint') }}</p>
           <div v-for="(g, i) in draft.gifts" :key="g.id" class="gift-row">
@@ -296,7 +292,7 @@ async function copyLink() {
           </label>
         </section>
 
-        <section class="panel form-grid" @focusin="previewSection = 'contact'">
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.contact') }}</h2>
           <div class="form-grid cols-3">
             <div class="field">
@@ -394,9 +390,5 @@ git push</pre>
 .gift-thumb { width: 6rem; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius); background: #fff; border: 1px solid var(--c-line); }
 .text-block { position: relative; }
 .move { position: absolute; top: -0.4rem; right: 0; display: flex; gap: var(--space-1); }
-.editor { display: grid; gap: var(--space-5); align-items: start; }
-@media (min-width: 1100px) {
-  .editor { grid-template-columns: minmax(0, 1fr) 380px; }
-  .preview { grid-column: 2; grid-row: 1; }
-}
+.editor { display: grid; gap: var(--space-5); align-items: start; max-width: 52rem; }
 </style>

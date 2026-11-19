@@ -302,7 +302,8 @@
       "empty": "No photos yet.",
       "moveUp": "Move earlier",
       "moveDown": "Move later",
-      "coverPositionHint": "This is the cover. Click the photo on the spot that must stay in view (e.g. the faces)."
+      "coverPositionHint": "This is the cover. Click the photo on the spot that must stay in view (e.g. the faces).",
+      "text": "Caption and description"
     },
     "settings": {
       "style": "Style",

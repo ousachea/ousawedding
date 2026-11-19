@@ -92,7 +92,7 @@ const L = useLocalized()
   <div class="admin-page">
     <div class="page-head">
       <div class="page-actions">
-        <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
+        <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
         <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
       </div>
     </div>

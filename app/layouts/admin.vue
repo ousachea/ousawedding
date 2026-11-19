@@ -14,6 +14,11 @@ const { steps, index: stepIndex, step } = useAdminSteps()
 const isOverview = computed(() => route.path.replace(/\/$/, '') === localePath('/admin'))
 const dateLabel = computed(() => wedding.value ? new Date(wedding.value.date).toLocaleDateString(locale.value === 'km' ? 'km-KH' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '')
 watch(() => route.path, () => (menuOpen.value = false))
+// Keep the current step in view in the tablet step row
+const strip = ref<HTMLElement>()
+const showCurrentStep = () => nextTick(() => strip.value?.querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'center' }))
+watch(stepIndex, showCurrentStep)
+onMounted(showCurrentStep)
 
 onMounted(() => { if (!list.value.length) loadList() })
 
@@ -53,6 +58,15 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
           {{ t('admin.nav.menu') }}
         </button>
       </div>
+      <!-- Tablets in portrait: the steps stay in view as a row to tap, instead of only behind Menu -->
+      <nav ref="strip" class="step-strip" :aria-label="t('admin.nav.steps')">
+        <NuxtLink
+          v-for="(s, i) in steps" :key="s.key" :to="localePath(s.to)" class="strip-step"
+          :class="{ active: i === stepIndex, done: i < stepIndex }" :aria-current="i === stepIndex ? 'step' : undefined"
+        >
+          <span class="strip-dot">{{ i + 1 }}</span>{{ t(`admin.steps.${s.key}.title`) }}
+        </NuxtLink>
+      </nav>
       <div class="side-body">
         <NuxtLink :to="localePath('/admin')" class="overview-link" :class="{ active: isOverview }">{{ t('admin.nav.overview') }}</NuxtLink>
         <!-- The steps are done in order, so they are numbered and joined by a thread -->
@@ -68,7 +82,8 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
           </li>
         </ol>
         <div class="side-foot">
-          <a v-if="wedding" :href="localePath(`/${wedding.slug}`)" target="_blank" rel="noopener" class="btn btn-outline btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
+          <!-- Every invitation link opens the same named tab, so viewing it never piles up tabs -->
+          <a v-if="wedding" :href="localePath(`/${wedding.slug}`)" target="wedding-invitation" class="btn btn-outline btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
           <div v-if="list.length > 1 || me?.role === 'owner'" class="field wedding-select">
             <label for="wedding-select">{{ t('admin.wedding.select') }}</label>
             <select v-if="list.length" id="wedding-select" :value="id" @change="select(($event.target as HTMLSelectElement).value)">
@@ -114,8 +129,8 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 <style src="~/assets/css/admin.css"></style>
 
 <style scoped>
-.admin { min-height: 100dvh; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; background: var(--c-bg); }
-.side { background: var(--c-surface); border-bottom: 1px solid var(--c-line-soft); }
+.admin { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; align-content: start; background: var(--c-bg); }
+.side { min-width: 0; background: var(--c-surface); border-bottom: 1px solid var(--c-line-soft); }
 .side-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); padding-top: max(var(--space-3), env(safe-area-inset-top)); }
 /* The couple's names in the invitation's serif: the one place the admin borrows the invitation's voice */
 .couple { display: flex; flex-direction: column; text-decoration: none; color: var(--c-secondary); min-width: 0; }
@@ -153,6 +168,31 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 .step-head h1 { font-family: var(--font-serif); font-size: clamp(2rem, 5vw, 2.6rem); font-weight: 600; line-height: 1.1; color: var(--c-secondary); }
 .step-lead { color: var(--c-muted); max-width: 38rem; }
 
+.step-strip { display: none; }
+@media (min-width: 640px) and (max-width: 959px) {
+  .step-strip {
+    display: flex; gap: var(--space-2); overflow-x: auto; scrollbar-width: none;
+    padding: 0 var(--space-4) var(--space-3); scroll-padding-inline: var(--space-4);
+  }
+  .step-strip::-webkit-scrollbar { display: none; }
+  .strip-step {
+    flex: none; display: inline-flex; align-items: center; gap: var(--space-2);
+    min-height: 44px; padding: 0.35rem 1rem 0.35rem 0.4rem; border-radius: 999px;
+    border: 1px solid var(--c-line); background: var(--c-bg);
+    text-decoration: none; color: var(--c-text); font-weight: 500; white-space: nowrap;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .strip-dot {
+    display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+    border: 2px solid var(--c-accent); color: var(--c-accent-ink); font-size: 0.85rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .strip-step.done .strip-dot { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
+  .strip-step.active { background: var(--c-secondary); border-color: var(--c-secondary); color: var(--c-on-secondary); }
+  .strip-step.active .strip-dot { background: var(--c-on-secondary); border-color: var(--c-on-secondary); color: var(--c-secondary); }
+  .strip-step:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
+  /* The open menu lists the steps again; hide the row meanwhile */
+  .side.open .step-strip { display: none; }
+}
 @media (min-width: 960px) {
   .admin { grid-template-columns: 17.5rem 1fr; grid-template-rows: 1fr; }
   .side { border-bottom: 0; border-right: 1px solid var(--c-line-soft); position: sticky; top: 0; height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; }
