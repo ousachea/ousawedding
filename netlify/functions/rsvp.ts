@@ -4,7 +4,7 @@ import { sendRsvp } from '../../shared/rsvp.ts'
 export default async (req: Request) => {
   if (req.method !== 'POST') return new Response(null, { status: 405 })
   const body = await req.json().catch(() => null)
-  return new Response(null, { status: await sendRsvp(body) })
+  return new Response(null, { status: await sendRsvp(body, { host: new URL(req.url).host }) })
 }
 
 export const config = { path: '/api/rsvp' }

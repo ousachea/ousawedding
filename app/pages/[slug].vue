@@ -103,7 +103,7 @@ onMounted(() => {
   const key = `opened:${slug}:${linkName.value}`
   try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1') } catch {}
   const name = withSpouse(guestNameFromLink(linkName.value, 'en'), guestSpouse.value, 'en')
-  $fetch('/api/opened', { method: 'POST', body: { name, lang: loc.value } }).catch(() => {})
+  $fetch('/api/opened', { method: 'POST', body: { name, lang: loc.value, url: location.href } }).catch(() => {})
 })
 
 const introDelay = ref<number | null>(null)

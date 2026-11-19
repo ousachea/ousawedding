@@ -59,7 +59,7 @@ async function submit() {
   sending.value = true
   failed.value = false
   try {
-    await $fetch('/api/rsvp', { method: 'POST', body: form })
+    await $fetch('/api/rsvp', { method: 'POST', body: { ...form, url: location.href } })
     burst()
     sent.value = form.attending ? 'yes' : 'no'
   } catch {
