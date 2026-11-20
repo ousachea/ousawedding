@@ -115,7 +115,12 @@
     "fewer": "One fewer guest",
     "more": "One more guest",
     "phone": "Phone number",
-    "optional": "(optional)"
+    "optional": "(optional)",
+    "change": "Change my reply",
+    "people": "Guests",
+    "guestsHint": "Up to {n} people, including you.",
+    "justMe": "Just me",
+    "peopleN": "{n} people"
   },
   "footer": {
     "thanks": "With love and gratitude"
@@ -138,7 +143,8 @@
       "logout": "Sign out",
       "menu": "Menu",
       "overview": "Overview",
-      "steps": "Steps"
+      "steps": "Steps",
+      "couples": "Couples"
     },
     "login": {
       "title": "Sign in",
@@ -152,8 +158,6 @@
     },
     "wedding": {
       "select": "Couple",
-      "create": "New couple",
-      "slugPrompt": "Web address for the new couple, e.g. sokha-dara (lowercase letters, numbers and dashes)",
       "none": "No weddings yet."
     },
     "dashboard": {
@@ -285,7 +289,12 @@
       "moveDown": "Move down",
       "deleteConfirm": "Delete the event \"{name}\"?",
       "empty": "No events yet. Add the ceremonies and reception your guests should know about.",
-      "timezone": "Times are in {tz}."
+      "timezone": "Times are in {tz}.",
+      "order": "Order",
+      "moved": "{name} is now number {n}",
+      "sortByTime": "Sort by time",
+      "outOfOrder": "Guests see the events in this order, but it isn’t the order of their times.",
+      "orderHint": "Use the arrows to set the order guests see."
     },
     "gallery": {
       "upload": "Upload photos",
@@ -302,7 +311,11 @@
       "moveUp": "Move earlier",
       "moveDown": "Move later",
       "coverPositionHint": "This is the cover. Click the photo on the spot that must stay in view (e.g. the faces).",
-      "text": "Caption and description"
+      "text": "Caption and description",
+      "dropHint": "Or drag photos here.",
+      "coverChange": "To use another photo as the cover, open More on that photo.",
+      "orderHint": "Guests see the photos in this order. Use the arrows to move one.",
+      "more": "More"
     },
     "settings": {
       "style": "Style",
@@ -436,7 +449,10 @@
       "back": "Back",
       "next": "Next: {step}",
       "saveNext": "Save and continue",
-      "done": "Back to overview"
+      "done": "Back to overview",
+      "unsaved": "Unsaved changes",
+      "leave": "You have changes that aren’t saved. Leave this page and lose them?",
+      "leaveAction": "Leave without saving"
     },
     "steps": {
       "couple": {
@@ -494,7 +510,8 @@
       "linkHint": "Type a guest’s name to get their personal link. The invitation greets them by name, and a title like Mr or Mrs is translated.",
       "guestName": "Guest name",
       "copy": "Copy link",
-      "copied": "Link copied"
+      "copied": "Link copied",
+      "advanced": "Web address, publishing and backup"
     },
     "telegram": {
       "title": "Telegram alerts",
@@ -524,6 +541,68 @@
       "pricesHint": "The home page shows a price table once the invitation price is set. Each feature is included in it or an add-on with its own price. Fill in dollars, riel or both.",
       "base": "Invitation (base price)",
       "addon": "Add-on"
+    },
+    "couples": {
+      "all": "All couples",
+      "title": "Couples",
+      "hint": "Every couple you make invitations for, soonest wedding first. Open one to edit its invitation.",
+      "new": "New couple",
+      "address": "Their address",
+      "create": "Create and start",
+      "none": "No couples yet. Tap New couple to add the first one.",
+      "editing": "Editing",
+      "daysLeft": "{n} day to go | {n} days to go",
+      "past": "Wedding has passed",
+      "alertsCouple": "Alerts to the couple",
+      "alertsYou": "Alerts to you",
+      "samples": "Samples",
+      "samplesHint": "The style previews on your home page. They send no alerts, and can’t be deleted while the home page uses them.",
+      "sample": "Sample",
+      "deleteConfirm": "Delete {names}? Their invitation, schedule, photos, KHQR codes, music and guest list are removed for good. Push afterwards to take it off the live site.",
+      "deleted": "{names} deleted",
+      "search": "Search by name or address",
+      "noMatch": "No couple matches that search.",
+      "upcoming": "Upcoming weddings",
+      "pastTitle": "Past weddings",
+      "open": "Open",
+      "today": "Today"
+    },
+    "couple": {
+      "hint": "Names as they appear on the invitation, in Khmer and English, with each side’s parents.",
+      "addPhoto": "Add photo",
+      "changePhoto": "Change photo"
+    },
+    "words": {
+      "messageHint": "The first words guests read when they open the invitation.",
+      "blocksHint": "Optional texts, shown in this order. Leave one empty to hide it. Use the arrows to change the order."
+    },
+    "replies": {
+      "contactHint": "Who guests can call with questions. Shown at the foot of the invitation.",
+      "title": "Guest replies",
+      "hint": "Every reply sent from the invitation. A guest who replies again replaces their earlier reply.",
+      "coming": "Coming",
+      "notComing": "Can’t come",
+      "total": "Replies",
+      "guestsInAll": "{n} guest in all | {n} guests in all",
+      "guestsN": "{n} guest | {n} guests",
+      "none": "No replies yet. They appear here as guests answer.",
+      "noMatch": "No reply matches.",
+      "search": "Search by name",
+      "refresh": "Refresh",
+      "download": "Download (CSV)",
+      "note": "Note",
+      "replied": "Replied",
+      "local": "Test on this computer",
+      "deleteConfirm": "Delete the reply from {name}? It is removed from the list and the totals.",
+      "liveOff": "Only replies sent on this computer are shown. To see the live site’s replies, set REPLIES_KEY in your .env and in Netlify (see .env.example).",
+      "liveFailed": "Couldn’t reach the live site, so its replies are missing. Check the internet connection and press Refresh."
+    },
+    "look": {
+      "colours": "Colours",
+      "coloursHint": "Tap a colour to change it. The preview shows the result before you save.",
+      "fonts": "Fonts",
+      "sampleInvite": "You are invited",
+      "sampleText": "Join us to celebrate our wedding day."
     }
   },
   "gift": {
@@ -662,7 +741,9 @@
       "send": "Send",
       "sending": "Sending…",
       "sent": "Thank you! We’ll get back to you soon.",
-      "failed": "It couldn’t be sent. Please try again, or contact us directly."
+      "failed": "It couldn’t be sent. Please try again, or contact us directly.",
+      "chosen": "Your choice",
+      "change": "Change"
     },
     "total": "Total",
     "askPrice": "Ask about this",
@@ -675,6 +756,7 @@
       "preview": "Link preview with your photo in chat apps",
       "changes": "Changes after sending"
     },
-    "remove": "Remove {item}"
+    "remove": "Remove {item}",
+    "step": "Step {n}"
   }
 }

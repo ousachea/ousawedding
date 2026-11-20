@@ -61,3 +61,40 @@
   .admin .row-actions, .admin .page-actions, .admin .toolbar { gap: var(--space-2); }
   .admin summary { padding-block: 0.65rem; }
 }
+
+/* A section's title with one line on what it is for */
+.section-head { display: flex; flex-direction: column; gap: var(--space-1); }
+.section-head h2 { font-size: 1.2rem; margin: 0; }
+.section-head .hint { margin: 0; max-width: 40rem; }
+.admin .panel { box-shadow: var(--shadow-sm); }
+
+/* Folded extras inside a section: a plain row to tap, with a turning arrow */
+.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: var(--space-2); min-height: 44px; font-weight: 500; color: var(--c-secondary); }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before { content: '▸'; color: var(--c-muted); transition: rotate 0.2s; }
+.fold[open] > summary::before { rotate: 90deg; }
+.fold[open] > summary { margin-bottom: var(--space-3); }
+
+/* Big tappable choices (radio buttons inside labels) */
+.choices { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); }
+.choice {
+  position: relative; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3);
+  border: 1.5px solid var(--c-line); border-radius: var(--radius); background: var(--c-surface); cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.choice:hover { border-color: color-mix(in srgb, var(--c-secondary) 45%, var(--c-line)); }
+.choice:has(input:checked) { border-color: var(--c-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 15%, transparent); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
+.choice-title { font-weight: 600; }
+
+/* A file picker that looks like a button */
+.file-btn { cursor: pointer; align-self: flex-start; }
+.file-btn.busy { opacity: 0.7; cursor: progress; }
+.file-btn:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
+
+/* A row of filters, one picked (aria-pressed) */
+.segmented { display: inline-flex; align-self: flex-start; padding: 3px; border-radius: 999px; background: var(--c-line-soft); }
+.segmented button { min-height: 40px; padding: 0 1rem; border: 0; border-radius: 999px; background: transparent; color: var(--c-text); font: inherit; font-weight: 500; cursor: pointer; }
+.segmented button.on { background: var(--c-surface); color: var(--c-secondary); box-shadow: var(--shadow-sm); }
+.segmented .n { color: var(--c-muted); font-size: 0.85rem; }
+

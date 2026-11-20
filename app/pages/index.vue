@@ -85,9 +85,18 @@ function onFrameLoad() {
 onMounted(() => { if (frame.value?.contentDocument?.readyState === 'complete') tour() })
 onBeforeUnmount(() => stopTour())
 
-// The header gets a frosted background once the page has scrolled
+// The header gets a frosted background once the page has scrolled, slides away while scrolling down
+// and comes back on the way up
 const scrolled = ref(false)
-const onScroll = () => (scrolled.value = scrollY > 8)
+const navHidden = ref(false)
+let lastY = 0
+function onScroll() {
+  const y = scrollY
+  scrolled.value = y > 8
+  // Small moves (and the bounce at the ends) don't flip it
+  if (Math.abs(y - lastY) > 6) navHidden.value = y > lastY && y > 120
+  lastY = y
+}
 onMounted(() => { onScroll(); addEventListener('scroll', onScroll, { passive: true }) })
 onBeforeUnmount(() => removeEventListener('scroll', onScroll))
 
@@ -145,7 +154,7 @@ useHead(() => ({
 
 <template>
   <div class="home">
-    <header class="top" :class="{ scrolled }">
+    <header class="top" :class="{ scrolled, hidden: navHidden }" @focusin="navHidden = false">
       <span class="brand">{{ name }}</span>
       <nav class="langs" :aria-label="t('common.language')">
         <NuxtLink :to="switchLocalePath('en')" :class="{ on: loc === 'en' }" lang="en">EN</NuxtLink>
@@ -276,11 +285,12 @@ useHead(() => ({
       <section class="block" aria-labelledby="how-title">
         <h2 id="how-title" v-reveal>{{ t('home.howTitle') }}</h2>
         <ol class="how">
-          <li v-for="n in 3" :key="n" v-reveal="60 + n * 90">
-            <span class="num">{{ n }}</span>
+          <li v-for="(icon, i) in (['envelope', 'phone', 'heart'] as const)" :key="icon" v-reveal="60 + i * 110">
+            <div class="how-art" aria-hidden="true"><span class="how-icon"><WeddingIcon :name="icon" /></span></div>
             <div class="how-text">
-              <h3>{{ t(`home.how.${n}.title`) }}</h3>
-              <p>{{ t(`home.how.${n}.text`) }}</p>
+              <p class="how-step">{{ t('home.step', { n: i + 1 }) }}</p>
+              <h3>{{ t(`home.how.${i + 1}.title`) }}</h3>
+              <p>{{ t(`home.how.${i + 1}.text`) }}</p>
             </div>
           </li>
         </ol>
@@ -310,6 +320,15 @@ useHead(() => ({
         <p v-reveal="80" class="block-lead">{{ t('home.contactLead') }}</p>
         <p v-if="sendState === 'sent'" class="sent" role="status">{{ t('home.form.sent') }}</p>
         <form v-else v-reveal="120" class="enquiry" @submit.prevent="sendForm">
+          <!-- What they picked in the price table travels with the enquiry; shown here so they can check it -->
+          <div v-if="showPrices && picked.length" class="wide chosen">
+            <p class="chosen-title">{{ t('home.form.chosen') }}</p>
+            <ul>
+              <li>{{ t('home.basePrice') }}</li>
+              <li v-for="k in picked" :key="k">+ {{ t(`home.features.${k}.title`) }}</li>
+            </ul>
+            <p class="chosen-total"><strong class="tabular">{{ money(total) }}</strong><a href="#prices">{{ t('home.form.change') }}</a></p>
+          </div>
           <div class="field">
             <label for="c-name">{{ t('home.form.name') }}</label>
             <input id="c-name" v-model="form.name" required maxlength="120" autocomplete="name">
@@ -353,6 +372,13 @@ useHead(() => ({
 
 <style scoped>
 .home {
+  /* Easier reading than the invitation fonts: sturdy serif headings, the phone's own font for text */
+  --font-serif: 'Lora', 'Noto Serif Khmer', Georgia, serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Khmer', sans-serif;
+  --font-heading: var(--font-serif);
+  font-family: var(--font-sans); font-size: 1.0625rem;
+  /* clip, not hidden: never slides sideways, and the sticky header keeps working */
+  overflow-x: clip; overscroll-behavior-x: none;
   min-height: 100dvh; color: var(--c-text);
   background:
     radial-gradient(60rem 30rem at 85% -10%, color-mix(in srgb, var(--c-gold) 16%, transparent), transparent 70%),
@@ -361,10 +387,12 @@ useHead(() => ({
 }
 .top, main, .foot { width: min(72rem, 100% - 2rem); margin-inline: auto; }
 .top {
-  position: sticky; top: 0; z-index: var(--z-nav); display: flex; justify-content: space-between; align-items: center;
+  /* Floats a little below the top edge (and the iPhone notch) rather than sitting flush against it */
+  position: sticky; top: calc(env(safe-area-inset-top) + var(--space-2)); z-index: var(--z-nav); display: flex; justify-content: space-between; align-items: center;
   padding: var(--space-3) var(--space-4); margin-top: var(--space-2); border-radius: 999px;
-  transition: background-color 0.3s, box-shadow 0.3s, backdrop-filter 0.3s;
+  transition: background-color 0.3s, box-shadow 0.3s, backdrop-filter 0.3s, translate 0.35s var(--ease-out), opacity 0.35s;
 }
+.top.hidden { translate: 0 calc(-100% - var(--space-4) - env(safe-area-inset-top)); opacity: 0; }
 .top.scrolled { background: color-mix(in srgb, var(--c-bg) 75%, transparent); backdrop-filter: blur(12px); box-shadow: 0 0 0 1px var(--c-line-soft), var(--shadow-sm); }
 .brand { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; color: var(--c-secondary); }
 .langs { display: flex; gap: var(--space-1); padding: 3px; border: 1px solid var(--c-line); border-radius: 999px; }
@@ -448,25 +476,34 @@ useHead(() => ({
 .features p, .how p { color: var(--c-muted); font-size: 0.95rem; }
 .badge-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; font-size: 1.4rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 9%, transparent); }
 
-/* How it works: three steps on a dashed thread. Phones: a timeline down the left. Wider: three equal
-   cards in a row, the thread running through their numbers. */
-.how { position: relative; list-style: none; margin: var(--space-6) auto 0; padding: 0; max-width: 30rem; display: grid; gap: var(--space-5); }
-.how li:not(:last-child)::before { content: ''; position: absolute; left: 1.6rem; top: 3.2rem; bottom: calc(-1 * var(--space-5)); border-left: 2px dashed var(--c-line); }
-.how li { position: relative; display: grid; grid-template-columns: 3.2rem 1fr; gap: var(--space-4); align-items: start; }
-.num {
-  display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 50%;
-  font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: #5a4413;
-  background: radial-gradient(circle at 35% 30%, var(--c-gold-light), var(--c-gold) 60%, var(--c-gold-deep));
-  box-shadow: 0 0 0 6px var(--c-bg), 0 6px 14px -6px rgb(138 106 34 / 0.6);
+/* How it works: three tall cards, each with a large icon on a tinted panel. In a row when wide, stacked on phones. */
+.how { list-style: none; margin: var(--space-6) 0 0; padding: 0; display: grid; gap: var(--space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+.how li {
+  display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-lg);
+  background: var(--c-surface); box-shadow: 0 0 0 1px var(--c-line-soft) inset, var(--shadow-sm);
+  transition: translate 0.35s var(--ease-out), box-shadow 0.35s; -webkit-tap-highlight-color: transparent;
 }
-.how-text { padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); background: var(--c-surface); box-shadow: 0 0 0 1px var(--c-line-soft) inset; }
-.how-text h3 { margin-top: 0; }
-@media (min-width: 760px) {
-  .how { max-width: none; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); }
-  .how li:not(:last-child)::before { content: none; }
-  .how::before { content: ''; position: absolute; left: 16.7%; right: 16.7%; top: 1.6rem; border-top: 2px dashed var(--c-line); }
-  .how li { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: var(--space-4); }
-  .how-text { align-self: stretch; }
+.how-art {
+  display: grid; place-items: center; aspect-ratio: 16 / 10;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 22%, color-mix(in srgb, var(--c-gold) 22%, transparent) 22.5% 23%, transparent 23.5% 32%, color-mix(in srgb, var(--c-gold) 14%, transparent) 32.5% 33%, transparent 33.5%),
+    linear-gradient(160deg, color-mix(in srgb, var(--c-secondary) 14%, var(--c-bg)), color-mix(in srgb, var(--c-gold) 18%, var(--c-bg)));
+}
+.how-icon {
+  display: grid; place-items: center; width: 5.5rem; height: 5.5rem; border-radius: 50%;
+  font-size: 2.6rem; color: var(--c-secondary); background: var(--c-surface);
+  box-shadow: 0 10px 24px -10px rgb(45 22 64 / 0.45), 0 0 0 6px color-mix(in srgb, var(--c-surface) 55%, transparent);
+  transition: scale 0.35s var(--ease-out), rotate 0.35s var(--ease-out);
+}
+.how-text { padding: var(--space-4) var(--space-5) var(--space-5); text-align: center; }
+.how-text h3 { margin-top: var(--space-1); }
+.how-step { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-accent-ink); }
+.how-step:lang(km) { letter-spacing: 0; text-transform: none; font-size: 0.9rem; }
+.how li:active { translate: 0 -4px; box-shadow: 0 0 0 1px var(--c-line) inset, var(--shadow); }
+.how li:active .how-icon { scale: 1.08; rotate: -6deg; }
+@media (hover: hover) {
+  .how li:hover { translate: 0 -4px; box-shadow: 0 0 0 1px var(--c-line) inset, var(--shadow); }
+  .how li:hover .how-icon { scale: 1.08; rotate: -6deg; }
 }
 
 /* What to send: a two-column checklist with gold ticks */
@@ -570,8 +607,18 @@ useHead(() => ({
 .contact { text-align: center; }
 .enquiry { max-width: 40rem; margin: var(--space-6) auto 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); text-align: left; }
 .enquiry .wide { grid-column: 1 / -1; }
+.home .field input, .home .field select, .home .field textarea { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+.home .field input[type='date'] { -webkit-appearance: none; appearance: none; text-align: left; }
+.home .field input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .enquiry .btn { min-height: 48px; min-width: 12rem; }
 .failed { color: var(--c-danger); }
+.chosen { padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--c-secondary) 6%, var(--c-surface)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-secondary) 25%, transparent) inset; }
+.chosen-title { font-weight: 600; color: var(--c-secondary); }
+.chosen ul { list-style: none; margin: var(--space-2) 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.chosen li { padding: 0.15rem 0.7rem; border-radius: 999px; background: var(--c-surface); font-size: 0.9rem; box-shadow: 0 0 0 1px var(--c-line-soft) inset; }
+.chosen-total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+.chosen-total strong { font-family: var(--font-serif); font-size: 1.4rem; color: var(--c-secondary); }
+.chosen-total a { min-height: 44px; display: inline-flex; align-items: center; color: var(--c-secondary); font-weight: 500; }
 .sent { margin: var(--space-6) auto 0; max-width: 30rem; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--c-surface); font-family: var(--font-serif); font-size: 1.3rem; color: var(--c-secondary); }
 .contacts { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin-top: var(--space-6); }
 .contacts .btn { min-height: 48px; gap: var(--space-2); }

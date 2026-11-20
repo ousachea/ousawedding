@@ -93,10 +93,18 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
           <div v-else-if="sent" class="thanks" role="status">
             <!-- A ring draws itself round, then the icon pops in -->
             <span class="thanks-mark">
-              <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" /></svg>
+              <svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" /></svg>
               <WeddingIcon :name="sent === 'yes' ? 'heart' : 'envelope'" />
             </span>
             <p class="thanks-title">{{ t(sent === 'yes' ? 'rsvp.thanksYes' : 'rsvp.thanksNo') }}</p>
+            <!-- What they sent, so they can see it went through as meant -->
+            <dl class="summary">
+              <div v-if="form.name.trim()"><dt>{{ t('rsvp.name') }}</dt><dd>{{ form.name }}</dd></div>
+              <div><dt>{{ t('rsvp.attending') }}</dt><dd>{{ t(`rsvp.${sent}`) }}</dd></div>
+              <div v-if="sent === 'yes'"><dt>{{ t('rsvp.people') }}</dt><dd class="tabular">{{ form.guests }}</dd></div>
+            </dl>
+            <!-- The form keeps their answers; sending again gives the couple the newer reply -->
+            <button type="button" class="change" @click="sent = ''">{{ t('rsvp.change') }}</button>
           </div>
           <form v-else class="form" @submit.prevent="submit">
             <fieldset class="field">
@@ -129,14 +137,21 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 
             <!-- Opens smoothly once the guest says they're coming -->
             <div class="expand" :class="{ open: form.attending }" :inert="!form.attending">
-              <div class="field">
-                <span id="rsvp-guests-label" class="label">{{ t('rsvp.guests') }}</span>
-                <div class="stepper" role="group" aria-labelledby="rsvp-guests-label">
-                  <button type="button" class="step" :disabled="form.guests <= 1" :aria-label="t('rsvp.fewer')" @click="form.guests--">−</button>
-                  <output class="count tabular" aria-live="polite"><span :key="form.guests">{{ form.guests }}</span></output>
-                  <button type="button" class="step" :disabled="form.guests >= 20" :aria-label="t('rsvp.more')" @click="form.guests++">+</button>
+              <fieldset class="field">
+                <legend class="label">{{ t('rsvp.guests') }}</legend>
+                <p class="hint">{{ t('rsvp.guestsHint', { n: MAX_GUESTS }) }}</p>
+                <!-- A tile per number of people, each with that many little figures -->
+                <div class="party">
+                  <label v-for="n in MAX_GUESTS" :key="n" class="seat" :class="{ on: form.guests === n }">
+                    <input v-model="form.guests" type="radio" name="guests" :value="n" class="visually-hidden">
+                    <span class="people" aria-hidden="true">
+                      <svg v-for="p in n" :key="p" viewBox="0 0 12 16" width="12" height="16"><circle cx="6" cy="4" r="3" /><path d="M0.5 16c0-3.6 2.4-6 5.5-6s5.5 2.4 5.5 6z" /></svg>
+                    </span>
+                    <span class="seat-n tabular">{{ n }}</span>
+                    <span class="seat-label">{{ n === 1 ? t('rsvp.justMe') : t('rsvp.peopleN', { n }) }}</span>
+                  </label>
                 </div>
-              </div>
+              </fieldset>
             </div>
 
             <div class="field">
@@ -236,24 +251,34 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 .optional { font-weight: 400; color: var(--c-muted); }
 .with-icon { position: relative; }
 .with-icon .field-icon { position: absolute; left: 0.9rem; top: 50%; translate: 0 -50%; color: var(--c-muted); pointer-events: none; transition: color 0.2s; }
-.with-icon input { padding-left: 2.6rem; }
+/* .field in front: outranks the plain `.field input` padding above, which would put the text under the icon */
+.field .with-icon input { padding-left: 2.75rem; }
 .with-icon:focus-within .field-icon { color: var(--c-accent); }
 /* Room for the focus ring, which the opening animation's overflow would otherwise cut off */
 .expand > * { padding: 3px; margin: -3px; }
-.stepper { display: flex; align-items: center; gap: var(--space-4); }
-.step {
-  width: 2.75rem; height: 2.75rem; border-radius: 50%;
-  font-size: 1.4rem; line-height: 1; cursor: pointer;
-  color: var(--c-secondary); background: var(--c-bg); border: 1.5px solid var(--c-line);
-  transition: border-color 0.2s, transform 0.15s;
+.hint { margin-top: calc(var(--space-1) * -1); font-size: 0.9rem; color: var(--c-muted); }
+.party { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); }
+.seat {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-3) var(--space-1);
+  border: 1.5px solid var(--c-line); border-radius: var(--radius); background: var(--c-bg); cursor: pointer; text-align: center;
+  transition: border-color 0.2s, background-color 0.2s, transform 0.2s var(--ease-out), box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
-.step:hover:not(:disabled) { border-color: var(--c-secondary); }
-.step:active:not(:disabled) { transform: scale(0.9); }
-.step:disabled { opacity: 0.35; cursor: not-allowed; }
-.count { min-width: 2ch; text-align: center; font-family: var(--font-serif); font-size: 1.9rem; color: var(--c-secondary); }
-/* Each new number remounts (keyed), so it bumps in */
-.count span { display: inline-block; animation: bump 0.3s var(--ease-out); }
-@keyframes bump { from { transform: translateY(-40%) scale(0.7); opacity: 0; } }
+@media (hover: hover) { .seat:hover { border-color: var(--c-accent); } }
+.seat:active { transform: scale(0.95); }
+.seat:has(input:focus-visible) { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.seat.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 8%, var(--c-bg)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 14%, transparent); }
+.people { display: flex; justify-content: center; gap: 1px; height: 16px; color: var(--c-line); transition: color 0.2s; }
+.people svg { fill: currentColor; }
+.seat.on .people { color: var(--c-accent); }
+.seat.on .people svg { animation: hop 0.35s var(--ease-out) backwards; }
+.seat.on .people svg:nth-child(2) { animation-delay: 0.05s; }
+.seat.on .people svg:nth-child(3) { animation-delay: 0.1s; }
+.seat.on .people svg:nth-child(4) { animation-delay: 0.15s; }
+@keyframes hop { 40% { transform: translateY(-4px); } }
+.seat-n { font-family: var(--font-serif); font-size: 1.7rem; line-height: 1.2; color: var(--c-text); }
+.seat.on .seat-n { color: var(--c-secondary); }
+.seat-label { font-size: 0.78rem; line-height: 1.25; color: var(--c-muted); }
 
 .send { min-width: 11rem; }
 .dots { display: inline-flex; gap: 3px; margin-left: 4px; }
@@ -267,12 +292,32 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 
 /* Thank-you: a ring draws round, the icon pops in, then the words rise */
-.thanks { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding-block: var(--space-4); text-align: center; }
-.thanks-mark { position: relative; display: grid; place-items: center; width: 5rem; height: 5rem; font-size: 2rem; color: var(--c-secondary); }
-.thanks-mark svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.thanks { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding-block: var(--space-3); text-align: center; }
+.thanks-mark {
+  position: relative; display: grid; place-items: center; width: 5.5rem; height: 5.5rem; border-radius: 50%;
+  font-size: 2.2rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-accent) 14%, var(--c-surface));
+}
+/* .ring, not svg: the icon is an svg too and must stay upright */
+.thanks-mark .ring { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); transform: rotate(-90deg); }
 .thanks-mark circle { fill: none; stroke: var(--c-accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 183; stroke-dashoffset: 183; animation: draw 0.9s var(--ease-out) forwards; }
-.thanks-mark > :not(svg) { animation: pop-in 0.5s 0.6s var(--ease-out) backwards; }
-.thanks-title { font-family: var(--font-serif); font-size: 1.35rem; color: var(--c-secondary); max-width: 24rem; animation: rise 0.6s 0.8s var(--ease-out) backwards; }
+.thanks-mark > :not(.ring) { animation: pop-in 0.5s 0.6s var(--ease-out) backwards; }
+.thanks-title { font-family: var(--font-serif); font-size: 1.45rem; line-height: 1.35; color: var(--c-secondary); max-width: 24rem; text-wrap: balance; animation: rise 0.6s 0.8s var(--ease-out) backwards; }
+.summary {
+  width: 100%; max-width: 22rem; margin: 0; padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius); background: var(--c-bg); border: 1px solid var(--c-line-soft); text-align: left;
+  animation: rise 0.6s 1s var(--ease-out) backwards;
+}
+.summary div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); padding-block: var(--space-2); }
+.summary div + div { border-top: 1px solid var(--c-line-soft); }
+.summary dt { color: var(--c-muted); font-size: 0.9rem; }
+.summary dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.change {
+  min-height: 44px; padding: 0 var(--space-3); border: 0; background: none; font: inherit; cursor: pointer;
+  color: var(--c-secondary); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  animation: rise 0.6s 1.1s var(--ease-out) backwards;
+}
+.change:hover { text-decoration-color: currentColor; }
+@media (prefers-reduced-motion: reduce) { .thanks *, .thanks-mark circle { animation: none; } .thanks-mark circle { stroke-dashoffset: 0; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes pop-in { from { transform: scale(0); opacity: 0; } 70% { transform: scale(1.2); } }
 @keyframes rise { from { transform: translateY(12px); opacity: 0; } }

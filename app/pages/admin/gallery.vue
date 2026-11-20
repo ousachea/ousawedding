@@ -75,75 +75,105 @@ async function remove(img: GalleryImage) {
   await Promise.all([load(), loadWedding()])
   push(t('common.saved'))
 }
-async function move(index: number, step: number) {
+// Arrows move a photo one place; the order is saved once the taps stop, in one request
+let saveTimer: ReturnType<typeof setTimeout> | undefined
+const saveOrder = () => api(`${base.value}/gallery/reorder`, { method: 'POST', body: { ids: images.value.map(i => i.id) } }).catch(load)
+onBeforeUnmount(() => { if (saveTimer) { clearTimeout(saveTimer); saveOrder() } })
+function move(index: number, step: number) {
   const list = [...images.value]
   const [item] = list.splice(index, 1)
   list.splice(index + step, 0, item!)
   images.value = list
-  await api(`${base.value}/gallery/reorder`, { method: 'POST', body: { ids: list.map(i => i.id) } }).catch(load)
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => { saveTimer = undefined; saveOrder() }, 500)
 }
+
+// Photos dropped on the upload box go through the same upload as the file picker
+const dragging = ref(false)
+async function drop(e: DragEvent) {
+  dragging.value = false
+  if (!e.dataTransfer?.files.length || progress.value) return
+  if (await uploadFiles({ target: { files: e.dataTransfer.files } } as unknown as Event)) await load()
+}
+const cover = computed(() => images.value.find(img => img.url === wedding.value?.coverImage) ?? null)
+const coverPoint = computed(() => (wedding.value?.coverPosition ?? '50% 50%').split(' '))
+const name = (img: GalleryImage, i: number) => img.caption[locale.value as Locale] || img.caption.en || `#${i + 1}`
 </script>
 
 <template>
   <div class="admin-page">
-    <div class="page-head">
-      <label class="btn btn-primary upload" :class="{ busy: progress }">
-        <input type="file" accept="image/jpeg,image/png,image/webp" multiple class="visually-hidden" :disabled="!!progress" @change="upload">
-        {{ progress ? t('admin.gallery.uploading', progress) : `+ ${t('admin.gallery.upload')}` }}
-      </label>
-    </div>
-    <p class="muted small">{{ t('admin.gallery.hint') }}</p>
+    <label
+      class="drop" :class="{ busy: progress, over: dragging }"
+      @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="drop"
+    >
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple class="visually-hidden" :disabled="!!progress" @change="upload">
+      <span class="drop-icon" aria-hidden="true">+</span>
+      <span class="drop-title">{{ progress ? t('admin.gallery.uploading', progress) : t('admin.gallery.upload') }}</span>
+      <span class="muted small">{{ t('admin.gallery.dropHint') }} {{ t('admin.gallery.hint') }}</span>
+    </label>
 
-    <div class="toolbar" role="group">
-      <button v-for="f in (['all', 'used', 'unused'] as const)" :key="f" type="button" class="btn btn-sm" :class="filter === f ? 'btn-primary' : 'btn-ghost'" :aria-pressed="filter === f" @click="filter = f">
-        {{ t(`admin.assets.filter${f[0]!.toUpperCase()}${f.slice(1)}`) }} ({{ images.filter(img => matches(f, img)).length }})
+    <section v-if="cover" class="panel cover">
+      <!-- The cover is shown cropped like on the invitation; clicking sets the point that stays in view -->
+      <button type="button" class="cover-crop" :aria-label="t('admin.gallery.coverPositionHint')" @click="setCoverPosition">
+        <img :src="cover.url" alt="" :style="{ objectPosition: wedding?.coverPosition }">
+        <span class="focus" :style="{ left: coverPoint[0], top: coverPoint[1] }" aria-hidden="true" />
+      </button>
+      <div class="section-head">
+        <h2>{{ t('admin.gallery.isCover') }}</h2>
+        <p class="hint">{{ t('admin.gallery.coverPositionHint') }}</p>
+        <p class="hint">{{ t('admin.gallery.coverChange') }}</p>
+      </div>
+    </section>
+
+    <div v-if="images.length" class="segmented" role="group">
+      <button v-for="f in (['all', 'used', 'unused'] as const)" :key="f" type="button" :class="{ on: filter === f }" :aria-pressed="filter === f" @click="filter = f">
+        {{ t(`admin.assets.filter${f[0]!.toUpperCase()}${f.slice(1)}`) }} <span class="n tabular">{{ images.filter(img => matches(f, img)).length }}</span>
       </button>
     </div>
+    <p v-if="filter === 'all' && images.length > 1" class="muted small">{{ t('admin.gallery.orderHint') }}</p>
 
     <p v-if="loading && !images.length" class="muted">{{ t('common.loading') }}</p>
     <div v-else-if="!shown.length" class="panel empty-state"><p>{{ t('admin.gallery.empty') }}</p></div>
-    <ul v-else class="grid">
-      <li v-for="(img, i) in shown" :key="img.id" class="panel item" :class="{ hidden: !img.visible }">
-        <!-- The cover is shown cropped like on the invitation; clicking sets the point that stays in view -->
-        <button
-          v-if="wedding?.coverImage === img.url"
-          type="button" class="thumb cover-crop" :title="t('admin.gallery.coverPositionHint')" @click="setCoverPosition"
-        >
-          <img :src="img.url" alt="" :style="{ objectPosition: wedding.coverPosition }">
-          <span class="focus" :style="{ left: (wedding.coverPosition ?? '50% 50%').split(' ')[0], top: (wedding.coverPosition ?? '50% 50%').split(' ')[1] }" aria-hidden="true" />
-        </button>
-        <div v-else class="thumb">
-          <img :src="img.thumbUrl || img.url" :alt="img.alt.en || img.caption.en" loading="lazy" :width="img.width" :height="img.height">
+    <TransitionGroup v-else tag="ul" name="reorder" class="grid">
+      <li v-for="(img, i) in shown" :key="img.id" class="tile" :class="{ hidden: !img.visible }">
+        <div class="thumb">
+          <img :src="img.thumbUrl || img.url" :alt="img.alt.en || img.caption.en" loading="lazy">
+          <span class="flags">
+            <span v-if="wedding?.coverImage === img.url" class="flag">★ {{ t('admin.gallery.isCover') }}</span>
+            <span v-if="!img.visible" class="flag dim">{{ t('admin.gallery.hidden') }}</span>
+          </span>
         </div>
-        <p v-if="wedding?.coverImage === img.url" class="hint small">{{ t('admin.gallery.coverPositionHint') }}</p>
+        <div class="tile-bar">
+          <AdminMoveButtons v-if="filter === 'all'" horizontal :index="i" :count="images.length" :name="name(img, i)" @move="move(i, $event)" />
+          <label class="switch">
+            <input type="checkbox" :checked="img.visible" @change="patch(img, { visible: !img.visible })">
+            <span class="track" aria-hidden="true" />
+            <span class="small">{{ t('admin.gallery.visible') }}</span>
+          </label>
+        </div>
         <ul class="uses">
           <li v-for="u in usesOf(img.url, img)" :key="u" class="badge responded">{{ u }}</li>
           <li v-if="!usesOf(img.url, img).length" class="badge">{{ t('admin.assets.unused') }}</li>
         </ul>
-        <label class="check small"><input type="checkbox" :checked="img.visible" @change="patch(img, { visible: !img.visible })"> {{ t('admin.gallery.visible') }}</label>
-        <!-- Folded away so the photos stay easy to scan; marked when something is filled in -->
-        <details class="text">
+        <!-- Folded away so the photos stay easy to scan; marked when a caption is filled in -->
+        <details class="fold">
           <summary>
-            {{ t('admin.gallery.text') }}
-            <span v-if="img.caption.en || img.caption.km || img.alt.en || img.alt.km" class="filled">✓</span>
+            {{ t('admin.gallery.more') }}
+            <span v-if="img.caption.en || img.caption.km || img.alt.en || img.alt.km" class="filled" :title="t('admin.gallery.text')">✓</span>
           </summary>
           <form class="form-grid" @submit.prevent="saveText(img)">
             <AdminLocalizedField v-model="img.caption" :label="t('admin.gallery.caption')" />
             <AdminLocalizedField v-model="img.alt" :label="t('admin.gallery.alt')" />
             <div><button type="submit" class="btn btn-outline btn-sm">{{ t('common.save') }}</button></div>
           </form>
+          <div class="row-actions">
+            <button v-if="wedding?.coverImage !== img.url" type="button" class="btn btn-ghost btn-sm" @click="setCover(img)">{{ t('admin.gallery.cover') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="copy(img.url)">{{ t('admin.assets.copy') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm delete" @click="remove(img)">{{ t('common.delete') }}</button>
+          </div>
         </details>
-        <div class="row-actions">
-          <template v-if="filter === 'all'">
-            <button type="button" class="btn btn-ghost btn-sm" :disabled="i === 0" :aria-label="t('admin.gallery.moveUp')" @click="move(i, -1)">←</button>
-            <button type="button" class="btn btn-ghost btn-sm" :disabled="i === images.length - 1" :aria-label="t('admin.gallery.moveDown')" @click="move(i, 1)">→</button>
-          </template>
-          <button type="button" class="btn btn-ghost btn-sm" @click="copy(img.url)">{{ t('admin.assets.copy') }}</button>
-          <button v-if="wedding?.coverImage !== img.url" type="button" class="btn btn-ghost btn-sm" @click="setCover(img)">{{ t('admin.gallery.cover') }}</button>
-          <button type="button" class="btn btn-danger btn-sm" @click="remove(img)">{{ t('common.delete') }}</button>
-        </div>
       </li>
-    </ul>
+    </TransitionGroup>
 
     <section v-if="linked.length && filter !== 'unused'" class="panel linked">
       <h2>{{ t('admin.assets.external') }}</h2>
@@ -160,26 +190,51 @@ async function move(index: number, step: number) {
 </template>
 
 <style scoped>
-.upload { cursor: pointer; }
-.upload.busy { opacity: 0.7; cursor: progress; }
-.upload:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
-.grid { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); align-items: start; }
-.item { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
-.item.hidden .thumb img { opacity: 0.45; }
+.drop {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-5) var(--space-4);
+  border: 2px dashed var(--c-line); border-radius: var(--radius-lg); background: var(--c-surface); text-align: center; cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.drop:hover, .drop.over { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 5%, var(--c-surface)); }
+.drop:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
+.drop.busy { cursor: progress; }
+.drop-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: var(--c-secondary); color: var(--c-on-secondary); font-size: 1.8rem; line-height: 1; }
+.drop-title { font-size: 1.1rem; font-weight: 600; color: var(--c-secondary); }
+
+.cover { display: grid; gap: var(--space-4); align-items: center; }
+@media (min-width: 640px) { .cover { grid-template-columns: 12rem minmax(0, 1fr); } }
+.cover-crop { position: relative; display: block; width: 100%; max-width: 14rem; padding: 0; border: 0; cursor: crosshair; background: none; }
+.cover-crop img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
+.focus { position: absolute; width: 20px; height: 20px; translate: -50% -50%; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45); pointer-events: none; }
+
+.grid { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); align-items: start; }
+.tile { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2); background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
 .thumb { position: relative; }
-.thumb img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); } /* natural aspect ratio from the width/height attributes */
+.thumb img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-sm); background: var(--c-line-soft); }
+.tile.hidden .thumb img { opacity: 0.4; }
+.flags { position: absolute; top: var(--space-2); left: var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.flag { padding: 2px 8px; border-radius: 999px; background: var(--c-secondary); color: var(--c-on-secondary); font-size: 0.75rem; font-weight: 600; }
+.flag.dim { background: rgb(0 0 0 / 0.6); color: #fff; }
+.tile-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.tile .uses, .tile .fold { padding-inline: var(--space-1); }
 .uses { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .uses .badge { white-space: normal; }
-/* Cover: cropped 4:5 like on the invitation, with the chosen point marked */
-.cover-crop { display: block; width: 100%; padding: 0; border: 0; cursor: crosshair; background: none; }
-.cover-crop img { aspect-ratio: 4 / 5; object-fit: cover; }
-.focus { position: absolute; width: 18px; height: 18px; translate: -50% -50%; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4); pointer-events: none; }
+.filled { color: #2F7A50; }
+.row-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-3); }
+.delete { color: var(--c-danger); }
+@media (prefers-reduced-motion: no-preference) { .reorder-move { transition: transform 0.3s var(--ease-out); } }
+
+/* On/off switch for showing a photo in the public gallery */
+.switch { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; margin-left: auto; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track { position: relative; width: 2.6rem; height: 1.5rem; border-radius: 999px; background: var(--c-line); transition: background-color 0.2s; }
+.switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: calc(1.5rem - 6px); height: calc(1.5rem - 6px); border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); transition: translate 0.2s var(--ease-out); }
+.switch input:checked + .track { background: var(--c-secondary); }
+.switch input:checked + .track::after { translate: 1.1rem 0; }
+.switch input:focus-visible + .track { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
+
 .linked h2 { font-size: 1.1rem; margin-bottom: var(--space-3); }
 .linked ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.linked li { display: flex; align-items: center; gap: var(--space-3); }
+.linked li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .linked img { width: 4rem; height: 3rem; object-fit: cover; border-radius: var(--radius-sm); }
-.text summary { cursor: pointer; font-weight: 500; color: var(--c-secondary); }
-.text[open] summary { margin-bottom: var(--space-3); }
-.filled { margin-left: var(--space-1); color: #2F7A50; }
-.row-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; }
 </style>

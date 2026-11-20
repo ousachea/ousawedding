@@ -12,11 +12,13 @@ const config = useRuntimeConfig().public
 // Editable copy of the wedding; saved as one PATCH
 type Draft = Omit<Wedding, 'id' | 'createdAt' | 'updatedAt' | 'isSample'>
 const draft = ref<Draft | null>(null)
+const { dirty, reset } = useUnsaved(draft)
 watch(wedding, (w) => {
   if (!w) return
   const { id: _id, createdAt: _c, updatedAt: _u, isSample: _s, ...rest } = structuredClone(toRaw(w))
   // Times are entered in the admin's own timezone, taken from the browser
   draft.value = { partnerPhotos: { partner1: '', partner2: '' }, gifts: [], telegramChatId: '', ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
+  reset()
 }, { immediate: true })
 
 const saving = ref(false)
@@ -25,6 +27,7 @@ async function save(e?: Event) {
   saving.value = true
   try {
     await api(base.value, { method: 'PATCH', body: draft.value })
+    reset()
     await Promise.all([loadWedding(), loadList()])
     push(t('common.saved'))
   } finally {
@@ -68,7 +71,7 @@ const apology = loc('apology')
 const textFields = { story, thanks, apology }
 const textLabel = { story: 'admin.settings.story', thanks: 'admin.settings.thanks', apology: 'admin.settings.apology' } as const
 const textOrder = computed(() => draft.value!.textOrder ?? [...TEXT_BLOCKS])
-function moveText(i: number, by: -1 | 1) {
+function moveText(i: number, by: number) {
   const order = [...textOrder.value]
   ;[order[i], order[i + by]] = [order[i + by]!, order[i]!]
   draft.value!.textOrder = order
@@ -80,10 +83,12 @@ const nameField = (key: 'partner1' | 'partner2' | 'parents1' | 'parents2') => co
     draft.value!.names.en[key] = v.en
   },
 })
-const partner1 = nameField('partner1')
-const partner2 = nameField('partner2')
-const parents1 = nameField('parents1')
-const parents2 = nameField('parents2')
+const people = [
+  { key: 'partner1', name: nameField('partner1'), parents: nameField('parents1') },
+  { key: 'partner2', name: nameField('partner2'), parents: nameField('parents2') },
+] as const
+// Which partner's photo choices are open
+const picking = ref<'partner1' | 'partner2' | null>(null)
 
 // Banks' KHQR images differ in framing (header, name, borders), so each is cut down to the code alone,
 // square on white: every code then shows at the same size. Returns null when no code is found.
@@ -191,118 +196,155 @@ async function copyLink() {
     <form id="step-form" class="sections" @submit.prevent="save">
       <template v-if="part === 'couple'">
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.couple') }}</h2>
-          <AdminLocalizedField v-model="partner1" :label="t('admin.settings.partner1')" required />
-          <AdminLocalizedField v-model="partner2" :label="t('admin.settings.partner2')" required />
-          <AdminLocalizedField v-model="parents1" :label="t('admin.settings.parentsOf', { name: draft.names.en.partner1 })" multiline />
-          <AdminLocalizedField v-model="parents2" :label="t('admin.settings.parentsOf', { name: draft.names.en.partner2 })" multiline />
-          <div class="field narrow">
-            <label for="s-mono">{{ t('admin.settings.monogram') }}</label>
-            <input id="s-mono" v-model="draft.monogram" maxlength="12">
-          </div>
-        </section>
-
-        <section class="panel form-grid">
-          <h2>{{ t('admin.settings.date') }}</h2>
-          <div class="field narrow">
-            <label for="s-date">{{ t('admin.settings.dateLabel') }}</label>
-            <input id="s-date" v-model="draft.date" type="datetime-local" required>
-            <p class="hint">{{ t('admin.settings.dateHint') }}</p>
-          </div>
-          <div class="field narrow">
-            <label for="s-lang">{{ t('admin.settings.language') }}</label>
-            <select id="s-lang" v-model="draft.defaultLocale">
-              <option value="km">{{ t('common.khmer') }}</option>
-              <option value="en">{{ t('common.english') }}</option>
-            </select>
-          </div>
-        </section>
-
-        <section class="panel form-grid">
-          <h2>{{ t('admin.settings.photos') }}</h2>
-          <p class="hint">{{ t('admin.settings.photoHint') }}</p>
-          <fieldset v-for="key in (['partner1', 'partner2'] as const)" :key="key" class="field photo-pick">
-            <legend>{{ t('admin.settings.photoOf', { name: draft.names.en[key] }) }}</legend>
-            <div class="photo-grid">
-              <label class="photo-opt none">
-                <input v-model="photos[key]" type="radio" :name="`photo-${key}`" value="" class="visually-hidden">
-                <span>{{ t('admin.settings.noPhoto') }}</span>
-              </label>
-              <!-- A photo set before (e.g. by URL) that is not in the gallery stays selectable -->
-              <label v-if="photos[key] && !images.some(img => img.url === photos[key])" class="photo-opt">
-                <input v-model="photos[key]" type="radio" :name="`photo-${key}`" :value="photos[key]" class="visually-hidden">
-                <img :src="photos[key]" alt="">
-              </label>
-              <label v-for="img in images" :key="img.id" class="photo-opt" :title="imageLabel(img)">
-                <input v-model="photos[key]" type="radio" :name="`photo-${key}`" :value="img.url" class="visually-hidden" :aria-label="imageLabel(img)">
-                <img :src="img.thumbUrl || img.url" alt="" loading="lazy">
-              </label>
+          <header class="section-head">
+            <h2>{{ t('admin.settings.couple') }}</h2>
+            <p class="hint">{{ t('admin.couple.hint') }}</p>
+          </header>
+          <div class="people">
+            <div v-for="p in people" :key="p.key" class="person">
+              <div class="person-head">
+                <img v-if="photos[p.key]" :src="photos[p.key]" alt="" class="avatar">
+                <span v-else class="avatar empty" aria-hidden="true">{{ (draft.names.en[p.key] || '?')[0] }}</span>
+                <button type="button" class="btn btn-ghost btn-sm" :aria-expanded="picking === p.key" @click="picking = picking === p.key ? null : p.key">
+                  {{ photos[p.key] ? t('admin.couple.changePhoto') : t('admin.couple.addPhoto') }}
+                </button>
+              </div>
+              <fieldset v-if="picking === p.key" class="photo-pick">
+                <legend>{{ t('admin.settings.photoOf', { name: draft.names.en[p.key] }) }}</legend>
+                <p v-if="!images.length" class="hint">{{ t('admin.settings.photoHint') }}</p>
+                <div class="photo-grid">
+                  <label class="photo-opt none">
+                    <input v-model="photos[p.key]" type="radio" :name="`photo-${p.key}`" value="" class="visually-hidden">
+                    <span>{{ t('admin.settings.noPhoto') }}</span>
+                  </label>
+                  <!-- A photo set before (e.g. by URL) that is not in the gallery stays selectable -->
+                  <label v-if="photos[p.key] && !images.some(img => img.url === photos[p.key])" class="photo-opt">
+                    <input v-model="photos[p.key]" type="radio" :name="`photo-${p.key}`" :value="photos[p.key]" class="visually-hidden">
+                    <img :src="photos[p.key]" alt="">
+                  </label>
+                  <label v-for="img in images" :key="img.id" class="photo-opt" :title="imageLabel(img)">
+                    <input v-model="photos[p.key]" type="radio" :name="`photo-${p.key}`" :value="img.url" class="visually-hidden" :aria-label="imageLabel(img)">
+                    <img :src="img.thumbUrl || img.url" alt="" loading="lazy">
+                  </label>
+                </div>
+              </fieldset>
+              <AdminLocalizedField :model-value="p.name.value" :label="t(`admin.settings.${p.key}`)" required @update:model-value="p.name.value = $event" />
+              <AdminLocalizedField :model-value="p.parents.value" :label="t('admin.settings.parentsOf', { name: draft.names.en[p.key] || '…' })" multiline @update:model-value="p.parents.value = $event" />
             </div>
-          </fieldset>
+          </div>
+        </section>
+
+        <section class="panel form-grid">
+          <header class="section-head">
+            <h2>{{ t('admin.settings.date') }}</h2>
+            <p class="hint">{{ t('admin.settings.dateHint') }}</p>
+          </header>
+          <div class="form-grid cols-3 one-line">
+            <div class="field">
+              <label for="s-date">{{ t('admin.settings.dateLabel') }}</label>
+              <input id="s-date" v-model="draft.date" type="datetime-local" required>
+            </div>
+            <div class="field">
+              <label for="s-lang">{{ t('admin.settings.language') }}</label>
+              <select id="s-lang" v-model="draft.defaultLocale">
+                <option value="km">{{ t('common.khmer') }}</option>
+                <option value="en">{{ t('common.english') }}</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="s-mono">{{ t('admin.settings.monogram') }}</label>
+              <input id="s-mono" v-model="draft.monogram" maxlength="12">
+            </div>
+          </div>
         </section>
       </template>
 
       <template v-else-if="part === 'words'">
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.content') }}</h2>
+          <header class="section-head">
+            <h2>{{ t('admin.settings.message') }}</h2>
+            <p class="hint">{{ t('admin.words.messageHint') }}</p>
+          </header>
           <AdminLocalizedField v-model="message" :label="t('admin.settings.message')" multiline />
-          <!-- Shown on the page in this order -->
-          <div v-for="(key, i) in textOrder" :key="key" class="text-block">
-            <AdminLocalizedField :model-value="textFields[key].value" :label="t(textLabel[key])" multiline @update:model-value="textFields[key].value = $event" />
-            <div class="move">
-              <button type="button" class="btn btn-ghost btn-sm" :disabled="i === 0" :aria-label="`${t('admin.settings.moveUp')}: ${t(textLabel[key])}`" @click="moveText(i, -1)">↑</button>
-              <button type="button" class="btn btn-ghost btn-sm" :disabled="i === textOrder.length - 1" :aria-label="`${t('admin.settings.moveDown')}: ${t(textLabel[key])}`" @click="moveText(i, 1)">↓</button>
-            </div>
-          </div>
         </section>
 
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.music') }}</h2>
-          <div class="field">
-            <label for="s-music">{{ t('admin.settings.musicLink') }}</label>
-            <!-- Not type="url": uploaded music has a site path ("/uploads/…"), which the browser would reject; the server checks it -->
-            <input id="s-music" v-model="draft.musicUrl">
-            <label class="btn btn-outline btn-sm file-btn" :class="{ busy: uploadingMusic }">
+          <header class="section-head">
+            <h2>{{ t('admin.settings.content') }}</h2>
+            <p class="hint">{{ t('admin.words.blocksHint') }}</p>
+          </header>
+          <!-- Shown on the page in this order -->
+          <TransitionGroup tag="ol" name="reorder" class="blocks">
+            <li v-for="(key, i) in textOrder" :key="key" class="block">
+              <AdminMoveButtons :index="i" :count="textOrder.length" :name="t(textLabel[key])" @move="moveText(i, $event)" />
+              <AdminLocalizedField :model-value="textFields[key].value" :label="t(textLabel[key])" multiline @update:model-value="textFields[key].value = $event" />
+            </li>
+          </TransitionGroup>
+        </section>
+
+        <section class="panel form-grid">
+          <header class="section-head">
+            <h2>{{ t('admin.settings.music') }}</h2>
+            <p class="hint">{{ t('admin.settings.musicHint') }}</p>
+          </header>
+          <div class="track">
+            <audio v-if="draft.musicUrl" :src="draft.musicUrl" controls preload="none" class="music-preview" />
+            <p v-else class="muted">{{ t('admin.overview.noMusic') }}</p>
+            <label class="btn btn-outline file-btn" :class="{ busy: uploadingMusic }">
               <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" class="visually-hidden" :disabled="uploadingMusic" @change="uploadMusic">
               {{ uploadingMusic ? t('admin.settings.musicUploading') : t('admin.settings.musicUpload') }}
             </label>
-            <audio v-if="draft.musicUrl" :src="draft.musicUrl" controls preload="none" class="music-preview" />
-            <p class="hint">{{ t('admin.settings.musicHint') }}</p>
           </div>
+          <details class="fold">
+            <summary>{{ t('admin.settings.musicLink') }}</summary>
+            <div class="field">
+              <label for="s-music" class="visually-hidden">{{ t('admin.settings.musicLink') }}</label>
+              <!-- Not type="url": uploaded music has a site path ("/uploads/…"), which the browser would reject; the server checks it -->
+              <input id="s-music" v-model="draft.musicUrl" placeholder="https://…">
+            </div>
+          </details>
         </section>
       </template>
 
       <template v-else-if="part === 'replies'">
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.rsvp') }}</h2>
-          <div class="field narrow">
-            <label for="s-deadline">{{ t('admin.invitations.deadline') }}</label>
-            <input id="s-deadline" v-model="draft.rsvp.deadline" type="datetime-local" required>
-          </div>
-          <div class="field">
-            <label for="s-form">{{ t('admin.settings.rsvpForm') }}</label>
-            <input id="s-form" v-model="draft.rsvp.formUrl" type="url" placeholder="https://forms.gle/…">
+          <header class="section-head">
+            <h2>{{ t('admin.settings.rsvp') }}</h2>
             <p class="hint">{{ t('admin.settings.rsvpFormHint') }}</p>
+          </header>
+          <div class="form-grid cols-2">
+            <div class="field">
+              <label for="s-deadline">{{ t('admin.invitations.deadline') }}</label>
+              <input id="s-deadline" v-model="draft.rsvp.deadline" type="datetime-local" required>
+            </div>
+            <div class="field">
+              <label for="s-form">{{ t('admin.settings.rsvpForm') }}</label>
+              <input id="s-form" v-model="draft.rsvp.formUrl" type="url" placeholder="https://forms.gle/…">
+            </div>
           </div>
         </section>
 
         <section class="panel form-grid">
-          <h2>{{ t('admin.telegram.title') }}</h2>
-          <p class="hint">{{ t('admin.telegram.hint') }}</p>
+          <header class="section-head">
+            <h2>{{ t('admin.telegram.title') }}</h2>
+            <p class="hint">{{ t('admin.telegram.hint') }}</p>
+          </header>
+          <p class="status" :class="{ on: draft.telegramChatId }">
+            <span class="dot" aria-hidden="true" />{{ draft.telegramChatId ? t('admin.telegram.toCouple') : t('admin.telegram.toOwner') }}
+          </p>
           <div class="field">
             <label for="s-chat">{{ t('admin.telegram.chat') }}</label>
             <div class="chat-row">
               <input id="s-chat" v-model="draft.telegramChatId" inputmode="numeric" maxlength="21" :placeholder="t('admin.telegram.ownerChat')" class="tabular">
               <button type="button" class="btn btn-outline" :disabled="finding" @click="findChats">{{ finding ? t('common.loading') : t('admin.telegram.find') }}</button>
             </div>
-            <p class="hint">{{ draft.telegramChatId ? t('admin.telegram.toCouple') : t('admin.telegram.toOwner') }}</p>
           </div>
           <template v-if="chats">
             <p class="hint">{{ t('admin.telegram.steps', { bot: `@${bot}` }) }}</p>
             <p v-if="!chats.length" class="muted small">{{ t('admin.telegram.none') }}</p>
             <ul v-else class="chats">
               <li v-for="c in chats" :key="c.id">
-                <button type="button" class="btn btn-ghost chat-pick" :class="{ on: draft.telegramChatId === c.id }" @click="draft.telegramChatId = c.id">
+                <button type="button" class="btn btn-ghost chat-pick" :class="{ on: draft.telegramChatId === c.id }" :aria-pressed="draft.telegramChatId === c.id" @click="draft.telegramChatId = c.id">
                   <span>{{ c.name }}</span><span class="muted small tabular">{{ c.id }}</span>
                 </button>
               </li>
@@ -311,11 +353,13 @@ async function copyLink() {
         </section>
 
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.gifts') }}</h2>
-          <p class="hint">{{ t('admin.settings.giftsHint') }}</p>
-          <div v-for="(g, i) in draft.gifts" :key="g.id" class="gift-row">
-            <img :src="g.image" alt="" class="gift-thumb">
-            <div class="form-grid">
+          <header class="section-head">
+            <h2>{{ t('admin.settings.gifts') }}</h2>
+            <p class="hint">{{ t('admin.settings.giftsHint') }}</p>
+          </header>
+          <ul class="gifts">
+            <li v-for="(g, i) in draft.gifts" :key="g.id" class="gift">
+              <img :src="g.image" alt="" class="gift-thumb">
               <div class="field">
                 <label :for="`g-name-${g.id}`">{{ t('admin.settings.giftName') }}</label>
                 <input :id="`g-name-${g.id}`" v-model="g.name" maxlength="120" required>
@@ -324,17 +368,23 @@ async function copyLink() {
                 <label :for="`g-bank-${g.id}`">{{ t('admin.settings.giftBank') }}</label>
                 <input :id="`g-bank-${g.id}`" v-model="g.bank" maxlength="80" placeholder="ABA, ACLEDA, Wing…">
               </div>
-            </div>
-            <button type="button" class="btn btn-ghost btn-sm" @click="draft.gifts!.splice(i, 1)">{{ t('common.delete') }}</button>
-          </div>
-          <label v-if="draft.gifts!.length < 4" class="btn btn-outline btn-sm file-btn" :class="{ busy: uploadingGift }">
-            <input type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" :disabled="uploadingGift" @change="uploadGift">
-            {{ uploadingGift ? t('admin.settings.musicUploading') : t('admin.settings.giftAdd') }}
-          </label>
+              <button type="button" class="btn btn-ghost btn-sm delete" @click="draft.gifts!.splice(i, 1)">{{ t('common.delete') }}</button>
+            </li>
+            <li v-if="draft.gifts!.length < 4">
+              <label class="gift add" :class="{ busy: uploadingGift }">
+                <input type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" :disabled="uploadingGift" @change="uploadGift">
+                <span class="plus" aria-hidden="true">+</span>
+                {{ uploadingGift ? t('admin.settings.musicUploading') : t('admin.settings.giftAdd') }}
+              </label>
+            </li>
+          </ul>
         </section>
 
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.contact') }}</h2>
+          <header class="section-head">
+            <h2>{{ t('admin.settings.contact') }}</h2>
+            <p class="hint">{{ t('admin.replies.contactHint') }}</p>
+          </header>
           <div class="form-grid cols-3">
             <div class="field">
               <label for="s-cname">{{ t('admin.settings.contactName') }}</label>
@@ -353,13 +403,15 @@ async function copyLink() {
       </template>
 
       <template v-else>
-        <section class="panel form-grid">
-          <h2>{{ t('admin.share.linkTitle') }}</h2>
-          <p class="hint">{{ t('admin.share.linkHint') }}</p>
+        <section class="panel form-grid guest-links">
+          <header class="section-head">
+            <h2>{{ t('admin.share.linkTitle') }}</h2>
+            <p class="hint">{{ t('admin.share.linkHint') }}</p>
+          </header>
           <div class="link-maker">
             <div class="field">
               <label for="s-guest">{{ t('admin.share.guestName') }}</label>
-              <input id="s-guest" v-model="guestName" maxlength="120" placeholder="Mr Chea Ousa">
+              <input id="s-guest" v-model="guestName" maxlength="120" placeholder="Mr Chea Ousa" autocomplete="off">
             </div>
             <div class="field">
               <label for="s-guest-lang">{{ t('common.language') }}</label>
@@ -369,59 +421,88 @@ async function copyLink() {
               </select>
             </div>
           </div>
-          <div v-if="guestLink" class="link-out">
-            <code>{{ guestLink }}</code>
-            <button type="button" class="btn btn-outline btn-sm" @click="copyLink">{{ t('admin.share.copy') }}</button>
-          </div>
-          <div class="field narrow">
-            <label for="s-slug">{{ t('admin.settings.slug') }}</label>
-            <input id="s-slug" v-model="draft.slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="60" required>
-            <p class="hint">{{ site }}/{{ draft.slug }}</p>
+          <div class="link-out" :class="{ empty: !guestLink }">
+            <code>{{ guestLink || `${site}/${draft.slug}/…` }}</code>
+            <button type="button" class="btn btn-primary btn-sm" :disabled="!guestLink" @click="copyLink">{{ t('admin.share.copy') }}</button>
           </div>
         </section>
 
         <section class="panel form-grid">
-          <h2>{{ t('admin.settings.share') }}</h2>
+          <header class="section-head">
+            <h2>{{ t('admin.settings.share') }}</h2>
+            <p class="hint">{{ t('admin.settings.sharePreviewHint') }}</p>
+          </header>
           <AdminLocalizedField v-model="shareTitle" :label="t('admin.settings.shareTitle')" />
           <AdminLocalizedField v-model="shareDescription" :label="t('admin.settings.shareDescription')" multiline />
           <AdminSharePreview :draft="draft" @share-image="draft.shareImage = $event" />
-          <label class="check"><input v-model="draft.privacy.allowIndexing" type="checkbox"> {{ t('admin.settings.allowIndexing') }}</label>
         </section>
 
-        <section class="panel form-grid">
-          <h2>{{ t('admin.dashboard.publishTitle') }}</h2>
-          <p class="hint">{{ t('admin.dashboard.publishHint') }}</p>
-          <pre class="cmd">git add content public/uploads
+        <section class="panel">
+          <details class="fold">
+            <summary>{{ t('admin.share.advanced') }}</summary>
+            <div class="form-grid">
+              <div class="field narrow">
+                <label for="s-slug">{{ t('admin.settings.slug') }}</label>
+                <input id="s-slug" v-model="draft.slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="60" required>
+                <p class="hint tabular">{{ site }}/{{ draft.slug }}</p>
+              </div>
+              <label class="check"><input v-model="draft.privacy.allowIndexing" type="checkbox"> {{ t('admin.settings.allowIndexing') }}</label>
+              <div class="section-head">
+                <h2>{{ t('admin.dashboard.publishTitle') }}</h2>
+                <p class="hint">{{ t('admin.dashboard.publishHint') }}</p>
+              </div>
+              <pre class="cmd">git add content public/uploads
 git commit -m "Update invitation"
 git push</pre>
-          <h2>{{ t('admin.settings.backup') }}</h2>
-          <p class="hint">{{ t('admin.settings.backupHint') }}</p>
-          <div><a :href="`${base}/backup`" class="btn btn-outline btn-sm" download>{{ t('admin.settings.downloadBackup') }}</a></div>
-          <p class="muted small">{{ t('admin.settings.version') }}: {{ config.version || '–' }}<template v-if="config.commit"> ({{ config.commit }})</template></p>
+              <div class="section-head">
+                <h2>{{ t('admin.settings.backup') }}</h2>
+                <p class="hint">{{ t('admin.settings.backupHint') }}</p>
+              </div>
+              <div><a :href="`${base}/backup`" class="btn btn-outline btn-sm" download>{{ t('admin.settings.downloadBackup') }}</a></div>
+              <p class="muted small">{{ t('admin.settings.version') }}: {{ config.version || '–' }}<template v-if="config.commit"> ({{ config.commit }})</template></p>
+            </div>
+          </details>
         </section>
       </template>
 
-      <AdminStepNav form="step-form" :saving="saving" />
+      <AdminStepNav form="step-form" :saving="saving" :dirty="dirty" />
     </form>
   </div>
 </template>
 
 <style scoped>
+.editor { max-width: 56rem; }
 .sections { display: flex; flex-direction: column; gap: var(--space-5); }
-.file-btn { align-self: flex-start; cursor: pointer; }
-.file-btn.busy { opacity: 0.7; cursor: progress; }
-.file-btn:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
-.music-preview { width: 100%; max-width: 24rem; }
-.panel h2 { font-size: 1.3rem; }
+.narrow { max-width: 22rem; }
+/* Fields side by side: the boxes share one line even when a label wraps onto two */
+.one-line { align-items: end; }
+
+/* Couple: one card per partner, photo first */
+.people { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.person { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-4); border-radius: var(--radius); background: color-mix(in srgb, var(--c-accent) 6%, var(--c-bg)); }
+.person-head { display: flex; align-items: center; gap: var(--space-3); }
+.avatar { width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 3px var(--c-surface), 0 0 0 4px var(--c-line); }
+.avatar.empty { display: grid; place-items: center; background: var(--c-surface); color: var(--c-secondary); font-size: 1.6rem; font-weight: 700; }
 .photo-pick { border: 0; padding: 0; margin: 0; min-width: 0; }
 .photo-pick legend { padding: 0; margin-bottom: var(--space-2); font-weight: 500; }
-.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr)); gap: var(--space-2); }
-.photo-opt { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; overflow: hidden; cursor: pointer; background: var(--c-line-soft); outline: 2px solid transparent; outline-offset: 2px; transition: outline-color 0.15s; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: var(--space-2); max-height: 15rem; overflow-y: auto; padding: 4px; }
+.photo-opt { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; overflow: hidden; cursor: pointer; background: var(--c-surface); outline: 3px solid transparent; outline-offset: 1px; transition: outline-color 0.15s; }
 .photo-opt img { width: 100%; height: 100%; object-fit: cover; }
-.photo-opt.none span { font-size: 0.75rem; text-align: center; padding: var(--space-1); }
+.photo-opt.none span { font-size: 0.7rem; text-align: center; padding: var(--space-1); }
 .photo-opt:has(input:checked) { outline-color: var(--c-secondary); }
 .photo-opt:has(input:focus-visible) { outline-color: var(--c-secondary); outline-style: dashed; }
-.narrow { max-width: 22rem; }
+
+/* Words: each text block with its arrows */
+.blocks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.block { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start; padding: var(--space-3) var(--space-3) var(--space-3) var(--space-1); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
+@media (prefers-reduced-motion: no-preference) { .reorder-move { transition: transform 0.3s var(--ease-out); } }
+.track { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.music-preview { flex: 1 1 16rem; max-width: 26rem; }
+
+/* Replies */
+.status { display: flex; align-items: center; gap: var(--space-2); font-weight: 500; }
+.status .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c-muted); }
+.status.on .dot { background: #2F7A50; }
 .chat-row { display: flex; gap: var(--space-2); }
 .chat-row input { flex: 1; min-width: 0; }
 /* Fixed width, so the box beside it doesn't jump while the label reads "Loading…" */
@@ -429,14 +510,24 @@ git push</pre>
 .chats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .chat-pick { width: 100%; justify-content: space-between; gap: var(--space-3); border: 1px solid var(--c-line-soft); }
 .chat-pick.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 8%, transparent); }
+.gifts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
+.gift { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; padding: var(--space-3); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
+.gift-thumb { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius-sm); background: #fff; border: 1px solid var(--c-line-soft); }
+.gift .delete { align-self: flex-start; color: var(--c-danger); }
+.gift.add {
+  min-height: 14rem; justify-content: center; align-items: center; text-align: center; cursor: pointer;
+  border: 2px dashed var(--c-line); color: var(--c-secondary); font-weight: 500; transition: border-color 0.15s, background-color 0.15s;
+}
+.gift.add:hover { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 5%, transparent); }
+.gift.add:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
+.gift.add.busy { opacity: 0.7; cursor: progress; }
+.plus { font-size: 2rem; line-height: 1; }
+
+/* Share */
+.guest-links { border-color: color-mix(in srgb, var(--c-secondary) 25%, var(--c-line-soft)); }
 .link-maker { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr) 9rem; }
-.link-out { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--c-accent) 10%, var(--c-surface)); }
-.link-out code { flex: 1 1 16rem; overflow-wrap: anywhere; font-size: 0.9rem; }
+.link-out { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface)); }
+.link-out.empty code { color: var(--c-muted); }
+.link-out code { flex: 1 1 16rem; overflow-wrap: anywhere; font-size: 0.92rem; }
 .cmd { margin: 0; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--c-text); color: var(--c-bg); font-size: 0.85rem; overflow-x: auto; }
-.gift-row { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: var(--space-3) var(--space-4); align-items: start; padding-block: var(--space-3); border-top: 1px solid var(--c-line-soft); }
-.gift-row > .btn { grid-column: 2; justify-self: start; }
-.gift-thumb { width: 6rem; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius); background: #fff; border: 1px solid var(--c-line); }
-.text-block { position: relative; }
-.move { position: absolute; top: -0.4rem; right: 0; display: flex; gap: var(--space-1); }
-.editor { display: grid; gap: var(--space-5); align-items: start; max-width: 52rem; }
 </style>

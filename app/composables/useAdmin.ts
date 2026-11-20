@@ -63,7 +63,7 @@ export function useAdminSession() {
   return { me, load }
 }
 
-type WeddingSummary = Pick<Wedding, 'id' | 'slug' | 'names' | 'date'>
+export type WeddingSummary = Pick<Wedding, 'id' | 'slug' | 'names' | 'date' | 'timezone'> & { isSample: boolean, style: WeddingStyle, hasTelegram: boolean }
 
 /** The wedding the dashboard is managing, remembered per browser. */
 export function useCurrentWedding() {
@@ -76,7 +76,9 @@ export function useCurrentWedding() {
     list.value = await api<WeddingSummary[]>('/api/admin/weddings')
     let saved = ''
     try { saved = localStorage.getItem('admin-wedding-id') ?? '' } catch {}
-    id.value = list.value.find(w => w.id === saved)?.id ?? list.value[0]?.id ?? ''
+    // A couple named in the address (?couple=<their address>) wins over the one last edited here
+    const fromUrl = useRoute().query.couple
+    id.value = list.value.find(w => w.slug === fromUrl)?.id ?? list.value.find(w => w.id === saved)?.id ?? list.value[0]?.id ?? ''
     await loadWedding()
   }
 

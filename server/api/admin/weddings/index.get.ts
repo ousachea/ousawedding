@@ -2,6 +2,6 @@
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   return (await useDb().all<Wedding>('weddings'))
-    .map(w => ({ id: w.id, slug: w.slug, names: w.names, date: w.date }))
+    .map(w => ({ id: w.id, slug: w.slug, names: w.names, date: w.date, timezone: w.timezone, isSample: !!w.isSample, style: w.theme.style ?? 'classic', hasTelegram: !!w.telegramChatId }))
     .sort((a, b) => a.date.localeCompare(b.date))
 })

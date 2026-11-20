@@ -13,6 +13,7 @@
     "build:server": "node node_modules/nuxt/bin/nuxt.mjs build"
   },
   "dependencies": {
+    "@netlify/blobs": "11.1.7",
     "@nuxtjs/i18n": "^10.6.0",
     "nuxt": "^4.6.2",
     "vue": "latest",

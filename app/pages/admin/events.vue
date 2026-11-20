@@ -59,12 +59,47 @@ async function remove(e: WeddingEvent) {
   await load()
 }
 
-async function move(index: number, step: number) {
+// Arrows move an item one place; the order is saved once the taps stop, in one request
+const moved = ref<string | null>(null)
+const announce = ref('')
+let saveTimer: ReturnType<typeof setTimeout> | undefined
+let movedTimer: ReturnType<typeof setTimeout> | undefined
+const saveOrder = () => api(`${base.value}/events/reorder`, { method: 'POST', body: { ids: events.value.map(e => e.id) } }).catch(load)
+function queueSave() {
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => { saveTimer = undefined; saveOrder() }, 500)
+}
+onBeforeUnmount(() => { if (saveTimer) { clearTimeout(saveTimer); saveOrder() } })
+
+function move(index: number, step: number) {
+  const to = index + step
+  if (to < 0 || to >= events.value.length) return
   const list = [...events.value]
   const [item] = list.splice(index, 1)
-  list.splice(index + step, 0, item!)
+  list.splice(to, 0, item!)
   events.value = list
-  await api(`${base.value}/events/reorder`, { method: 'POST', body: { ids: list.map(e => e.id) } }).catch(load)
+  moved.value = item!.id
+  clearTimeout(movedTimer)
+  movedTimer = setTimeout(() => (moved.value = null), 1600)
+  announce.value = t('admin.events.moved', { name: L(item!.title), n: to + 1 })
+  queueSave()
+}
+
+// Guests see the items in this order, not by time, so offer to sort when the two differ
+const chronological = computed(() => events.value.every((e, i, a) => !i || a[i - 1]!.start <= e.start))
+function sortByTime() {
+  events.value = [...events.value].sort((a, b) => a.start.localeCompare(b.start))
+  queueSave()
+  push(t('common.saved'))
+}
+
+const loc = computed(() => (locale.value === 'km' ? 'km-KH' : 'en-GB'))
+const day = (iso: string) => iso.slice(0, 10)
+const dayLabel = (iso: string) => new Date(`${day(iso)}T00:00:00Z`).toLocaleDateString(loc.value, { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+const newDay = (i: number) => !i || day(events.value[i]!.start) !== day(events.value[i - 1]!.start)
+const timeRange = (e: WeddingEvent) => {
+  const end = day(e.end) === day(e.start) ? e.end.slice(11, 16) : `${new Date(`${day(e.end)}T00:00:00Z`).toLocaleDateString(loc.value, { timeZone: 'UTC', day: 'numeric', month: 'short' })} ${e.end.slice(11, 16)}`
+  return `${e.start.slice(11, 16)} – ${end}`
 }
 
 // Dress code and guest information live on the wedding but belong with the schedule
@@ -90,38 +125,45 @@ const L = useLocalized()
 
 <template>
   <div class="admin-page">
-    <div class="page-head">
+    <div class="toolbar-row">
+      <p v-if="wedding" class="muted small">{{ t('admin.events.timezone', { tz: wedding.timezone }) }}<template v-if="events.length > 1"> {{ t('admin.events.orderHint') }}</template></p>
       <div class="page-actions">
         <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
         <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
       </div>
     </div>
-    <p v-if="wedding" class="muted small">{{ t('admin.events.timezone', { tz: wedding.timezone }) }}</p>
+
+    <div v-if="!chronological" class="notice" role="note">
+      <p>{{ t('admin.events.outOfOrder') }}</p>
+      <button type="button" class="btn btn-outline btn-sm" @click="sortByTime">{{ t('admin.events.sortByTime') }}</button>
+    </div>
 
     <p v-if="loading && !events.length" class="muted">{{ t('common.loading') }}</p>
     <div v-else-if="!events.length" class="panel empty-state">
       <p>{{ t('admin.events.empty') }}</p>
       <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
     </div>
-    <ol v-else class="event-list">
-      <li v-for="(e, i) in events" :key="e.id" class="panel event">
-        <div class="order">
-          <button type="button" class="btn btn-ghost btn-sm" :disabled="i === 0" :aria-label="t('admin.events.moveUp')" @click="move(i, -1)">↑</button>
-          <button type="button" class="btn btn-ghost btn-sm" :disabled="i === events.length - 1" :aria-label="t('admin.events.moveDown')" @click="move(i, 1)">↓</button>
-        </div>
-        <div class="body">
-          <p class="when tabular">{{ e.start.replace('T', ' ') }} – {{ e.end.slice(11) }}</p>
-          <h2 class="title"><WeddingIcon :name="e.icon ?? 'calendar'" />{{ i + 1 }}. {{ L(e.title) }}</h2>
-          <p class="muted small">{{ L(e.venue) }}<template v-if="L(e.address)"> · {{ L(e.address) }}</template></p>
-        </div>
-        <div class="row-actions">
-          <button type="button" class="btn btn-ghost btn-sm" @click="openEdit(e)">{{ t('common.edit') }}</button>
-          <button type="button" class="btn btn-danger btn-sm" @click="remove(e)">{{ t('common.delete') }}</button>
-        </div>
+    <TransitionGroup v-else tag="ol" name="reorder" class="timeline">
+      <li v-for="(e, i) in events" :key="e.id" class="slot">
+        <h2 v-if="newDay(i)" class="day">{{ dayLabel(e.start) }}</h2>
+        <article class="event" :class="{ moved: moved === e.id }">
+          <AdminMoveButtons :index="i" :count="events.length" :name="L(e.title)" @move="move(i, $event)" />
+          <span class="mark" aria-hidden="true"><WeddingIcon :name="e.icon ?? 'calendar'" /></span>
+          <div class="body">
+            <p class="when tabular">{{ timeRange(e) }}</p>
+            <h3 class="title">{{ L(e.title) }}</h3>
+            <p v-if="L(e.venue) || L(e.address)" class="muted small place">{{ L(e.venue) }}<template v-if="L(e.venue) && L(e.address)"> · </template>{{ L(e.address) }}</p>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn btn-outline btn-sm" @click="openEdit(e)">{{ t('common.edit') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm delete" @click="remove(e)">{{ t('common.delete') }}</button>
+          </div>
+        </article>
       </li>
-    </ol>
+    </TransitionGroup>
+    <p class="visually-hidden" aria-live="polite">{{ announce }}</p>
 
-    <form v-if="info" class="panel form-grid" @submit.prevent="saveInfo">
+    <form v-if="info" class="panel form-grid info" @submit.prevent="saveInfo">
       <h2>{{ t('admin.settings.dressCode') }} · {{ t('admin.settings.instructions') }}</h2>
       <AdminLocalizedField v-model="info.dressCode" :label="t('admin.settings.dressCode')" />
       <AdminLocalizedField v-model="info.instructions" :label="t('admin.settings.instructions')" multiline />
@@ -174,15 +216,48 @@ const L = useLocalized()
 </template>
 
 <style scoped>
-.event-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.event { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: center; }
-.event .row-actions { grid-column: 1 / -1; display: flex; gap: var(--space-1); justify-content: flex-end; }
-@media (min-width: 720px) { .event { grid-template-columns: auto 1fr auto; } .event .row-actions { grid-column: auto; } }
-.order { display: flex; flex-direction: column; }
-.when { font-size: 0.85rem; color: var(--c-accent-ink); }
-.body h2 { font-size: 1.25rem; }
-.title { display: flex; align-items: center; gap: var(--space-2); }
-.title .icon { color: var(--c-accent-ink); }
+.toolbar-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.toolbar-row > p { flex: 1 1 18rem; max-width: 40rem; }
+.notice {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface)); border: 1px solid color-mix(in srgb, var(--c-accent) 35%, transparent);
+}
+.notice p { flex: 1 1 16rem; }
+
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); max-width: 56rem; }
+.day { margin: var(--space-3) 0 var(--space-1); font-size: 1rem; font-weight: 600; color: var(--c-secondary); }
+.slot:first-child .day { margin-top: 0; }
+
+.event {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
+  background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+/* The item just moved keeps a ring for a moment, so the eye can follow it */
+.event.moved { border-color: var(--c-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 18%, transparent); }
+
+.mark {
+  display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border-radius: 50%;
+  font-size: 1.3rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-accent) 16%, var(--c-surface));
+}
+.body { min-width: 0; }
+.when { font-size: 0.9rem; font-weight: 600; color: var(--c-accent-ink); }
+.title { font-size: 1.15rem; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.place { overflow-wrap: anywhere; }
+.row-actions { grid-column: 1 / -1; display: flex; gap: var(--space-2); justify-content: flex-end; }
+.delete { color: var(--c-danger); }
+@media (min-width: 720px) {
+  .event { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+  .row-actions { grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reorder-move { transition: transform 0.3s var(--ease-out); }
+}
+
+.info { max-width: 56rem; }
 .icons { display: flex; flex-wrap: wrap; gap: var(--space-1); border: 0; padding: 0; margin: 0; }
 .icons legend { font-size: 0.9rem; font-weight: 500; padding: 0; margin-bottom: var(--space-1); }
 .icon-choice { display: grid; place-items: center; width: 3rem; height: 3rem; border: 1px solid var(--c-line); border-radius: var(--radius-sm); cursor: pointer; color: var(--c-accent-ink); font-size: 1.2rem; }

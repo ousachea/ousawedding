@@ -1,5 +1,8 @@
 import type { Spouse } from '../types/wedding.ts'
 
+/** The most people one reply can bring, the guest included */
+export const MAX_GUESTS = 4
+
 /** The invitation's free-text blocks, in their default page order. */
 export const TEXT_BLOCKS = ['story', 'thanks', 'apology'] as const
 

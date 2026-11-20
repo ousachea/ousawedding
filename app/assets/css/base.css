@@ -228,3 +228,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .wedding.style-ruby .section-title:lang(km) { font-size: 1.6rem; line-height: 1.6; }
 .wedding.style-ruby .section-icon { color: var(--c-secondary); }
 .wedding.style-ruby .section-icon::before { display: none; }
+
+/* Phones draw date and time boxes their own way (taller, text centred); match the other boxes */
+.field input[type='date'], .field input[type='datetime-local'], .field input[type='time'] {
+  -webkit-appearance: none; appearance: none; text-align: left; line-height: normal;
+}
+.field input::-webkit-date-and-time-value { text-align: left; }

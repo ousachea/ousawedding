@@ -2,9 +2,10 @@ import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
 // Public collections (shown on the invitation) live in content/, which is committed and published.
-// The guest list is private and stays in .data/local/, which git ignores (the repository is public).
-export type Collection = 'weddings' | 'events' | 'gallery' | 'guests' | 'site'
-const PRIVATE: Collection[] = ['guests']
+// The guest list and replies sent to the dev server are private and stay in .data/local/, which git
+// ignores (the repository is public).
+export type Collection = 'weddings' | 'events' | 'gallery' | 'guests' | 'site' | 'replies'
+const PRIVATE: Collection[] = ['guests', 'replies']
 
 /**
  * Minimal document store on JSON files, one file per collection. Used by the admin on your computer;
