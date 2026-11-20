@@ -1,6 +1,6 @@
 # ousawedding
 
-A wedding invitation website in Khmer and English, built with Nuxt 4.
+Online wedding invitations in Khmer and English for many couples, built with Nuxt 4. The site's home page introduces the service (Theab Online); each couple's invitation lives at its own address, e.g. `/sokha-dara`.
 
 - **Live site:** https://theab-online.netlify.app. Netlify rebuilds it on every push.
 - **Admin:** http://localhost:8000/admin. It only runs on your computer and walks you through seven steps: couple, schedule, photos, words and music, look, replies and gifts, share.
@@ -29,17 +29,31 @@ git push
 
 | Folder | Holds | Public? |
 |---|---|---|
-| `content/` | wedding, schedule, gallery | yes |
+| `content/` | weddings, schedules, galleries, the business page | yes |
 | `public/uploads/` | photos | yes |
 | `.data/local/guests.json` | guest list | **no**, it stays on your computer |
 
+## Couples
+
+Every couple is a wedding in the admin, with its own address, details, photos, style and Telegram chat.
+
+1. In the admin sidebar, under **Couple**, press **+ New couple** and give their address (e.g. `sokha-dara`). They start from sample details (Dara & Sophea).
+2. Go through the seven steps for them. The **Couple** menu at the top of the sidebar switches between couples.
+3. Push. Their invitation is live at `https://theab-online.netlify.app/sokha-dara`, and their guests' links work as in *Personal links*.
+
+The site's home page is your business page. Edit its name, tagline and contacts in the admin under **Business page** (saved in `content/site.json`); contacts left empty are not shown.
+
 ## RSVP
 
-Guests reply on the invitation, and each reply is sent to you on Telegram. You also get a message the first time a guest opens their personal link (once per phone or browser).
+Guests reply on the invitation, and each reply is sent on Telegram to the couple. They also get a message the first time a guest opens their personal link (once per phone or browser). Every message is headed with the couple's names and ends with a link to the guest's invitation.
+
+One bot serves every couple. Set it up once:
 
 1. Create a bot with @BotFather and send it a message.
-2. Find your chat ID at `https://api.telegram.org/bot<token>/getUpdates`.
-3. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env` and in Netlify (Site configuration → Environment variables).
+2. Find your own chat ID at `https://api.telegram.org/bot<token>/getUpdates`.
+3. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (yours) in `.env` and in Netlify (Site configuration → Environment variables).
+
+Then for each couple, in step 6, **Replies and gifts → Telegram alerts**: ask the couple to open the bot in Telegram and press Start, press **Find**, and tap their name. A couple without a chat sends their alerts to you. Their chat ID is saved with their wedding (in `content/`, so public on GitHub) but never sent to guests' browsers.
 
 To use a Google Form instead, paste its link in step 6, **Replies and gifts**. Replies close at the RSVP deadline.
 

@@ -15,11 +15,10 @@ export function sampleWedding(slug = 'our-wedding') {
     slug,
     isSample: true,
     names: {
-      // Khmer spelling not provided yet, so the English names are used for both
-      km: { partner1: 'Ousa Chea', partner2: 'Kanha Neak', parents1: '', parents2: '' },
-      en: { partner1: 'Ousa Chea', partner2: 'Kanha Neak', parents1: '', parents2: '' },
+      km: { partner1: 'ដារ៉ា', partner2: 'សុភា', parents1: '', parents2: '' },
+      en: { partner1: 'Dara', partner2: 'Sophea', parents1: '', parents2: '' },
     },
-    monogram: 'O & K',
+    monogram: 'D & S',
     date: '2027-01-31T07:00',
     timezone: 'Asia/Phnom_Penh',
     content: {
@@ -54,8 +53,8 @@ export function sampleWedding(slug = 'our-wedding') {
     musicUrl: '',
     contact: { name: 'Sample contact', phone: '+855 12 345 678', email: '' },
     share: {
-      km: { title: 'Ousa & Kanha | ពិធីអាពាហ៍ពិពាហ៍', description: 'សូមគោរពអញ្ជើញចូលរួមពិធីអាពាហ៍ពិពាហ៍របស់យើង។' },
-      en: { title: 'Ousa & Kanha | Wedding Invitation', description: 'You are invited to celebrate our wedding.' },
+      km: { title: 'ដារ៉ា & សុភា | ពិធីអាពាហ៍ពិពាហ៍', description: 'សូមគោរពអញ្ជើញចូលរួមពិធីអាពាហ៍ពិពាហ៍របស់យើង។' },
+      en: { title: 'Dara & Sophea | Wedding Invitation', description: 'You are invited to celebrate our wedding.' },
     },
     createdAt: now,
     updatedAt: now,

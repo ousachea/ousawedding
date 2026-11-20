@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { sendOpened, sendRsvp } from '../shared/rsvp.ts'
+import { alertWeddingBySlug, sendOpened, sendRsvp } from '../shared/rsvp.ts'
 
 test('opened links and replies are sent to Telegram as escaped HTML', async () => {
   const sent: string[] = []
@@ -20,6 +20,33 @@ test('opened links and replies are sent to Telegram as escaped HTML', async () =
     assert.equal(sent.pop(), '✅ <b>New reply: coming</b>\n\n👤 <b>Dara</b>\n👥 2 guests\n📞 012\n\n💬 <i>See you &lt;3</i>\n\n🕒 Wed, 18 Nov 2026, 11:45 pm')
     assert.equal(await sendOpened({ name: '' }), 400)
     assert.equal(await sendOpened(null), 400)
+  } finally {
+    globalThis.fetch = realFetch
+  }
+})
+
+test('each couple gets their own alerts, headed by their names; without a chat they go to the owner', async () => {
+  const sent: Array<{ chat_id: string, text: string }> = []
+  const realFetch = globalThis.fetch
+  globalThis.fetch = (async (_url: string, init: RequestInit) => { sent.push(JSON.parse(init.body as string)); return new Response('{}') }) as typeof fetch
+  process.env.TELEGRAM_BOT_TOKEN = 'x'
+  process.env.TELEGRAM_CHAT_ID = 'owner'
+  const weddings = {
+    a: { slug: 'dara-sophea', names: { en: { partner1: 'Dara', partner2: 'Sophea' } }, telegramChatId: '555' },
+    b: { slug: 'sok-nita', names: { en: { partner1: 'Sok', partner2: 'Nita' } }, telegramChatId: '' },
+  }
+  try {
+    assert.equal(await sendRsvp({ name: 'Vanna', attending: false }, { wedding: alertWeddingBySlug(weddings, 'dara-sophea') }), 200)
+    assert.equal(sent[0]!.chat_id, '555')
+    assert.ok(sent[0]!.text.startsWith('❌ <b>New reply: can’t come</b>\n💍 Dara &amp; Sophea\n'))
+    assert.equal(await sendOpened({ name: 'Vanna' }, { wedding: alertWeddingBySlug(weddings, 'sok-nita') }), 200)
+    assert.equal(sent[1]!.chat_id, 'owner')
+    assert.ok(sent[1]!.text.includes('💍 Sok &amp; Nita'))
+    assert.equal(alertWeddingBySlug(weddings, 'nobody'), null)
+    // No couple chat and no owner chat: nowhere to send
+    delete process.env.TELEGRAM_CHAT_ID
+    assert.equal(await sendOpened({ name: 'Vanna' }, { wedding: alertWeddingBySlug(weddings, 'sok-nita') }), 503)
+    assert.equal(await sendOpened({ name: 'Vanna' }, { wedding: alertWeddingBySlug(weddings, 'dara-sophea') }), 200)
     delete process.env.TELEGRAM_BOT_TOKEN
     assert.equal(await sendOpened({ name: 'A' }), 503)
   } finally {

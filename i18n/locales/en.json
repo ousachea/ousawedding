@@ -152,9 +152,9 @@
       "rate": "Too many attempts. Please wait a minute and try again."
     },
     "wedding": {
-      "select": "Wedding",
-      "create": "New wedding",
-      "slugPrompt": "Web address for the new wedding (e.g. sokha-dara)",
+      "select": "Couple",
+      "create": "New couple",
+      "slugPrompt": "Web address for the new couple, e.g. sokha-dara (lowercase letters, numbers and dashes)",
       "none": "No weddings yet."
     },
     "dashboard": {
@@ -496,6 +496,31 @@
       "guestName": "Guest name",
       "copy": "Copy link",
       "copied": "Link copied"
+    },
+    "telegram": {
+      "title": "Telegram alerts",
+      "hint": "Replies and \"invitation opened\" alerts for this couple go to this Telegram chat.",
+      "chat": "Couple's chat ID",
+      "ownerChat": "Empty: alerts come to you",
+      "find": "Find",
+      "toCouple": "Alerts go to the couple's chat.",
+      "toOwner": "No chat set: alerts come to your own chat.",
+      "steps": "Ask the couple to open {bot} in Telegram and press Start (or send any message), then press Find again and tap their name.",
+      "none": "No recent chats yet. Ask the couple to message the bot, then press Find again."
+    },
+    "business": {
+      "title": "Business page",
+      "hint": "The home page of your site: who you are and how couples can reach you. Like the invitations, it goes live when you push.",
+      "view": "View home page",
+      "name": "Business name",
+      "tagline": "Tagline (one line under the name)",
+      "about": "About (a short paragraph)",
+      "contact": "Contact",
+      "contactHint": "Only the ones you fill in are shown, as buttons.",
+      "telegram": "Telegram username",
+      "phone": "Phone",
+      "facebook": "Facebook page",
+      "email": "Email"
     }
   },
   "gift": {
@@ -509,5 +534,75 @@
     "show": "Show QR",
     "hide": "Hide",
     "tapHint": "Tap the code to see it larger"
+  },
+  "home": {
+    "eyebrow": "Online wedding invitations",
+    "tagline": "Wedding invitations your guests open on their phone",
+    "about": "A personal invitation for every guest, in Khmer and English: the envelope greets them by name, the schedule and map are a tap away, and their replies come straight to you on Telegram.",
+    "ctaTelegram": "Message us on Telegram",
+    "ctaContact": "Get in touch",
+    "ctaStyles": "See the styles",
+    "sampleFor": "Specially for Mr. Sok Dara",
+    "sampleOpen": "Open invitation",
+    "featuresTitle": "Everything in one link",
+    "features": {
+      "envelope": {
+        "title": "A letter for each guest",
+        "text": "Each guest gets their own link. The envelope and letter greet them by name and title: Mr., Lok Chumteav, H.E. and more."
+      },
+      "languages": {
+        "title": "Khmer and English",
+        "text": "The whole invitation in both languages. Guests switch with one tap."
+      },
+      "schedule": {
+        "title": "Schedule and map",
+        "text": "Every ceremony with its time and place, a map link and a countdown, ready to add to their calendar."
+      },
+      "gallery": {
+        "title": "Your photos",
+        "text": "Your pre-wedding photos in a gallery guests can swipe through."
+      },
+      "replies": {
+        "title": "Replies on Telegram",
+        "text": "Guests say whether they can come, and you get each reply on Telegram, plus a note when someone opens their invitation."
+      },
+      "gift": {
+        "title": "KHQR gifts",
+        "text": "Your bank KHQR codes, so guests can send a wedding gift from any banking app."
+      }
+    },
+    "stylesTitle": "Choose a style",
+    "stylesLead": "Each couple picks a style, then their own colours, fonts and photos.",
+    "styles": {
+      "classic": {
+        "title": "Classic",
+        "text": "Gold and lotus on soft paper, with a gold foil seal."
+      },
+      "floral": {
+        "title": "Floral",
+        "text": "Watercolour flowers on linen paper, in lavender and green."
+      },
+      "ruby": {
+        "title": "Ruby",
+        "text": "Embossed red with white paper panels and gold."
+      }
+    },
+    "howTitle": "How it works",
+    "how": {
+      "1": {
+        "title": "Send us your details",
+        "text": "Names, date, ceremonies, photos and your KHQR codes."
+      },
+      "2": {
+        "title": "We build your invitation",
+        "text": "In the style and colours you choose. You check it and ask for changes."
+      },
+      "3": {
+        "title": "Send it to your guests",
+        "text": "Share each guest their personal link, and follow replies on Telegram."
+      }
+    },
+    "contactTitle": "Let’s make your invitation",
+    "contactLead": "Tell us your wedding date and we’ll get back to you."
   }
 }

@@ -4,7 +4,7 @@ import { sampleWedding } from '../utils/sample'
 export default defineNitroPlugin(async () => {
   const db = useDb()
   if ((await db.all('weddings')).length) return
-  const { wedding, events, gallery, guests } = sampleWedding(useRuntimeConfig().public.defaultWeddingSlug)
+  const { wedding, events, gallery, guests } = sampleWedding()
   await db.set('weddings', wedding.id, wedding)
   await db.setMany('events', events.map(e => ({ id: e.id, data: e })))
   await db.setMany('gallery', gallery.map(g => ({ id: g.id, data: g })))

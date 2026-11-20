@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 // Public collections (shown on the invitation) live in content/, which is committed and published.
 // The guest list is private and stays in .data/local/, which git ignores (the repository is public).
-export type Collection = 'weddings' | 'events' | 'gallery' | 'guests'
+export type Collection = 'weddings' | 'events' | 'gallery' | 'guests' | 'site'
 const PRIVATE: Collection[] = ['guests']
 
 /**

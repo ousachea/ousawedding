@@ -7,6 +7,18 @@ const url = z.union([z.literal(''), z.string().trim().max(2000).refine(v => /^ht
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/)
 const locale = z.enum(['km', 'en'])
 
+// The business page at the site root: who makes the invitations and how to reach them
+export const siteSchema = z.object({
+  name: text(80).min(1),
+  tagline: localized(200),
+  about: localized(1000),
+  phone: text(40),
+  // Telegram username, without the @
+  telegram: z.union([z.literal(''), z.string().trim().regex(/^@?\w{5,32}$/, 'A Telegram username').transform(v => v.replace(/^@/, ''))]),
+  facebook: url,
+  email: z.union([z.literal(''), z.email()]),
+})
+
 export const weddingSchema = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Lowercase letters, numbers and dashes').max(60)
     // The invitation lives at /<slug>, so it can't take a path the site already uses
@@ -41,6 +53,7 @@ export const weddingSchema = z.object({
   textOrder: z.array(z.enum(TEXT_BLOCKS)).length(TEXT_BLOCKS.length).refine(o => new Set(o).size === o.length, 'Each block once').default([...TEXT_BLOCKS]),
   musicUrl: url,
   contact: z.object({ name: text(120), phone: text(40), email: z.union([z.literal(''), z.email()]) }),
+  telegramChatId: z.union([z.literal(''), z.string().trim().regex(/^-?\d{1,20}$/, 'A Telegram chat ID is a number')]).default(''),
   gifts: z.array(z.object({ id: z.string().regex(/^[\w-]{1,40}$/), name: text(120), bank: text(80), image: url })).max(4).default([]),
   share: z.object({
     km: z.object({ title: text(120), description: text(300) }),

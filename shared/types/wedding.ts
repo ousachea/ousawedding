@@ -66,6 +66,9 @@ export interface Wedding {
   contact: { name: string, phone: string, email: string }
   // KHQR codes guests can scan to send a gift (bank transfer); missing on weddings saved before it existed
   gifts?: GiftQr[]
+  // The couple's Telegram chat for reply and "opened" alerts; empty sends them to the site owner (TELEGRAM_CHAT_ID).
+  // Never sent to guests' browsers.
+  telegramChatId?: string
   share: Record<Locale, { title: string, description: string }>
   // Link-preview image: `cover` cropped to 1200×630 around `position` (object-position). Used only while the
   // cover photo is still `cover`; otherwise previews show the whole cover. Set by the share-image upload.
@@ -138,8 +141,19 @@ export interface Admin {
 }
 
 /** What the public invitation page receives: no guest data. */
+/** The business page at the site root (content/site.json) */
+export interface SiteInfo {
+  name: string
+  tagline: Record<Locale, string>
+  about: Record<Locale, string>
+  phone: string
+  telegram: string
+  facebook: string
+  email: string
+}
+
 export interface PublicWedding {
-  wedding: Omit<Wedding, 'createdAt' | 'updatedAt' | 'contact'> & {
+  wedding: Omit<Wedding, 'createdAt' | 'updatedAt' | 'contact' | 'telegramChatId'> & {
     contact: Wedding['contact']
   }
   dateUtc: string

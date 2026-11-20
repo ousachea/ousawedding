@@ -16,7 +16,7 @@ watch(wedding, (w) => {
   if (!w) return
   const { id: _id, createdAt: _c, updatedAt: _u, isSample: _s, ...rest } = structuredClone(toRaw(w))
   // Times are entered in the admin's own timezone, taken from the browser
-  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, gifts: [], ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
+  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, gifts: [], telegramChatId: '', ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
 }, { immediate: true })
 
 const saving = ref(false)
@@ -122,6 +122,23 @@ async function cropQr(file: File): Promise<Blob | null> {
 }
 
 // KHQR codes for gifts: the image is uploaded straight away, the name and bank are saved with the form
+// The couple's Telegram chat: they message the bot, then Find lists recent chats to pick from
+const chats = ref<Array<{ id: string, name: string }> | null>(null)
+const bot = ref('')
+const finding = ref(false)
+async function findChats() {
+  finding.value = true
+  try {
+    const res = await api<{ bot: string, chats: Array<{ id: string, name: string }> }>('/api/admin/telegram-chats')
+    bot.value = res.bot
+    chats.value = res.chats
+  } catch {
+    // the error toast is shown by api()
+  } finally {
+    finding.value = false
+  }
+}
+
 const uploadingGift = ref(false)
 async function uploadGift(event: Event) {
   const input = event.target as HTMLInputElement
@@ -270,6 +287,30 @@ async function copyLink() {
         </section>
 
         <section class="panel form-grid">
+          <h2>{{ t('admin.telegram.title') }}</h2>
+          <p class="hint">{{ t('admin.telegram.hint') }}</p>
+          <div class="field">
+            <label for="s-chat">{{ t('admin.telegram.chat') }}</label>
+            <div class="chat-row">
+              <input id="s-chat" v-model="draft.telegramChatId" inputmode="numeric" maxlength="21" :placeholder="t('admin.telegram.ownerChat')" class="tabular">
+              <button type="button" class="btn btn-outline" :disabled="finding" @click="findChats">{{ finding ? t('common.loading') : t('admin.telegram.find') }}</button>
+            </div>
+            <p class="hint">{{ draft.telegramChatId ? t('admin.telegram.toCouple') : t('admin.telegram.toOwner') }}</p>
+          </div>
+          <template v-if="chats">
+            <p class="hint">{{ t('admin.telegram.steps', { bot: `@${bot}` }) }}</p>
+            <p v-if="!chats.length" class="muted small">{{ t('admin.telegram.none') }}</p>
+            <ul v-else class="chats">
+              <li v-for="c in chats" :key="c.id">
+                <button type="button" class="btn btn-ghost chat-pick" :class="{ on: draft.telegramChatId === c.id }" @click="draft.telegramChatId = c.id">
+                  <span>{{ c.name }}</span><span class="muted small tabular">{{ c.id }}</span>
+                </button>
+              </li>
+            </ul>
+          </template>
+        </section>
+
+        <section class="panel form-grid">
           <h2>{{ t('admin.settings.gifts') }}</h2>
           <p class="hint">{{ t('admin.settings.giftsHint') }}</p>
           <div v-for="(g, i) in draft.gifts" :key="g.id" class="gift-row">
@@ -381,6 +422,13 @@ git push</pre>
 .photo-opt:has(input:checked) { outline-color: var(--c-secondary); }
 .photo-opt:has(input:focus-visible) { outline-color: var(--c-secondary); outline-style: dashed; }
 .narrow { max-width: 22rem; }
+.chat-row { display: flex; gap: var(--space-2); }
+.chat-row input { flex: 1; min-width: 0; }
+/* Fixed width, so the box beside it doesn't jump while the label reads "Loading…" */
+.chat-row .btn { min-width: 7.5rem; }
+.chats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.chat-pick { width: 100%; justify-content: space-between; gap: var(--space-3); border: 1px solid var(--c-line-soft); }
+.chat-pick.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 8%, transparent); }
 .link-maker { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr) 9rem; }
 .link-out { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--c-accent) 10%, var(--c-surface)); }
 .link-out code { flex: 1 1 16rem; overflow-wrap: anywhere; font-size: 0.9rem; }

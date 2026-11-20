@@ -6,7 +6,7 @@ function weddingRoutes() {
   try {
     slugs = Object.values(JSON.parse(readFileSync('content/weddings.json', 'utf8')) as Record<string, { slug: string }>).map(w => w.slug)
   } catch {}
-  return ['/', ...slugs.flatMap(s => [`/${s}`, `/km/${s}`, `/api/public/weddings/${s}/events/all.ics`, `/api/public/weddings/${s}/events/all-en.ics`])]
+  return ['/', '/km', '/api/public/site', ...slugs.flatMap(s => [`/${s}`, `/km/${s}`, `/api/public/weddings/${s}/events/all.ics`, `/api/public/weddings/${s}/events/all-en.ics`])]
 }
 
 export default defineNuxtConfig({
@@ -34,7 +34,6 @@ export default defineNuxtConfig({
       // Netlify's build sets URL to the site's address, so link previews point at the live site; never
       // http://localhost. NUXT_PUBLIC_SITE_URL overrides it.
       siteUrl: process.env.URL ?? 'https://theab-online.netlify.app',
-      defaultWeddingSlug: 'ousa-kanha',
       version: process.env.npm_package_version ?? '',
       commit: (process.env.COMMIT_REF ?? '').slice(0, 7),
     },

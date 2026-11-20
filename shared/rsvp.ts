@@ -1,7 +1,8 @@
-// Sends a guest's RSVP to the couple on Telegram. Server-side only: shared by the Netlify function
-// (netlify/functions/rsvp.ts, live site) and the Nitro route (server/api/rsvp.post.ts, dev server).
-// The bot token and chat ID are secrets: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env locally
-// and in the Netlify site settings, never in the repository.
+// Sends a guest's RSVP to the couple on Telegram. Server-side only: shared by the Netlify functions
+// (netlify/functions/, live site) and the Nitro routes (server/api/, dev server).
+// One bot serves every couple. Each wedding names its couple's chat (telegramChatId); without one, alerts
+// go to the site owner's chat. The bot token and the owner's chat ID are secrets: TELEGRAM_BOT_TOKEN and
+// TELEGRAM_CHAT_ID in .env locally and in the Netlify site settings, never in the repository.
 
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
@@ -23,9 +24,17 @@ function pageLink(v: unknown, host: string | undefined): string[] {
 // Cambodia time, whatever timezone the server runs in
 const cambodiaTime = (d: Date) => d.toLocaleString('en-GB', { timeZone: 'Asia/Phnom_Penh', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
 
-/** Sends one message to the couple's chat; returns the HTTP status to answer with. */
-async function telegram(lines: string[]): Promise<number> {
-  const { TELEGRAM_BOT_TOKEN: token, TELEGRAM_CHAT_ID: chatId } = process.env
+/** The wedding an alert belongs to: whose names head the message, and which chat it goes to */
+export interface AlertWedding { names: { en: { partner1: string, partner2: string } }, telegramChatId?: string }
+
+/** The wedding with this address, from all weddings (content/weddings.json) */
+export const alertWeddingBySlug = (all: Record<string, AlertWedding & { slug: string }>, slug: unknown): AlertWedding | null =>
+  Object.values(all).find(w => w.slug === slug) ?? null
+
+/** Sends one message to the couple's chat (or the owner's); returns the HTTP status to answer with. */
+async function telegram(lines: string[], wedding: AlertWedding | null | undefined): Promise<number> {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = wedding?.telegramChatId || process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return 503
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -36,26 +45,30 @@ async function telegram(lines: string[]): Promise<number> {
   return res.ok ? 200 : 502
 }
 
-/** Where the request came from: `host` is the site serving it (for the page link), `now` the time shown */
-export interface AlertContext { host?: string, now?: Date }
+/** Where the request came from: `host` is the site serving it (for the page link), `wedding` the couple, `now` the time shown */
+export interface AlertContext { host?: string, wedding?: AlertWedding | null, now?: Date }
+
+// The couple's names under the heading, so an owner looking after several couples can tell alerts apart
+const coupleLine = (w: AlertWedding | null | undefined) => (w ? [`💍 ${esc(w.names.en.partner1)} &amp; ${esc(w.names.en.partner2)}`] : [])
 
 /** A guest opened their personal link: { name, lang, url }. The page sends it once per browser. */
-export async function sendOpened(body: Record<string, unknown> | null, { host, now = new Date() }: AlertContext = {}): Promise<number> {
+export async function sendOpened(body: Record<string, unknown> | null, { host, wedding, now = new Date() }: AlertContext = {}): Promise<number> {
   const name = text(body?.name, 120)
   if (!name) return 400
   return telegram([
     '👀 <b>Invitation opened</b>',
+    ...coupleLine(wedding),
     '',
     `👤 <b>${esc(name)}</b>`,
     `🌐 ${body!.lang === 'km' ? 'Khmer' : 'English'} invitation`,
     `🕒 ${cambodiaTime(now)}`,
     ...pageLink(body!.url, host),
-  ])
+  ], wedding)
 }
 
 /** Returns the HTTP status to answer with. */
-export async function sendRsvp(body: Record<string, unknown> | null, { host, now = new Date() }: AlertContext = {}): Promise<number> {
-  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) return 503
+export async function sendRsvp(body: Record<string, unknown> | null, { host, wedding, now = new Date() }: AlertContext = {}): Promise<number> {
+  if (!process.env.TELEGRAM_BOT_TOKEN || !(wedding?.telegramChatId || process.env.TELEGRAM_CHAT_ID)) return 503
   if (!body || typeof body !== 'object') return 400
   // Hidden field that people never see; bots fill it in
   if (body.website) return 200
@@ -67,6 +80,7 @@ export async function sendRsvp(body: Record<string, unknown> | null, { host, now
 
   return telegram([
     body.attending ? '✅ <b>New reply: coming</b>' : '❌ <b>New reply: can’t come</b>',
+    ...coupleLine(wedding),
     '',
     `👤 <b>${esc(name)}</b>`,
     ...(body.attending ? [`👥 ${guests} ${guests === 1 ? 'guest' : 'guests'}`] : []),
@@ -75,5 +89,5 @@ export async function sendRsvp(body: Record<string, unknown> | null, { host, now
     '',
     `🕒 ${cambodiaTime(now)}`,
     ...pageLink(body.url, host),
-  ])
+  ], wedding)
 }

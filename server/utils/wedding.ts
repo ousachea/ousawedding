@@ -12,7 +12,7 @@ export async function buildPublicWedding(wedding: Wedding): Promise<PublicWeddin
     db.where<GalleryImage>('gallery', 'weddingId', wedding.id),
   ])
   const tz = wedding.timezone
-  const { createdAt, updatedAt, ...publicFields } = wedding
+  const { createdAt, updatedAt, telegramChatId, ...publicFields } = wedding
 
   // Dates are formatted here so server and client render identical text (no hydration mismatch)
   return {

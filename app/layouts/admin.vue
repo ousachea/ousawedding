@@ -29,6 +29,8 @@ async function createWedding() {
   await loadList()
   await select(created.id)
   push(t('common.saved'))
+  // A new couple starts at the first step
+  await navigateTo(localePath('/admin/couple'))
 }
 
 async function logout() {
@@ -68,6 +70,14 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
         </NuxtLink>
       </nav>
       <div class="side-body">
+        <!-- Which couple is being edited: first, as the steps below all belong to it -->
+        <div v-if="list.length > 1 || me?.role === 'owner'" class="field wedding-select">
+          <label for="wedding-select">{{ t('admin.wedding.select') }}</label>
+          <select v-if="list.length" id="wedding-select" :value="id" @change="select(($event.target as HTMLSelectElement).value)">
+            <option v-for="w in list" :key="w.id" :value="w.id">{{ w.names.en.partner1 }} & {{ w.names.en.partner2 }} · {{ w.date.slice(0, 10) }}</option>
+          </select>
+          <button v-if="me?.role === 'owner'" type="button" class="btn btn-ghost btn-sm" @click="createWedding">+ {{ t('admin.wedding.create') }}</button>
+        </div>
         <NuxtLink :to="localePath('/admin')" class="overview-link" :class="{ active: isOverview }">{{ t('admin.nav.overview') }}</NuxtLink>
         <!-- The steps are done in order, so they are numbered and joined by a thread -->
         <ol class="steps" :aria-label="t('admin.nav.steps')">
@@ -84,13 +94,7 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
         <div class="side-foot">
           <!-- Every invitation link opens the same named tab, so viewing it never piles up tabs -->
           <a v-if="wedding" :href="localePath(`/${wedding.slug}`)" target="wedding-invitation" class="btn btn-outline btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
-          <div v-if="list.length > 1 || me?.role === 'owner'" class="field wedding-select">
-            <label for="wedding-select">{{ t('admin.wedding.select') }}</label>
-            <select v-if="list.length" id="wedding-select" :value="id" @change="select(($event.target as HTMLSelectElement).value)">
-              <option v-for="w in list" :key="w.id" :value="w.id">{{ w.names.en.partner1 }} & {{ w.names.en.partner2 }} · {{ w.date.slice(0, 10) }}</option>
-            </select>
-            <button v-if="me?.role === 'owner'" type="button" class="btn btn-ghost btn-sm" @click="createWedding">+ {{ t('admin.wedding.create') }}</button>
-          </div>
+          <NuxtLink :to="localePath('/admin/business')" class="btn btn-ghost btn-sm" :class="{ current: route.path.endsWith('/admin/business') }">{{ t('admin.business.title') }}</NuxtLink>
           <p v-if="me" class="muted small">{{ me.email }}</p>
           <button type="button" class="btn btn-ghost btn-sm" @click="logout">{{ t('admin.nav.logout') }}</button>
         </div>
@@ -160,7 +164,9 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 .step:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 
 .side-foot { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--c-line-soft); }
-.wedding-select { gap: var(--space-2); width: 100%; }
+.wedding-select { gap: var(--space-2); width: 100%; padding-bottom: var(--space-3); border-bottom: 1px solid var(--c-line-soft); }
+.wedding-select .btn { align-self: flex-start; }
+.side-foot .current { background: var(--c-line-soft); }
 
 .content { padding: var(--space-5) max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left)); min-width: 0; }
 .step-head { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-5); max-width: 44rem; }
