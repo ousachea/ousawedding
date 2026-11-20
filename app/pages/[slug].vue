@@ -222,7 +222,8 @@ useSeoMeta({
   twitterDescription: () => description.value,
   twitterImage: () => abs(shareImage.value ?? w.value.coverImage),
   robots: () => (w.value.privacy.allowIndexing ? 'index, follow' : 'noindex, nofollow'),
-})
+// First in <head>, before the page's styles: link-preview robots read only the start of a page
+}, { tagPriority: 'critical' })
 </script>
 
 <template>
