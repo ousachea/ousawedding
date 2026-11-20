@@ -7,6 +7,7 @@ export const DEFAULT_SITE: SiteInfo = {
   telegram: '',
   facebook: '',
   email: '',
+  pricing: { base: { usd: null, khr: null }, addons: {} },
 }
 
 export async function getSite(): Promise<SiteInfo> {

@@ -25,6 +25,10 @@ const SPOUSE_WORDS = { en: { wife: 'and wife', husband: 'and husband' }, km: { w
 /** A guest's name as the envelope addresses them: "Sok Dara and wife", "សុខ ដារ៉ា និងភរិយា". */
 export const withSpouse = (name: string, spouse: Spouse | undefined, locale: 'km' | 'en') =>
   spouse ? `${name} ${SPOUSE_WORDS[locale][spouse]}` : name
+/** The features on the home page, in order; each is in the base price or a priced add-on */
+export const HOME_FEATURES = ['envelope', 'languages', 'schedule', 'gallery', 'music', 'replies', 'gift'] as const
+export type HomeFeature = typeof HOME_FEATURES[number]
+
 // Titles a link can start with ("MrCheaOusa"), written out per language. Couples' titles come first,
 // so "HE" doesn't claim the start of "HE and Lok Chumteav".
 const TITLES = [

@@ -24,8 +24,7 @@
     "search": "Search",
     "all": "All",
     "previous": "Previous",
-    "next": "Next",
-    "sample": "Sample content: replace it in the admin dashboard before sending invitations."
+    "next": "Next"
   },
   "nav": {
     "label": "Invitation sections",
@@ -520,7 +519,11 @@
       "telegram": "Telegram username",
       "phone": "Phone",
       "facebook": "Facebook page",
-      "email": "Email"
+      "email": "Email",
+      "prices": "Prices",
+      "pricesHint": "The home page shows a price table once the invitation price is set. Each feature is included in it or an add-on with its own price. Fill in dollars, riel or both.",
+      "base": "Invitation (base price)",
+      "addon": "Add-on"
     }
   },
   "gift": {
@@ -541,9 +544,7 @@
     "about": "A personal invitation for every guest, in Khmer and English: the envelope greets them by name, the schedule and map are a tap away, and their replies come straight to you on Telegram.",
     "ctaTelegram": "Message us on Telegram",
     "ctaContact": "Get in touch",
-    "ctaStyles": "See the styles",
-    "sampleFor": "Specially for Mr. Sok Dara",
-    "sampleOpen": "Open invitation",
+    "ctaStyles": "Try the styles",
     "featuresTitle": "Everything in one link",
     "features": {
       "envelope": {
@@ -551,8 +552,8 @@
         "text": "Each guest gets their own link. The envelope and letter greet them by name and title: Mr., Lok Chumteav, H.E. and more."
       },
       "languages": {
-        "title": "Khmer and English",
-        "text": "The whole invitation in both languages. Guests switch with one tap."
+        "title": "Khmer language",
+        "text": "Add Khmer, and the whole invitation comes in Khmer and English. Guests switch with one tap."
       },
       "schedule": {
         "title": "Schedule and map",
@@ -563,16 +564,18 @@
         "text": "Your pre-wedding photos in a gallery guests can swipe through."
       },
       "replies": {
-        "title": "Replies on Telegram",
+        "title": "Alerts on Telegram",
         "text": "Guests say whether they can come, and you get each reply on Telegram, plus a note when someone opens their invitation."
       },
       "gift": {
         "title": "KHQR gifts",
         "text": "Your bank KHQR codes, so guests can send a wedding gift from any banking app."
+      },
+      "music": {
+        "title": "Background music"
       }
     },
     "stylesTitle": "Choose a style",
-    "stylesLead": "Each couple picks a style, then their own colours, fonts and photos.",
     "styles": {
       "classic": {
         "title": "Classic",
@@ -603,6 +606,75 @@
       }
     },
     "contactTitle": "Let’s make your invitation",
-    "contactLead": "Tell us your wedding date and we’ll get back to you."
+    "contactLead": "Tell us your wedding date and we’ll get back to you.",
+    "previewTitle": "Sample invitation",
+    "tryName": "Try it with a guest’s name",
+    "tryPlaceholder": "e.g. Mr Sok Dara",
+    "needTitle": "What we’ll need from you",
+    "needLead": "Send what you have; we’ll help with the rest.",
+    "need": {
+      "1": "Both your names, in Khmer and English",
+      "2": "Your parents’ names, as they should appear",
+      "3": "The date, and each ceremony with its time and place (a Google Maps link helps)",
+      "4": "Your favourite photos, and one for the cover",
+      "5": "Your bank KHQR codes, if you’d like gifts",
+      "6": "Your Telegram, to receive replies"
+    },
+    "faqTitle": "Questions",
+    "faq": {
+      "1": {
+        "q": "Do guests need to install anything?",
+        "a": "No. The invitation is a web page: guests tap the link in Telegram, Messenger or a text message and it opens in their browser."
+      },
+      "2": {
+        "q": "How does each guest get their own name?",
+        "a": "Each guest’s link carries their name and title, for example Mr Sok Dara or Lok Chumteav Sophea. The envelope and letter greet them with it, in Khmer or English."
+      },
+      "3": {
+        "q": "Can we change it after sending?",
+        "a": "Yes. Guests always see the latest version at the same link, so corrections to times, places or spelling reach everyone."
+      },
+      "4": {
+        "q": "How do we see who is coming?",
+        "a": "Each reply arrives in your Telegram with the guest’s name, how many are coming and their message. You also get a note when a guest first opens their invitation."
+      },
+      "5": {
+        "q": "Can we choose our own colours and fonts?",
+        "a": "Yes. Start from one of the styles above, then pick your colours, Khmer and English fonts, photos and music."
+      },
+      "6": {
+        "q": "Can guests send a gift?",
+        "a": "Yes. Add your bank KHQR codes and guests can scan them, or save them to their photos and pay from any banking app."
+      }
+    },
+    "pricesTitle": "Prices",
+    "pricesLead": "One price for the invitation, with a few extras you can add.",
+    "basePrice": "Invitation",
+    "included": "Included",
+    "form": {
+      "name": "Your name",
+      "reach": "Phone or Telegram",
+      "reachHint": "So we can reply to you",
+      "date": "Wedding date (if you know it)",
+      "style": "Style you like",
+      "anyStyle": "Not sure yet",
+      "message": "Anything else?",
+      "send": "Send",
+      "sending": "Sending…",
+      "sent": "Thank you! We’ll get back to you soon.",
+      "failed": "It couldn’t be sent. Please try again, or contact us directly."
+    },
+    "total": "Total",
+    "askPrice": "Ask about this",
+    "baseNote": "A general invitation in English",
+    "addons": "Add-ons",
+    "always": {
+      "envelope": "Envelope that opens, with your monogram",
+      "countdown": "Countdown to the big day",
+      "style": "Your style, colours and fonts",
+      "preview": "Link preview with your photo in chat apps",
+      "changes": "Changes after sending"
+    },
+    "remove": "Remove {item}"
   }
 }

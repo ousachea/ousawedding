@@ -25,7 +25,7 @@ function pageLink(v: unknown, host: string | undefined): string[] {
 const cambodiaTime = (d: Date) => d.toLocaleString('en-GB', { timeZone: 'Asia/Phnom_Penh', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
 
 /** The wedding an alert belongs to: whose names head the message, and which chat it goes to */
-export interface AlertWedding { names: { en: { partner1: string, partner2: string } }, telegramChatId?: string }
+export interface AlertWedding { names: { en: { partner1: string, partner2: string } }, telegramChatId?: string, isSample?: boolean }
 
 /** The wedding with this address, from all weddings (content/weddings.json) */
 export const alertWeddingBySlug = (all: Record<string, AlertWedding & { slug: string }>, slug: unknown): AlertWedding | null =>
@@ -33,6 +33,8 @@ export const alertWeddingBySlug = (all: Record<string, AlertWedding & { slug: st
 
 /** Sends one message to the couple's chat (or the owner's); returns the HTTP status to answer with. */
 async function telegram(lines: string[], wedding: AlertWedding | null | undefined): Promise<number> {
+  // Sample invitations (the styles on the home page) are for trying out: replies go nowhere
+  if (wedding?.isSample) return 200
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = wedding?.telegramChatId || process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return 503
@@ -68,7 +70,7 @@ export async function sendOpened(body: Record<string, unknown> | null, { host, w
 
 /** Returns the HTTP status to answer with. */
 export async function sendRsvp(body: Record<string, unknown> | null, { host, wedding, now = new Date() }: AlertContext = {}): Promise<number> {
-  if (!process.env.TELEGRAM_BOT_TOKEN || !(wedding?.telegramChatId || process.env.TELEGRAM_CHAT_ID)) return 503
+  if (!wedding?.isSample && (!process.env.TELEGRAM_BOT_TOKEN || !(wedding?.telegramChatId || process.env.TELEGRAM_CHAT_ID))) return 503
   if (!body || typeof body !== 'object') return 400
   // Hidden field that people never see; bots fill it in
   if (body.website) return 200
@@ -90,4 +92,31 @@ export async function sendRsvp(body: Record<string, unknown> | null, { host, wed
     `🕒 ${cambodiaTime(now)}`,
     ...pageLink(body.url, host),
   ], wedding)
+}
+
+/** A couple asks about an invitation from the home page's contact form; it goes to the site owner */
+export async function sendContact(body: Record<string, unknown> | null, { now = new Date() }: AlertContext = {}): Promise<number> {
+  if (!body || typeof body !== 'object') return 400
+  // Hidden field that people never see; bots fill it in
+  if (body.website) return 200
+  const name = text(body.name, 120)
+  const reach = text(body.reach, 120)
+  const date = text(body.date, 10)
+  const style = text(body.style, 20)
+  const message = text(body.message, 2000)
+  const ADDONS: Record<string, string> = { envelope: 'Letter for each guest', languages: 'Khmer language', schedule: 'Schedule and map', gallery: 'Photos', music: 'Background music', replies: 'Alerts on Telegram', gift: 'KHQR gifts' }
+  const addons = Array.isArray(body.addons) ? body.addons.filter(a => typeof a === 'string' && a in ADDONS).map(a => ADDONS[a]!) : []
+  if (!name || !reach) return 400
+  return telegram([
+    '💌 <b>New enquiry</b>',
+    '',
+    `👤 <b>${esc(name)}</b>`,
+    `📞 ${esc(reach)}`,
+    ...(/^\d{4}-\d{2}-\d{2}$/.test(date) ? [`💍 Wedding on ${new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`] : []),
+    ...(['classic', 'floral', 'ruby'].includes(style) ? [`🎨 Likes the ${style[0]!.toUpperCase()}${style.slice(1)} style`] : []),
+    ...(addons.length ? [`➕ Add-ons: ${addons.join(', ')}`] : []),
+    ...(message ? ['', `💬 <i>${esc(message)}</i>`] : []),
+    '',
+    `🕒 ${cambodiaTime(now)}`,
+  ], null)
 }

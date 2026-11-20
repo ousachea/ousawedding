@@ -15,6 +15,12 @@ const field = (key: 'tagline' | 'about') => computed<Localized>({
 const tagline = field('tagline')
 const about = field('about')
 
+// Prices: empty boxes are saved as no price (null), not 0
+const num = (v: string) => (v.trim() === '' ? null : Number(v))
+function setAddon(key: HomeFeature, on: boolean) {
+  site.value!.pricing.addons[key] = on ? { usd: null, khr: null } : null
+}
+
 const saving = ref(false)
 async function save() {
   if (!site.value || saving.value) return
@@ -71,6 +77,27 @@ async function save() {
         </div>
       </section>
 
+      <section class="panel form-grid">
+        <h2>{{ t('admin.business.prices') }}</h2>
+        <p class="hint">{{ t('admin.business.pricesHint') }}</p>
+        <fieldset class="price-row">
+          <legend>{{ t('admin.business.base') }}</legend>
+          <label>$ <input class="input" type="number" min="0" step="any" inputmode="decimal" :value="site.pricing.base.usd ?? ''" @input="site.pricing.base.usd = num(($event.target as HTMLInputElement).value)"></label>
+          <label>៛ <input class="input" type="number" min="0" step="any" inputmode="numeric" :value="site.pricing.base.khr ?? ''" @input="site.pricing.base.khr = num(($event.target as HTMLInputElement).value)"></label>
+        </fieldset>
+        <fieldset v-for="key in HOME_FEATURES" :key="key" class="price-row">
+          <legend>{{ t(`home.features.${key}.title`) }}</legend>
+          <select class="input" :value="site.pricing.addons[key] ? 'addon' : 'included'" :aria-label="t(`home.features.${key}.title`)" @change="setAddon(key, ($event.target as HTMLSelectElement).value === 'addon')">
+            <option value="included">{{ t('home.included') }}</option>
+            <option value="addon">{{ t('admin.business.addon') }}</option>
+          </select>
+          <template v-if="site.pricing.addons[key]">
+            <label>+ $ <input class="input" type="number" min="0" step="any" inputmode="decimal" :value="site.pricing.addons[key]!.usd ?? ''" @input="site.pricing.addons[key]!.usd = num(($event.target as HTMLInputElement).value)"></label>
+            <label>+ ៛ <input class="input" type="number" min="0" step="any" inputmode="numeric" :value="site.pricing.addons[key]!.khr ?? ''" @input="site.pricing.addons[key]!.khr = num(($event.target as HTMLInputElement).value)"></label>
+          </template>
+        </fieldset>
+      </section>
+
       <div><button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button></div>
     </form>
     <p v-else class="muted">{{ t('common.loading') }}</p>
@@ -80,4 +107,9 @@ async function save() {
 <style scoped>
 .business { max-width: 52rem; }
 .panel h2 { font-size: 1.3rem; }
+.price-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); border: 0; border-top: 1px solid var(--c-line-soft); margin: 0; padding: var(--space-3) 0 0; }
+.price-row legend { float: left; width: 100%; padding: 0; margin-bottom: var(--space-2); font-weight: 500; }
+.price-row label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.price-row input { width: 8rem; }
+.price-row select { width: auto; }
 </style>

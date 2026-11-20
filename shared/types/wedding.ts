@@ -150,7 +150,13 @@ export interface SiteInfo {
   telegram: string
   facebook: string
   email: string
+  // The price table: the base price, and each feature either included (null) or an add-on with its price.
+  // An empty base price hides the table.
+  pricing: { base: Money, addons: Partial<Record<HomeFeature, Money | null>> }
 }
+
+/** A price in US dollars and riel; either may be empty */
+export interface Money { usd: number | null, khr: number | null }
 
 export interface PublicWedding {
   wedding: Omit<Wedding, 'createdAt' | 'updatedAt' | 'contact' | 'telegramChatId'> & {

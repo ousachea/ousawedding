@@ -6,6 +6,8 @@ const localDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Use Y
 const url = z.union([z.literal(''), z.string().trim().max(2000).refine(v => /^https?:\/\//.test(v) || v.startsWith('/'), 'Must be a URL')])
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/)
 const locale = z.enum(['km', 'en'])
+const price = z.number().nonnegative().max(1e9).nullable()
+const money = z.object({ usd: price, khr: price })
 
 // The business page at the site root: who makes the invitations and how to reach them
 export const siteSchema = z.object({
@@ -17,6 +19,10 @@ export const siteSchema = z.object({
   telegram: z.union([z.literal(''), z.string().trim().regex(/^@?\w{5,32}$/, 'A Telegram username').transform(v => v.replace(/^@/, ''))]),
   facebook: url,
   email: z.union([z.literal(''), z.email()]),
+  pricing: z.object({
+    base: money,
+    addons: z.partialRecord(z.enum(HOME_FEATURES), money.nullable()),
+  }).default({ base: { usd: null, khr: null }, addons: {} }),
 })
 
 export const weddingSchema = z.object({

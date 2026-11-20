@@ -1,0 +1,49 @@
+{
+  "main": {
+    "name": "Theab Online",
+    "tagline": {
+      "km": "",
+      "en": ""
+    },
+    "about": {
+      "km": "",
+      "en": ""
+    },
+    "phone": "",
+    "telegram": "",
+    "facebook": "",
+    "email": "",
+    "pricing": {
+      "base": {
+        "usd": 30,
+        "khr": 120000
+      },
+      "addons": {
+        "replies": {
+          "usd": 10,
+          "khr": null
+        },
+        "gift": {
+          "usd": 5,
+          "khr": null
+        },
+        "envelope": {
+          "usd": 5,
+          "khr": null
+        },
+        "languages": {
+          "usd": 5,
+          "khr": null
+        },
+        "schedule": {
+          "usd": 5,
+          "khr": null
+        },
+        "music": {
+          "usd": 10,
+          "khr": null
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { alertWeddingBySlug, sendOpened, sendRsvp } from '../shared/rsvp.ts'
+import { alertWeddingBySlug, sendContact, sendOpened, sendRsvp } from '../shared/rsvp.ts'
 
 test('opened links and replies are sent to Telegram as escaped HTML', async () => {
   const sent: string[] = []
@@ -43,6 +43,9 @@ test('each couple gets their own alerts, headed by their names; without a chat t
     assert.equal(sent[1]!.chat_id, 'owner')
     assert.ok(sent[1]!.text.includes('💍 Sok &amp; Nita'))
     assert.equal(alertWeddingBySlug(weddings, 'nobody'), null)
+    // Sample invitations answer as if sent, but send nothing
+    assert.equal(await sendRsvp({ name: 'Vanna', attending: true }, { wedding: { ...weddings.a, isSample: true } }), 200)
+    assert.equal(sent.length, 2)
     // No couple chat and no owner chat: nowhere to send
     delete process.env.TELEGRAM_CHAT_ID
     assert.equal(await sendOpened({ name: 'Vanna' }, { wedding: alertWeddingBySlug(weddings, 'sok-nita') }), 503)
@@ -51,5 +54,29 @@ test('each couple gets their own alerts, headed by their names; without a chat t
     assert.equal(await sendOpened({ name: 'A' }), 503)
   } finally {
     globalThis.fetch = realFetch
+  }
+})
+
+test('contact form enquiries go to the owner, escaped, with a readable wedding date', async () => {
+  const sent: Array<{ chat_id: string, text: string }> = []
+  const realFetch = globalThis.fetch
+  globalThis.fetch = (async (_url: string, init: RequestInit) => { sent.push(JSON.parse(init.body as string)); return new Response('{}') }) as typeof fetch
+  process.env.TELEGRAM_BOT_TOKEN = 'x'
+  process.env.TELEGRAM_CHAT_ID = 'owner'
+  try {
+    const at = new Date('2026-11-18T16:45:00Z')
+    assert.equal(await sendContact({ name: 'Dara <3', reach: '012 345 678', date: '2027-02-14', style: 'ruby', message: 'Hi' }, { now: at }), 200)
+    assert.equal(sent[0]!.chat_id, 'owner')
+    assert.equal(sent[0]!.text, '💌 <b>New enquiry</b>\n\n👤 <b>Dara &lt;3</b>\n📞 012 345 678\n💍 Wedding on Sun, 14 Feb 2027\n🎨 Likes the Ruby style\n\n💬 <i>Hi</i>\n\n🕒 Wed, 18 Nov 2026, 11:45 pm')
+    assert.equal(await sendContact({ name: 'Sok', reach: '@sok', addons: ['replies', 'gift', 'nope'] }, { now: at }), 200)
+    assert.ok(sent[1]!.text.includes('➕ Add-ons: Alerts on Telegram, KHQR gifts'))
+    sent.pop()
+    assert.equal(await sendContact({ name: 'Dara', reach: '' }), 400)
+    assert.equal(await sendContact({ name: 'Bot', reach: 'x', website: 'spam' }), 200)
+    assert.equal(sent.length, 1)
+  } finally {
+    globalThis.fetch = realFetch
+    delete process.env.TELEGRAM_BOT_TOKEN
+    delete process.env.TELEGRAM_CHAT_ID
   }
 })

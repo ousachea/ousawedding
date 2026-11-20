@@ -221,6 +221,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .wedding.style-ruby main { max-width: 34rem; margin: var(--space-6) auto; background: var(--linen), #fdfbf8; box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.55); }
 .wedding.style-ruby .btn { border-radius: 999px; }
+/* The envelope sits on the deep red page: its dark inks (guest name, Skip) would vanish */
+.wedding.style-ruby .for-guest, .wedding.style-ruby .skip { color: #FFF3E6; }
 .wedding.style-ruby .btn-primary { background: var(--c-secondary); }
 .wedding.style-ruby .section-title { font-family: var(--font-script); font-weight: 400; font-size: clamp(2.2rem, 8vw, 3rem); color: var(--c-secondary); }
 .wedding.style-ruby .section-title:lang(km) { font-size: 1.6rem; line-height: 1.6; }

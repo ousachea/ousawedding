@@ -218,5 +218,269 @@
     "visible": true,
     "createdAt": "2026-10-30T15:08:42.845Z",
     "updatedAt": "2026-10-30T15:08:42.845Z"
+  },
+  "IcK1WF8LDAhwpTUv": {
+    "id": "IcK1WF8LDAhwpTUv",
+    "weddingId": "iylVGlQI-GV27Kmt",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-1.svg",
+    "thumbUrl": "/sample/photo-1.svg",
+    "width": 800,
+    "height": 1000,
+    "caption": {
+      "km": "រូបភាពគំរូ 1",
+      "en": "Sample photo 1"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 1",
+      "en": "Sample placeholder photo 1"
+    },
+    "order": 0,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.122Z",
+    "updatedAt": "2026-11-20T08:56:25.122Z"
+  },
+  "cyPGZHbcjRIYpay2": {
+    "id": "cyPGZHbcjRIYpay2",
+    "weddingId": "iylVGlQI-GV27Kmt",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-2.svg",
+    "thumbUrl": "/sample/photo-2.svg",
+    "width": 600,
+    "height": 800,
+    "caption": {
+      "km": "រូបភាពគំរូ 2",
+      "en": "Sample photo 2"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 2",
+      "en": "Sample placeholder photo 2"
+    },
+    "order": 1,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.122Z",
+    "updatedAt": "2026-11-20T08:56:25.122Z"
+  },
+  "R8MwBIgKGrYUFqrS": {
+    "id": "R8MwBIgKGrYUFqrS",
+    "weddingId": "iylVGlQI-GV27Kmt",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-3.svg",
+    "thumbUrl": "/sample/photo-3.svg",
+    "width": 800,
+    "height": 1000,
+    "caption": {
+      "km": "រូបភាពគំរូ 3",
+      "en": "Sample photo 3"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 3",
+      "en": "Sample placeholder photo 3"
+    },
+    "order": 2,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.122Z",
+    "updatedAt": "2026-11-20T08:56:25.122Z"
+  },
+  "sLHSoUNyL8lW333x": {
+    "id": "sLHSoUNyL8lW333x",
+    "weddingId": "iylVGlQI-GV27Kmt",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-4.svg",
+    "thumbUrl": "/sample/photo-4.svg",
+    "width": 600,
+    "height": 800,
+    "caption": {
+      "km": "រូបភាពគំរូ 4",
+      "en": "Sample photo 4"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 4",
+      "en": "Sample placeholder photo 4"
+    },
+    "order": 3,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.122Z",
+    "updatedAt": "2026-11-20T08:56:25.122Z"
+  },
+  "Mib-EoyPgpGSiuxE": {
+    "id": "Mib-EoyPgpGSiuxE",
+    "weddingId": "TYI2GfXahs6MQqrm",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-1.svg",
+    "thumbUrl": "/sample/photo-1.svg",
+    "width": 800,
+    "height": 1000,
+    "caption": {
+      "km": "រូបភាពគំរូ 1",
+      "en": "Sample photo 1"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 1",
+      "en": "Sample placeholder photo 1"
+    },
+    "order": 0,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "Gx9eVCrBygZVOpCI": {
+    "id": "Gx9eVCrBygZVOpCI",
+    "weddingId": "TYI2GfXahs6MQqrm",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-2.svg",
+    "thumbUrl": "/sample/photo-2.svg",
+    "width": 600,
+    "height": 800,
+    "caption": {
+      "km": "រូបភាពគំរូ 2",
+      "en": "Sample photo 2"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 2",
+      "en": "Sample placeholder photo 2"
+    },
+    "order": 1,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "aUbCUt4KIKwcWIwG": {
+    "id": "aUbCUt4KIKwcWIwG",
+    "weddingId": "TYI2GfXahs6MQqrm",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-3.svg",
+    "thumbUrl": "/sample/photo-3.svg",
+    "width": 800,
+    "height": 1000,
+    "caption": {
+      "km": "រូបភាពគំរូ 3",
+      "en": "Sample photo 3"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 3",
+      "en": "Sample placeholder photo 3"
+    },
+    "order": 2,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "EtuMtvpHmboc_-w2": {
+    "id": "EtuMtvpHmboc_-w2",
+    "weddingId": "TYI2GfXahs6MQqrm",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-4.svg",
+    "thumbUrl": "/sample/photo-4.svg",
+    "width": 600,
+    "height": 800,
+    "caption": {
+      "km": "រូបភាពគំរូ 4",
+      "en": "Sample photo 4"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 4",
+      "en": "Sample placeholder photo 4"
+    },
+    "order": 3,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "6rp62uSGzQBumLxa": {
+    "id": "6rp62uSGzQBumLxa",
+    "weddingId": "1g2D1DI0i1SFCi4r",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-1.svg",
+    "thumbUrl": "/sample/photo-1.svg",
+    "width": 800,
+    "height": 1000,
+    "caption": {
+      "km": "រូបភាពគំរូ 1",
+      "en": "Sample photo 1"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 1",
+      "en": "Sample placeholder photo 1"
+    },
+    "order": 0,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "NDFvTIm7hyY-np9i": {
+    "id": "NDFvTIm7hyY-np9i",
+    "weddingId": "1g2D1DI0i1SFCi4r",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-2.svg",
+    "thumbUrl": "/sample/photo-2.svg",
+    "width": 600,
+    "height": 800,
+    "caption": {
+      "km": "រូបភាពគំរូ 2",
+      "en": "Sample photo 2"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 2",
+      "en": "Sample placeholder photo 2"
+    },
+    "order": 1,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "oBpB3ovaD3k_z3MN": {
+    "id": "oBpB3ovaD3k_z3MN",
+    "weddingId": "1g2D1DI0i1SFCi4r",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-3.svg",
+    "thumbUrl": "/sample/photo-3.svg",
+    "width": 800,
+    "height": 1000,
+    "caption": {
+      "km": "រូបភាពគំរូ 3",
+      "en": "Sample photo 3"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 3",
+      "en": "Sample placeholder photo 3"
+    },
+    "order": 2,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
+  },
+  "kYvfnzxMJ2PavCEq": {
+    "id": "kYvfnzxMJ2PavCEq",
+    "weddingId": "1g2D1DI0i1SFCi4r",
+    "storagePath": "",
+    "thumbPath": "",
+    "url": "/sample/photo-4.svg",
+    "thumbUrl": "/sample/photo-4.svg",
+    "width": 600,
+    "height": 800,
+    "caption": {
+      "km": "រូបភាពគំរូ 4",
+      "en": "Sample photo 4"
+    },
+    "alt": {
+      "km": "រូបភាពគំរូទី 4",
+      "en": "Sample placeholder photo 4"
+    },
+    "order": 3,
+    "visible": true,
+    "createdAt": "2026-11-20T08:56:25.124Z",
+    "updatedAt": "2026-11-20T08:56:25.124Z"
   }
 }

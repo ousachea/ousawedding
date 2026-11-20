@@ -232,8 +232,6 @@ useSeoMeta({
       @revealing="introDelay = $event; startMusic()"
     />
 
-    <p v-if="w.isSample" class="banner">{{ t('common.sample') }}</p>
-
     <WeddingGreenery />
     <WeddingPetals v-if="w.theme.motif !== 'none' || floral" />
     <WeddingButterflies />
@@ -278,10 +276,6 @@ useSeoMeta({
 /* overflow-x clip: flowers at the edges sway and slide past the screen side; without it the page scrolls sideways.
    clip, not hidden: hidden would make the page a scroll container and stop the scroll-linked animations. */
 .wedding { isolation: isolate; overflow-x: clip; background: var(--paper), var(--c-bg); color: var(--c-text); min-height: 100dvh; }
-.banner {
-  padding: 0.5rem 1rem; text-align: center; font-size: 0.85rem;
-  background: color-mix(in srgb, var(--c-accent) 22%, var(--c-bg)); color: var(--c-text);
-}
 .story { padding-block: var(--space-8); }
 .story-inner { max-width: 40rem; text-align: center; }
 .section-title { font-size: clamp(1.9rem, 6vw, 2.6rem); margin-bottom: var(--space-3); }
