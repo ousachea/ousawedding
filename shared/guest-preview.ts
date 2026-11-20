@@ -17,10 +17,31 @@ export function addGuestToTitles(html: string, rawName: string, spouse: Spouse =
     .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")/g, `$1${prefix} | `)
 }
 
-/** The response with the guest's name added, or as it was when it is not an HTML page. */
-export async function withGuestName(res: Response, name: string, spouse: Spouse = ''): Promise<Response> {
+/**
+ * og:url set to the personal link itself. Facebook and Messenger read the preview from og:url, so with the
+ * plain invitation's address there every guest's link would show the plain preview, without their name.
+ */
+export function setShareUrl(html: string, url: string): string {
+  return html.replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${escapeHtml(url)}$2`)
+}
+
+/** The personal link as shared: the page with its closing slash, and only the guest's own parameters */
+export function personalLink(requestUrl: URL): string {
+  const path = requestUrl.pathname.endsWith('/') ? requestUrl.pathname : `${requestUrl.pathname}/`
+  const query = new URLSearchParams()
+  for (const key of ['to', 'with']) {
+    const v = requestUrl.searchParams.get(key)
+    if (v) query.set(key, v)
+  }
+  return `${requestUrl.origin}${path}?${query}`
+}
+
+/** The response with the guest's name (and their own link) added, or as it was when it is not an HTML page. */
+export async function withGuestName(res: Response, name: string, spouse: Spouse = '', link?: string): Promise<Response> {
   if (!res.ok || !res.headers.get('content-type')?.includes('text/html')) return res
   const headers = new Headers(res.headers)
   headers.delete('content-length')
-  return new Response(addGuestToTitles(await res.text(), name, spouse), { status: res.status, headers })
+  let html = addGuestToTitles(await res.text(), name, spouse)
+  if (link) html = setShareUrl(html, link)
+  return new Response(html, { status: res.status, headers })
 }

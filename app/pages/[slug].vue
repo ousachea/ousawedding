@@ -156,7 +156,9 @@ const meta = computed(() => shareMeta(w.value, data.value!.display[loc.value], l
 const names = computed(() => meta.value.names)
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
-const pageUrl = computed(() => `${siteUrl}${localePath(`/${w.value.slug}`)}`)
+// With the closing slash: the address Netlify serves the page at. Without it, Netlify redirects to it, and
+// Facebook, which reads the preview from og:url, goes round in a circle and shows no picture.
+const pageUrl = computed(() => `${siteUrl}${localePath(`/${w.value.slug}`)}/`)
 const title = computed(() => meta.value.title)
 const description = computed(() => meta.value.description)
 // Size of the cover photo, when it is one of the gallery photos, so apps can lay out the preview before loading it

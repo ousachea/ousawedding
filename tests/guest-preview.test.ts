@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { addGuestToTitles, withGuestName } from '../shared/guest-preview.ts'
+import { addGuestToTitles, personalLink, setShareUrl, withGuestName } from '../shared/guest-preview.ts'
 import { inviteLink, parseSpouse, withSpouse } from '../shared/utils/wedding.ts'
 
 const page = (lang: string) => `<html lang="${lang}"><head><title>Ousa &amp; Kanha</title><meta property="og:title" content="Ousa & Kanha"><meta name="twitter:title" content="Ousa & Kanha"><meta property="og:description" content="x"></head></html>`
@@ -43,4 +43,14 @@ test('personal links carry the spouse, and only wife or husband is read back', (
   assert.equal(parseSpouse('husband'), 'husband')
   assert.equal(parseSpouse('<script>'), '')
   assert.equal(parseSpouse(['wife']), '')
+})
+
+test('a personal link previews as itself, so Facebook keeps the guest’s name', async () => {
+  const og = '<html lang="en"><head><title>A</title><meta property="og:title" content="A"><meta property="og:url" content="https://site.app/ousa-kanha/"></head></html>'
+  const link = personalLink(new URL('https://site.app/ousa-kanha?to=MrChea&with=wife&fbclid=xyz'))
+  assert.equal(link, 'https://site.app/ousa-kanha/?to=MrChea&with=wife')
+  assert.equal(personalLink(new URL('https://site.app/km/ousa-kanha/?to=%E1%9E%9F%E1%9E%BB%E1%9E%81')), 'https://site.app/km/ousa-kanha/?to=%E1%9E%9F%E1%9E%BB%E1%9E%81')
+  assert.match(setShareUrl(og, link), /og:url" content="https:\/\/site.app\/ousa-kanha\/\?to=MrChea&amp;with=wife"/)
+  const res = await withGuestName(new Response(og, { headers: { 'content-type': 'text/html' } }), 'MrChea', '', link)
+  assert.match(await res.text(), /og:url" content="https:\/\/site.app\/ousa-kanha\/\?to=MrChea&amp;with=wife"/)
 })
