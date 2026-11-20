@@ -45,3 +45,13 @@ export async function withGuestName(res: Response, name: string, spouse: Spouse 
   if (link) html = setShareUrl(html, link)
   return new Response(html, { status: res.status, headers })
 }
+
+/**
+ * Netlify answers a short personal link (/ousa-kanha/MrDara, sent on to /ousa-kanha/?to=MrDara by
+ * public/_redirects) asked for in part, as Facebook asks for pages, with "206 Partial Content" instead of
+ * a redirect. Facebook doesn't follow that and finds no preview, so it is turned back into a redirect.
+ */
+export function fixPartialRedirect(res: Response, requestUrl: URL): Response {
+  const location = res.headers.get('location')
+  return res.status === 206 && location ? Response.redirect(new URL(location, requestUrl).href, 301) : res
+}

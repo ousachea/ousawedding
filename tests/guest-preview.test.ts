@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { addGuestToTitles, personalLink, setShareUrl, withGuestName } from '../shared/guest-preview.ts'
+import { addGuestToTitles, fixPartialRedirect, personalLink, setShareUrl, withGuestName } from '../shared/guest-preview.ts'
 import { inviteLink, parseSpouse, withSpouse } from '../shared/utils/wedding.ts'
 
 const page = (lang: string) => `<html lang="${lang}"><head><title>Ousa &amp; Kanha</title><meta property="og:title" content="Ousa & Kanha"><meta name="twitter:title" content="Ousa & Kanha"><meta property="og:description" content="x"></head></html>`
@@ -53,4 +53,15 @@ test('a personal link previews as itself, so Facebook keeps the guest’s name',
   assert.match(setShareUrl(og, link), /og:url" content="https:\/\/site.app\/ousa-kanha\/\?to=MrChea&amp;with=wife"/)
   const res = await withGuestName(new Response(og, { headers: { 'content-type': 'text/html' } }), 'MrChea', '', link)
   assert.match(await res.text(), /og:url" content="https:\/\/site.app\/ousa-kanha\/\?to=MrChea&amp;with=wife"/)
+})
+
+test('a short link asked for in part still redirects, so Facebook reaches the page', () => {
+  const url = new URL('https://site.app/ousa-kanha/msChhonSrey')
+  const partial = new Response('Redirecting to /ousa-kanha/?to=msChhonSrey', { status: 206, headers: { location: '/ousa-kanha/?to=msChhonSrey' } })
+  const fixed = fixPartialRedirect(partial, url)
+  assert.equal(fixed.status, 301)
+  assert.equal(fixed.headers.get('location'), 'https://site.app/ousa-kanha/?to=msChhonSrey')
+  // Real partial content (no redirect) is left alone
+  const media = new Response('abc', { status: 206 })
+  assert.equal(fixPartialRedirect(media, url), media)
 })
