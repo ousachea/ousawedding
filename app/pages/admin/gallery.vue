@@ -210,7 +210,8 @@ const name = (img: GalleryImage, i: number) => img.caption[locale.value as Local
 .grid { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); align-items: start; }
 .tile { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2); background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
 .thumb { position: relative; }
-.thumb img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-sm); background: var(--c-line-soft); }
+/* 3:4, cropped as on the invitation */
+.thumb img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 35%; border-radius: var(--radius-sm); background: var(--c-line-soft); }
 .tile.hidden .thumb img { opacity: 0.4; }
 .flags { position: absolute; top: var(--space-2); left: var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .flag { padding: 2px 8px; border-radius: 999px; background: var(--c-secondary); color: var(--c-on-secondary); font-size: 0.75rem; font-weight: 600; }

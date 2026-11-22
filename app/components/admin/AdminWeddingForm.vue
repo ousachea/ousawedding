@@ -17,7 +17,7 @@ watch(wedding, (w) => {
   if (!w) return
   const { id: _id, createdAt: _c, updatedAt: _u, isSample: _s, ...rest } = structuredClone(toRaw(w))
   // Times are entered in the admin's own timezone, taken from the browser
-  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, gifts: [], telegramChatId: '', ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
+  draft.value = { partnerPhotos: { partner1: '', partner2: '' }, gifts: [], telegramChatId: '', location: { venue: { km: '', en: '' }, address: { km: '', en: '' }, mapUrl: '' }, ...rest, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || rest.timezone }
   reset()
 }, { immediate: true })
 
@@ -175,6 +175,31 @@ const shareField = (key: 'title' | 'description') => computed<Localized>({
     draft.value!.share.en[key] = v.en
   },
 })
+// The venue map, previewed as guests will see it
+const map = computed(() => venueMap(draft.value!.location))
+// A pasted Google Maps link fills in the venue and address; the couple checks them and saves
+const lookingUp = ref(false)
+async function lookupMap() {
+  const link = draft.value!.location!.mapUrl.trim()
+  if (!link || lookingUp.value) return
+  lookingUp.value = true
+  try {
+    const found = await api<{ mapUrl: string, venue: Localized, address: Localized }>('/api/admin/map-lookup', { method: 'POST', body: { url: link } })
+    const loc = draft.value!.location!
+    loc.mapUrl = found.mapUrl
+    for (const l of ['km', 'en'] as const) {
+      if (found.venue[l]) loc.venue[l] = found.venue[l]
+      if (found.address[l]) loc.address[l] = found.address[l]
+    }
+    push(t('admin.location.filled'))
+  } catch {
+    // the error toast is shown by api()
+  } finally {
+    lookingUp.value = false
+  }
+}
+// The input's value updates after the paste event
+const onMapPaste = () => nextTick(lookupMap)
 const shareTitle = shareField('title')
 const shareDescription = shareField('description')
 
@@ -256,6 +281,25 @@ async function copyLink() {
               <input id="s-mono" v-model="draft.monogram" maxlength="12">
             </div>
           </div>
+        </section>
+
+        <section class="panel form-grid">
+          <header class="section-head">
+            <h2>{{ t('admin.location.title') }}</h2>
+            <p class="hint">{{ t('admin.location.hint') }}</p>
+          </header>
+          <div class="field">
+            <label for="s-map">{{ t('admin.location.mapUrl') }}</label>
+            <!-- Pasting a link fills in the rest straight away -->
+            <div class="chat-row">
+              <input id="s-map" v-model="draft.location!.mapUrl" type="url" placeholder="https://maps.app.goo.gl/…" @paste="onMapPaste">
+              <button type="button" class="btn btn-outline" :disabled="lookingUp || !draft.location!.mapUrl" @click="lookupMap">{{ lookingUp ? t('common.loading') : t('admin.location.fill') }}</button>
+            </div>
+          </div>
+          <AdminLocalizedField v-model="draft.location!.venue" :label="t('admin.location.venue')" />
+          <AdminLocalizedField v-model="draft.location!.address" :label="t('admin.location.address')" multiline />
+          <iframe v-if="map" :src="map.embed" :title="t('admin.location.preview')" loading="lazy" class="map-preview" />
+          <p v-else class="muted small">{{ t('admin.location.empty') }}</p>
         </section>
       </template>
 
@@ -510,6 +554,7 @@ git push</pre>
 .chats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .chat-pick { width: 100%; justify-content: space-between; gap: var(--space-3); border: 1px solid var(--c-line-soft); }
 .chat-pick.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 8%, transparent); }
+.map-preview { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--c-line); border-radius: var(--radius); }
 .gifts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
 .gift { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; padding: var(--space-3); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
 .gift-thumb { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius-sm); background: #fff; border: 1px solid var(--c-line-soft); }

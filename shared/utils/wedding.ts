@@ -95,3 +95,23 @@ export function shareMeta(
     description: [share.description || invite, `${when.date} · ${when.time}`].join(' · '),
   }
 }
+
+/**
+ * The venue's map: what to show in the embedded map and where Directions goes. Coordinates in a full Google Maps
+ * link pin the exact spot; short links (maps.app.goo.gl) can't be read, so the venue and address are searched.
+ * Null when there is nothing to find.
+ */
+export function venueMap(location: { venue: Record<'km' | 'en', string>, address: Record<'km' | 'en', string>, mapUrl: string } | undefined) {
+  if (!location) return null
+  const { venue, address, mapUrl } = location
+  // The place's own pin (!3d…!4d…) before the view's centre (@…)
+  const coords = mapUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) ?? mapUrl.match(/[@=](-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/)
+  // English first: Google finds Latin-script places more reliably
+  const text = [venue.en || venue.km, address.en || address.km].filter(Boolean).join(', ')
+  const q = coords ? `${coords[1]},${coords[2]}` : text
+  if (!q) return null
+  return {
+    embed: `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=17&output=embed`,
+    directions: mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`,
+  }
+}

@@ -231,7 +231,7 @@ onBeforeUnmount(() => {
 /* While dragging, photos track the pointer directly; on release they animate to their places */
 .stage.dragging { cursor: grabbing; }
 .stage.dragging .slide, .stage.dragging .thumb { transition: none; }
-/* Sized by the screen's height too, so a whole portrait photo (2:3) and its frame fit on screen.
+/* Sized by the screen's height too, so a whole photo (3:4) and its frame fit on screen.
    Position, size, order and opacity come from place(). Only transform and opacity animate (smooth on
    iPhone); the stacking order switches a third of the way through, so the photo coming to the middle
    passes in front once it is mostly out from behind. */
@@ -281,7 +281,13 @@ onBeforeUnmount(() => {
 }
 .style-floral .slide:not(.current) .thumb { rotate: calc(var(--d) * 2deg); }
 .style-floral .slide.current .thumb { rotate: 0deg; }
-.style-floral .pic { border-radius: 0; }.thumb img { display: block; width: 100%; height: auto; /* natural aspect ratio, never cropped (slide width already keeps a 2:3 portrait on screen) */ transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px; }
+.style-floral .pic { border-radius: 0; }
+/* Every photo the same 3:4 shape, filled and trimmed at the edges: a row of mixed shapes looks untidy.
+   Held a little above the middle, where faces usually are. The viewer still shows the whole photo. */
+.thumb img {
+  display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 35%;
+  transition: scale 0.4s var(--ease-out); outline: 1px solid rgb(0 0 0 / 0.06); outline-offset: -1px;
+}
 @media (hover: hover) { .slide.current .thumb:hover img { scale: 1.04; } }
 .slide:not(.current) .thumb { cursor: pointer; }
 .caption { font-size: 0.85rem; color: var(--c-muted); margin-top: var(--space-2); text-align: center; }

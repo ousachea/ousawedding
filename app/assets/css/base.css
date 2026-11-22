@@ -234,3 +234,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
   -webkit-appearance: none; appearance: none; text-align: left; line-height: normal;
 }
 .field input::-webkit-date-and-time-value { text-align: left; }
+
+/* Changing language (WeddingLanguageSwitcher): the old words fade out softly as the new ones fade in.
+   The switch itself is left out of it, so its pill is seen sliding across. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.4s; animation-timing-function: ease; }
+::view-transition-old(root) { animation-name: lang-out; }
+::view-transition-new(root) { animation-name: lang-in; }
+@keyframes lang-out { to { opacity: 0; filter: blur(3px); } }
+@keyframes lang-in { from { opacity: 0; filter: blur(3px); } }
+::view-transition-old(lang-switch) { display: none; }
+::view-transition-new(lang-switch) { animation: none; }

@@ -20,13 +20,14 @@ const step = (i: number) => ({ '--i': i })
 // Sets each Polaroid's transform directly once per frame: a CSS variable on the hero would make the browser
 // restyle everything in it on every frame. Desktops send no events, so they stay still.
 const hero = ref<HTMLElement>()
+const motion = useMotion().on
 let frame = 0
 function onTilt(e: DeviceOrientationEvent) {
   if (e.beta === null || e.gamma === null || frame) return
   const clamp = (v: number) => Math.max(-25, Math.min(25, v))
-  // beta ~45° is how a phone is usually held, so that counts as level
-  const x = clamp(e.beta - 45) * -0.5
-  const y = clamp(e.gamma) * 0.6
+  // beta ~45° is how a phone is usually held, so that counts as level. Switched off: they stand straight.
+  const x = motion.value ? clamp(e.beta - 45) * -0.5 : 0
+  const y = motion.value ? clamp(e.gamma) * 0.6 : 0
   frame = requestAnimationFrame(() => {
     frame = 0
     const lean = `perspective(600px) rotateX(${x}deg) rotateY(${y}deg)`

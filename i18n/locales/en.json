@@ -35,7 +35,8 @@
     "story": "Our story",
     "gallery": "Gallery",
     "rsvp": "Reply",
-    "gift": "Gift"
+    "gift": "Gift",
+    "location": "Map"
   },
   "envelope": {
     "label": "Wedding invitation envelope",
@@ -603,6 +604,17 @@
       "fonts": "Fonts",
       "sampleInvite": "You are invited",
       "sampleText": "Join us to celebrate our wedding day."
+    },
+    "location": {
+      "title": "Location",
+      "hint": "The main venue, shown on a map so guests can find it. Paste the Google Maps link (Share → Copy link) and the venue and address fill in by themselves; check them, then save.",
+      "venue": "Venue",
+      "address": "Address",
+      "mapUrl": "Google Maps link",
+      "preview": "Map preview",
+      "empty": "Add a venue, address or map link to show the map on the invitation.",
+      "fill": "Fill in",
+      "filled": "Filled in from the link: check the names, then save"
     }
   },
   "gift": {
@@ -758,5 +770,18 @@
     },
     "remove": "Remove {item}",
     "step": "Step {n}"
+  },
+  "location": {
+    "title": "Location",
+    "mapLabel": "Map of the venue"
+  },
+  "fullscreen": {
+    "enter": "Full screen",
+    "exit": "Exit full screen"
+  },
+  "motion": {
+    "label": "Tilt effect",
+    "on": "On",
+    "off": "Off"
   }
 }

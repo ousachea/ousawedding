@@ -14,6 +14,11 @@ const open = ref(false)
 
 const tabs = computed(() => [{ id: 'home', label: t('nav.home'), icon: 'rings' as IconName }, ...props.sections])
 
+// Below the sections: switches for the tilt effect and full screen, each shown only where the phone has it
+const motion = useMotion()
+const fullscreen = useFullscreen()
+const switches = computed(() => Number(motion.supported.value) + Number(fullscreen.supported.value))
+
 // Scroll-spy: the section crossing ~40% down the screen is "current" and its tab is highlighted
 const current = ref('home')
 const currentIcon = computed(() => tabs.value.find(s => s.id === current.value)?.icon ?? 'rings')
@@ -35,6 +40,7 @@ const nav = ref<HTMLElement>()
 const onPointer = (e: PointerEvent) => { if (open.value && !nav.value?.contains(e.target as Node)) open.value = false }
 const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') open.value = false }
 onMounted(() => {
+  motion.init()
   spy()
   addEventListener('pointerdown', onPointer)
   addEventListener('keydown', onKey)
@@ -52,7 +58,7 @@ onBeforeUnmount(() => {
   <div class="dock" :class="{ tucked: hidden && !open }">
     <nav ref="nav" class="fab-nav" :class="{ open }" :aria-label="t('nav.label')">
       <ul :id="menuId" class="menu" :inert="!open">
-        <li v-for="(s, i) in tabs" :key="s.id" :style="{ '--i': tabs.length - 1 - i }">
+        <li v-for="(s, i) in tabs" :key="s.id" :style="{ '--i': tabs.length - 1 - i + switches }">
           <a
             :href="`#${s.id}`"
             class="tab"
@@ -63,6 +69,19 @@ onBeforeUnmount(() => {
             <WeddingIcon :name="s.icon" class="tab-icon" />
             <span class="tab-label">{{ s.label }}</span>
           </a>
+        </li>
+        <li v-if="motion.supported.value" class="first-switch" :style="{ '--i': switches - 1 }">
+          <button type="button" class="tab switch" :aria-pressed="motion.on.value" @click="motion.toggle">
+            <WeddingIcon name="tilt" class="tab-icon" />
+            <span class="tab-label">{{ t('motion.label') }}</span>
+            <span class="state">{{ motion.on.value ? t('motion.on') : t('motion.off') }}</span>
+          </button>
+        </li>
+        <li v-if="fullscreen.supported.value" :class="{ 'first-switch': !motion.supported.value }" :style="{ '--i': 0 }">
+          <button type="button" class="tab switch" :aria-pressed="fullscreen.on.value" @click="fullscreen.toggle(); open = false">
+            <WeddingIcon :name="fullscreen.on.value ? 'shrink' : 'expand'" class="tab-icon" />
+            <span class="tab-label">{{ fullscreen.on.value ? t('fullscreen.exit') : t('fullscreen.enter') }}</span>
+          </button>
         </li>
       </ul>
       <button
@@ -161,6 +180,14 @@ onBeforeUnmount(() => {
 .tab.current { color: var(--c-gold-deep); background: color-mix(in srgb, var(--c-gold) 14%, transparent); }
 .tab.current .tab-label { font-weight: 600; }
 .tab:active { background: color-mix(in srgb, var(--c-gold) 22%, transparent); }
+/* The switches: set apart from the sections by a thin rule; On/Off as a small pill at the end */
+.first-switch { margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid color-mix(in srgb, var(--c-gold) 35%, transparent); }
+.switch { width: 100%; border: 0; background: none; font: inherit; cursor: pointer; text-align: left; }
+.state {
+  margin-left: auto; padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--c-gold) 55%, transparent); color: var(--c-gold-deep);
+}
+.switch[aria-pressed='true'] .state { background: var(--c-gold-deep); border-color: var(--c-gold-deep); color: #fff; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* The rows rise in one after another, nearest the button first */

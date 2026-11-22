@@ -27,6 +27,7 @@ const floral = computed(() => w.value.theme.style === 'floral')
 // Only clusters on screen move, and none while the page scrolls (a hand scrolling tilts the phone too, and the
 // scroll should have the phone to itself); they glide back into place once it stops.
 const page = ref<HTMLElement>()
+const motion = useMotion().on
 let stopTilt = () => {}
 onMounted(() => {
   if (!floral.value || !('DeviceOrientationEvent' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -66,7 +67,8 @@ onMounted(() => {
   const onTilt = (e: DeviceOrientationEvent) => {
     if (e.gamma === null || e.beta === null) return
     level = level === null ? e.beta : level + (e.beta - level) * 0.02
-    target = [clamp(e.gamma / 20), clamp((e.beta - level) / 20)]
+    // Switched off in the menu: they glide back into place and stay
+    target = motion.value ? [clamp(e.gamma / 20), clamp((e.beta - level) / 20)] : [0, 0]
     if (!scrolling) frame ||= requestAnimationFrame(step)
   }
   const start = () => addEventListener('deviceorientation', onTilt)
@@ -143,6 +145,7 @@ const textBlocks = computed(() => (w.value.textOrder ?? TEXT_BLOCKS)
   .filter(b => b.key !== 'story' && b.text))
 
 const sections = computed(() => [
+  ...(venueMap(w.value.location) ? [{ id: 'location', label: t('nav.location'), icon: 'pin' as const }] : []),
   { id: 'schedule', label: t('nav.schedule'), icon: 'calendar' as const },
   ...(data.value!.gallery.length ? [{ id: 'gallery', label: t('nav.gallery'), icon: 'camera' as const }] : []),
   { id: 'rsvp', label: t('nav.rsvp'), icon: 'envelope' as const },
@@ -243,6 +246,7 @@ useSeoMeta({
     <main>
       <WeddingHero :data="data!" :intro-delay="introDelay" />
       <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" :when="`${data!.display[loc].date} · ${data!.display[loc].time}`" :event-days="data!.events.map(e => e.startUtc)" :ics-url="`/api/public/weddings/${w.slug}/events/${loc === 'en' ? 'all-en' : 'all'}.ics`" />
+      <WeddingLocation :data="data!" />
       <WeddingFlorals v-if="floral" class="fl-sprig" variant="sprig" :seed="0" />
       <WeddingEventTimeline :data="data!" />
       <WeddingFlorals v-if="floral" class="fl-divider" :seed="1" flip />

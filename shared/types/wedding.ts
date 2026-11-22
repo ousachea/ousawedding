@@ -66,6 +66,9 @@ export interface Wedding {
   contact: { name: string, phone: string, email: string }
   // KHQR codes guests can scan to send a gift (bank transfer); missing on weddings saved before it existed
   gifts?: GiftQr[]
+  // The main venue, shown on a map near the end of the page; missing on weddings saved before it existed.
+  // `mapUrl` is a Google Maps link for the Directions button; the map itself is found from it or from the address.
+  location?: { venue: Localized, address: Localized, mapUrl: string }
   // The couple's Telegram chat for reply and "opened" alerts; empty sends them to the site owner (TELEGRAM_CHAT_ID).
   // Never sent to guests' browsers.
   telegramChatId?: string

@@ -61,6 +61,7 @@ export const weddingSchema = z.object({
   contact: z.object({ name: text(120), phone: text(40), email: z.union([z.literal(''), z.email()]) }),
   telegramChatId: z.union([z.literal(''), z.string().trim().regex(/^-?\d{1,20}$/, 'A Telegram chat ID is a number')]).default(''),
   gifts: z.array(z.object({ id: z.string().regex(/^[\w-]{1,40}$/), name: text(120), bank: text(80), image: url })).max(4).default([]),
+  location: z.object({ venue: localized(200), address: localized(400), mapUrl: url }).default({ venue: { km: '', en: '' }, address: { km: '', en: '' }, mapUrl: '' }),
   share: z.object({
     km: z.object({ title: text(120), description: text(300) }),
     en: z.object({ title: text(120), description: text(300) }),

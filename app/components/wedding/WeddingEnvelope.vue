@@ -34,17 +34,6 @@ function finish() {
   emit('opened')
 }
 
-// Opening the invitation (or skipping) also goes fullscreen on touch devices where the browser allows it: Android and iPad.
-// Desktop (mouse/trackpad) is left alone. iPhone Safari has no fullscreen for pages. Must run in the tap itself.
-function fullscreen() {
-  const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void }
-  if (document.fullscreenElement || !matchMedia('(pointer: coarse)').matches) return
-  try {
-    if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {})
-    else el.webkitRequestFullscreen?.()
-  } catch {}
-}
-
 // iPhone Safari only sends tilt (used by the hero's Polaroids) after asking, and the ask must come from a tap
 function askMotion() {
   const D = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined
@@ -53,7 +42,6 @@ function askMotion() {
 
 function open() {
   if (state.value !== 'closed') return
-  fullscreen()
   askMotion()
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
   state.value = 'opening'
@@ -63,7 +51,6 @@ function open() {
 }
 
 function skip() {
-  fullscreen()
   askMotion()
   finish()
 }
