@@ -81,7 +81,7 @@
       }
     },
     "createdAt": "2026-10-26T23:31:19.332Z",
-    "updatedAt": "2026-11-22T08:50:54.603Z",
+    "updatedAt": "2026-11-25T03:53:42.908Z",
     "coverPosition": "50% 29.3%",
     "shareImage": {
       "url": "/uploads/weddings/rgbke4AtHLhcB8ro/share/vwW2oMdovzSYr_uI.jpg",
@@ -94,12 +94,6 @@
     },
     "gifts": [
       {
-        "id": "ousa1",
-        "name": "CHEA OUSA",
-        "bank": "Canadia Bank",
-        "image": "/uploads/weddings/rgbke4AtHLhcB8ro/gifts/qr-ousa-1.png"
-      },
-      {
         "id": "ousa2",
         "name": "CHEA OUSA",
         "bank": "ACLEDA Bank",
@@ -110,6 +104,12 @@
         "name": "CHEA OUSA",
         "bank": "ABA",
         "image": "/uploads/weddings/rgbke4AtHLhcB8ro/gifts/s-8-cUJ4JyuXpvj4.png"
+      },
+      {
+        "id": "n9gsqzwx",
+        "name": "CHEA OUSA and Neak Kanha",
+        "bank": "",
+        "image": "/uploads/weddings/rgbke4AtHLhcB8ro/gifts/oPEUVE4OeFXJY8vs.png"
       }
     ],
     "telegramChatId": "",
