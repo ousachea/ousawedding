@@ -38,7 +38,7 @@ useHead({ title: () => `${t('admin.login.title')} · ${t('admin.title')}`, meta:
       <p class="hint">{{ t('admin.login.localHint') }}</p>
       <div class="field">
         <label for="password">{{ t('admin.login.password') }}</label>
-        <input id="password" v-model="password" type="password" autocomplete="current-password" required>
+        <input id="password" v-model="password" type="password" autocomplete="current-password" enterkeyhint="go" required>
       </div>
       <p v-if="error" class="field-error" role="alert">{{ error }}</p>
       <button type="submit" class="btn btn-primary" :disabled="busy">{{ busy ? t('common.loading') : t('admin.login.submit') }}</button>

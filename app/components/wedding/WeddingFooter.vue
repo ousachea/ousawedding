@@ -20,12 +20,12 @@ const locale = useLocaleCode()
   padding: var(--space-8) 1rem calc(var(--space-7) + env(safe-area-inset-bottom));
   background: var(--c-secondary); color: var(--c-on-secondary);
 }
-.footer :deep(.ornament) { color: color-mix(in srgb, var(--c-accent) 70%, #fff); }
+.footer :deep(.ornament) { color: color-mix(in oklab, var(--c-accent) 70%, #fff); }
 @media (prefers-reduced-motion: no-preference) {
   .footer :deep(.flower g) { transform-box: fill-box; transform-origin: 50% 95%; animation: sway 6s ease-in-out infinite; }
 }
 @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
-.rings { font-size: 34px; color: color-mix(in srgb, var(--c-accent) 70%, #fff); }
+.rings { font-size: 34px; color: color-mix(in oklab, var(--c-accent) 70%, #fff); }
 .thanks { font-size: 0.95rem; opacity: 0.85; }
 .names { font-family: var(--font-heading); font-size: 2rem; }
 .date { font-size: 0.9rem; opacity: 0.85; }

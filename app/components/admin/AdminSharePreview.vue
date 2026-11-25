@@ -96,7 +96,7 @@ async function setSharePosition(event: MouseEvent) {
         </button>
         <div class="card-text">
           <span class="host">{{ host }}</span>
-          <strong class="card-title">{{ meta.cardTitle }}</strong>
+          <strong class="card-title clamp">{{ meta.cardTitle }}</strong>
           <span class="desc">{{ meta.description }}</span>
         </div>
       </div>
@@ -144,7 +144,7 @@ async function setSharePosition(event: MouseEvent) {
 
 /* A search result */
 .serp { display: flex; flex-direction: column; gap: 4px; max-width: 38rem; padding: var(--space-3); border: 1px solid var(--c-line-soft); border-radius: var(--radius); background: var(--c-bg); }
-.serp.hidden { opacity: 0.55; border-style: dashed; }
+.serp.hidden { filter: grayscale(1); border-style: dashed; }
 .site { display: flex; align-items: center; gap: var(--space-2); }
 .site img { padding: 3px; border-radius: 50%; background: var(--c-surface); outline: 1px solid var(--c-line-soft); }
 .site > span { display: flex; flex-direction: column; line-height: 1.25; }

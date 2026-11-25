@@ -119,7 +119,7 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   overscroll-behavior: contain;
   padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   background:
-    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 60%),
+    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--c-accent) 10%, transparent), transparent 60%),
     var(--paper),
     var(--c-bg);
   transition: opacity 0.5s var(--ease-out) 2.45s;
@@ -150,7 +150,7 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
 
 .back, .pocket, .flap { position: absolute; inset: 0; border-radius: 6px; }
 .back {
-  background: color-mix(in srgb, var(--c-secondary) 80%, #000);
+  background: color-mix(in oklab, var(--c-secondary) 80%, #000);
   box-shadow: var(--shadow);
 }
 
@@ -167,11 +167,12 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   gap: var(--space-1);
   text-align: center;
   background: var(--c-surface);
-  border: 1px solid color-mix(in srgb, var(--c-gold) 70%, transparent);
-  outline: 1px solid color-mix(in srgb, var(--c-gold) 45%, transparent);
+  border: 1px solid color-mix(in oklab, var(--c-gold) 70%, transparent);
+  outline: 1px solid color-mix(in oklab, var(--c-gold) 45%, transparent);
   outline-offset: -5px;
   border-radius: 4px;
-  transition: transform 0.7s var(--ease-out) 0.45s;
+  /* Dips a little before it rises */
+  transition: transform 0.7s cubic-bezier(0.4, -0.3, 0.2, 1) 0.45s;
 }
 .letter-mono { font-family: var(--font-serif); font-size: 1.6rem; color: var(--c-gold-deep); letter-spacing: 0.08em; }
 .letter-guest { font-family: var(--font-serif); font-size: clamp(1.4rem, 6vw, 1.7rem); font-weight: 600; line-height: 1.3; color: var(--c-gold-deep); text-wrap: balance; }
@@ -188,7 +189,7 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%);
   border: 1px solid var(--c-gold);
   /* A thin gold rule inside the edge */
-  box-shadow: inset 0 0 0 5px var(--c-secondary), inset 0 0 0 6px color-mix(in srgb, var(--c-gold) 70%, transparent);
+  box-shadow: inset 0 0 0 5px var(--c-secondary), inset 0 0 0 6px color-mix(in oklab, var(--c-gold) 70%, transparent);
 }
 .pocket :deep(.ornament), .letter :deep(.ornament) { color: var(--c-gold); }
 .corner-l, .corner-r { position: absolute; bottom: 8px; }
@@ -199,11 +200,11 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   z-index: 4;
   height: 60%;
   /* A shade lighter than the pocket so the flap's edges read */
-  background: color-mix(in srgb, var(--c-secondary) 85%, #fff);
+  background: color-mix(in oklab, var(--c-secondary) 85%, #fff);
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   transform-origin: top center;
-  /* Drop behind the letter halfway through the turn */
-  transition: transform 0.6s var(--ease-out), z-index 0s linear 0.3s;
+  /* Presses in a little, then swings open; drops behind the letter halfway through the turn */
+  transition: transform 0.6s cubic-bezier(0.4, -0.35, 0.2, 1), z-index 0s linear 0.3s;
 }
 .flap svg { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--c-gold); }
 .opening .flap { transform: rotateX(180deg); z-index: 1; }
@@ -223,11 +224,11 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   cursor: pointer;
   /* Gold foil: bright where the light hits, deeper at the rim */
   background:
-    radial-gradient(circle at 35% 30%, var(--c-gold-light), var(--c-gold) 55%, var(--c-gold-deep));
+    radial-gradient(circle at 35% 30% var(--oklch), var(--c-gold-light), var(--c-gold) 55%, var(--c-gold-deep));
   box-shadow:
-    inset 0 0 0 4px color-mix(in srgb, var(--c-gold-deep) 35%, transparent),
-    inset 0 0 0 5px color-mix(in srgb, var(--c-gold-light) 70%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--c-gold) 40%, transparent),
+    inset 0 0 0 4px color-mix(in oklab, var(--c-gold-deep) 35%, transparent),
+    inset 0 0 0 5px color-mix(in oklab, var(--c-gold-light) 70%, transparent),
+    0 0 0 3px color-mix(in oklab, var(--c-gold) 40%, transparent),
     0 6px 14px -4px rgb(0 0 0 / 0.45);
   overflow: hidden;
   transition: transform 0.2s var(--ease-out), opacity 0.3s;
@@ -246,14 +247,14 @@ onBeforeUnmount(() => { if (state.value !== 'gone') unlockScroll() })
   0%, 60% { transform: translateX(-120%); }
   85%, 100% { transform: translateX(120%); }
 }
-.seal:hover { transform: scale(1.05); }
-.seal:active { transform: scale(0.96); }
+@media (hover: hover) { .seal:hover { transform: scale(1.05); } }
+.seal:active { transform: scale(1.02, 0.97); }
 .seal-mono {
   font-family: var(--font-serif);
   font-size: 1rem;
-  color: color-mix(in srgb, var(--c-gold-deep) 70%, #000);
+  color: color-mix(in oklab, var(--c-gold-deep) 70%, #000);
   /* Pressed into the foil */
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--c-gold-light) 80%, transparent);
+  text-shadow: 0 1px 0 color-mix(in oklab, var(--c-gold-light) 80%, transparent);
   letter-spacing: 0.04em;
   padding: 0 6px;
   text-align: center;

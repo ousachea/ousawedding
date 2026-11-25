@@ -44,7 +44,13 @@ h1, h2, h3 {
 
 p { margin: 0; text-wrap: pretty; }
 img { max-width: 100%; height: auto; display: block; }
-a { color: inherit; }
+/* Clear of the descenders; Khmer subscripts reach lower */
+a { color: inherit; text-underline-offset: 0.18em; text-decoration-thickness: max(1px, 0.06em); }
+a:lang(km) { text-underline-offset: 0.35em; }
+/* Pressed states are designed, so no grey flash, and quick taps never zoom */
+a, button, label, summary { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* Cap height, not the line's empty space, sits against what is above. Khmer marks need that space. */
+h2:not(:lang(km)) { text-box: trim-start cap alphabetic; }
 button, input, select, textarea { font: inherit; color: inherit; }
 
 :focus-visible {
@@ -86,19 +92,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
   text-decoration: none;
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.12s var(--ease-out);
-  -webkit-tap-highlight-color: transparent;
 }
 .btn:active:not(:disabled) { transform: scale(0.97); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn-primary { background: var(--c-secondary); color: var(--c-on-secondary); }
-.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--c-secondary) 88%, #000); }
+@media (hover: hover) { .btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--c-secondary) 88%, #000); } }
 .btn-outline { border-color: var(--c-accent); color: var(--c-accent-ink); background: transparent; }
-.btn-outline:hover:not(:disabled) { background: var(--c-line-soft); }
+@media (hover: hover) { .btn-outline:hover:not(:disabled) { background: var(--c-line-soft); } }
 .btn-ghost { background: transparent; color: var(--c-text); }
-.btn-ghost:hover:not(:disabled) { background: var(--c-line-soft); }
-.btn-danger { background: transparent; border-color: color-mix(in srgb, var(--c-danger) 40%, transparent); color: var(--c-danger); }
-.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--c-danger) 8%, transparent); }
+@media (hover: hover) { .btn-ghost:hover:not(:disabled) { background: var(--c-line-soft); } }
+.btn-danger { background: transparent; border-color: color-mix(in oklab, var(--c-danger) 40%, transparent); color: var(--c-danger); }
+@media (hover: hover) { .btn-danger:hover:not(:disabled) { background: color-mix(in oklab, var(--c-danger) 8%, transparent); } }
 .btn-sm { min-height: 36px; padding: 0.3rem 0.9rem; font-size: 0.85rem; }
 
 /* Forms */
@@ -121,11 +126,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .field input:focus, .field select:focus, .field textarea:focus, .input:focus {
   outline: none;
   border-color: var(--c-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 25%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-accent) 25%, transparent);
 }
 .field.invalid input, .field.invalid textarea, .field.invalid select, .field.invalid .choice-group {
   border-color: var(--c-danger);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-danger) 14%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-danger) 14%, transparent);
 }
 .field-error { color: var(--c-danger); font-size: 0.85rem; }
 
@@ -151,20 +156,25 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* Scroll reveal (see plugins/reveal.ts) */
-/* Opacity eases in evenly (a sharp ease-out would show most of it at once); the short rise settles slowly */
+/* Opacity eases in evenly (a sharp ease-out would show most of it at once) */
 .reveal-init {
   opacity: 0;
   transform: translate3d(0, 12px, 0);
-  transition: opacity 1.2s ease, transform 1.4s var(--ease-out);
+  transition: opacity 0.5s ease, transform 0.6s var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal-init.revealed { opacity: 1; transform: none; }
+/* Headings are unmasked from the middle out. Room all round for swashes and Khmer marks. Hidden by opacity until
+   then: fully clipped, they would never count as on screen and never be revealed. */
+:is(h2, h3).reveal-init { transform: none; transition: none; }
+:is(h2, h3).reveal-init.revealed { animation: unmask 0.6s var(--reveal-delay, 0ms) var(--ease-out) backwards; }
+@keyframes unmask { from { clip-path: inset(-40% 50%); } to { clip-path: inset(-40% -10%); } }
 
 /* Gold ornaments and icons draw their lines when revealed */
 .reveal-init.ornament path, .reveal-init .ornament path, .reveal-init .icon path {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  transition: stroke-dashoffset 1.8s var(--ease-out);
+  transition: stroke-dashoffset 1s var(--ease-out);
   transition-delay: calc(var(--reveal-delay, 0ms) + 150ms);
 }
 .reveal-init.revealed.ornament path, .reveal-init.revealed .ornament path, .reveal-init.revealed .icon path { stroke-dashoffset: 0; }
@@ -192,6 +202,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 @keyframes turn { to { transform: rotate(360deg); } }
 
+/* Icons carry the weight of the words beside them */
+.btn .icon { stroke-width: 1.8; }
+
 @media (hover: hover) {
   .btn:hover:not(:disabled) { transform: translateY(-1px); }
   .btn:active:not(:disabled) { transform: scale(0.97); }
@@ -215,10 +228,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Ruby style: the page is embossed red, and the invitation is a sheet of white linen paper laid on it.
    The textures are SVG lighting filters (no image files). Section-specific touches live in each component. */
 .wedding.themed.style-ruby {
-  --emboss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='3' seed='4'/%3E%3CfeDiffuseLighting lighting-color='%23a8101f' surfaceScale='7'%3E%3CfeDistantLight azimuth='225' elevation='55'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23f)'/%3E%3C/svg%3E");
-  --linen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .7' numOctaves='2' seed='2'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.2'%3E%3CfeDistantLight azimuth='225' elevation='72'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E");
+  --emboss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='3' seed='4' x='0' y='0' width='420' height='420' stitchTiles='stitch'/%3E%3CfeTile/%3E%3CfeDiffuseLighting lighting-color='%23a8101f' surfaceScale='7'%3E%3CfeDistantLight azimuth='225' elevation='55'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23f)'/%3E%3C/svg%3E");
+  --linen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .7' numOctaves='2' seed='2' x='0' y='0' width='300' height='300' stitchTiles='stitch'/%3E%3CfeTile/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.2'%3E%3CfeDistantLight azimuth='225' elevation='72'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E");
   background: var(--emboss), var(--c-secondary);
 }
+/* The page colour is red, so what lies on the white sheet takes its colours from the paper instead */
+.wedding.style-ruby .paper { --c-bg: #fdfbf8; }
+.wedding.style-ruby .nav .mono { color: #FFF3E6; }
 .wedding.style-ruby main { max-width: 34rem; margin: var(--space-6) auto; background: var(--linen), #fdfbf8; box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.55); }
 .wedding.style-ruby .btn { border-radius: 999px; }
 /* The envelope sits on the deep red page: its dark inks (guest name, Skip) would vanish */
@@ -244,3 +260,38 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes lang-in { from { opacity: 0; filter: blur(3px); } }
 ::view-transition-old(lang-switch) { display: none; }
 ::view-transition-new(lang-switch) { animation: none; }
+
+/* A dialog holds the page behind it still */
+html:has(dialog[open]) { overflow: hidden; scrollbar-gutter: stable; }
+dialog { overscroll-behavior: contain; }
+
+/* Icons that swap in place: the old one blurs out as the new one blurs in, one on top of the other */
+.swap-enter-active, .swap-leave-active { transition: opacity 0.2s var(--ease-out), scale 0.2s var(--ease-out), filter 0.2s var(--ease-out); }
+.swap-leave-active { position: absolute; }
+.swap-enter-from, .swap-leave-to { opacity: 0; scale: 0.5; filter: blur(4px); }
+
+/* Titles of unknown length stop after a few lines */
+.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--lines, 2); overflow: hidden; }
+
+/* Acronyms, quieter than full capitals */
+abbr.caps { font-variant-caps: all-small-caps; letter-spacing: 0.04em; text-decoration: none; }
+
+@media (max-width: 480px) {
+  :is(.desc, .info-text, .features p, .how p, .faq p):lang(en) { hyphens: auto; -webkit-hyphenate-limit-before: 4; -webkit-hyphenate-limit-after: 4; hyphenate-limit-chars: 9 4 4; }
+}
+
+/* Guests tap with a thumb: small buttons keep their look but not their height */
+.wedding .btn-sm { min-height: 44px; }
+
+/* A dialog opened from a picture (useMorph): the picture itself grows into the dialog and shrinks back.
+   The language switch sits still rather than floating over it. Closing is a fifth quicker. */
+.morphing .lang { view-transition-name: none !important; }
+.morphing dialog { animation: none !important; }
+.morphing .slide, .morphing .slide * { transition: none !important; }
+.morphing::view-transition-old(root), .morphing::view-transition-new(root) { animation-duration: var(--morph); }
+.morphing::view-transition-old(root) { animation-name: morph-out; }
+.morphing::view-transition-new(root) { animation-name: morph-in; }
+.morphing::view-transition-group(morph) { animation-duration: var(--morph); animation-timing-function: var(--ease-in-out); }
+.morphing::view-transition-old(morph), .morphing::view-transition-new(morph) { width: 100%; height: 100%; object-fit: cover; overflow: clip; animation-duration: var(--morph); }
+@keyframes morph-out { to { opacity: 0; } }
+@keyframes morph-in { from { opacity: 0; } }

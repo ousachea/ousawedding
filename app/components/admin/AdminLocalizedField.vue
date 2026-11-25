@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // One field edited in both languages side by side.
 const model = defineModel<Localized>({ required: true })
-defineProps<{ label: string, multiline?: boolean, required?: boolean }>()
+defineProps<{ label: string, multiline?: boolean, rich?: boolean, required?: boolean }>()
 const { t } = useI18n()
 const uid = useId()
 // Emit a new object: parents often pass a computed copy, so editing it in place would be lost
@@ -13,8 +13,9 @@ const set = (l: Locale, e: Event) => (model.value = { ...model.value, [l]: (e.ta
     <legend class="label">{{ label }}</legend>
     <div class="pair">
       <div v-for="l in (['km', 'en'] as const)" :key="l" class="field">
-        <label :for="`${uid}-${l}`" class="lang-tag">{{ l === 'km' ? t('common.khmer') : t('common.english') }}</label>
-        <textarea v-if="multiline" :id="`${uid}-${l}`" v-autosize rows="1" :value="model[l]" :lang="l" @input="set(l, $event)" />
+        <component :is="rich ? 'span' : 'label'" :for="rich ? undefined : `${uid}-${l}`" class="lang-tag">{{ l === 'km' ? t('common.khmer') : t('common.english') }}</component>
+        <AdminRichText v-if="rich" :model-value="model[l]" :label="`${label}, ${l === 'km' ? t('common.khmer') : t('common.english')}`" :lang="l" @update:model-value="model = { ...model, [l]: $event }" />
+        <textarea v-else-if="multiline" :id="`${uid}-${l}`" v-autosize rows="1" :value="model[l]" :lang="l" @input="set(l, $event)" />
         <input v-else :id="`${uid}-${l}`" :value="model[l]" :lang="l" type="text" @input="set(l, $event)" :required="required && l === 'km'">
       </div>
     </div>

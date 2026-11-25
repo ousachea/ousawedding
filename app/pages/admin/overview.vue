@@ -46,7 +46,7 @@ const nextStep = computed(() => steps.find(s => !status.value[s.key]?.done) ?? n
         <NuxtLink :to="localePath((nextStep ?? steps[0]).to)" class="btn btn-primary">
           {{ nextStep ? t('admin.overview.continue', { step: t(`admin.steps.${nextStep.key}.title`) }) : t('admin.overview.review') }}
         </NuxtLink>
-        <a :href="localePath(`/${wedding.slug}`)" target="wedding-invitation" class="btn btn-ghost">{{ t('admin.nav.viewSite') }} ↗</a>
+        <a :href="localePath(`/${wedding.slug}`)" target="wedding-invitation" class="btn btn-ghost">{{ t('admin.nav.viewSite') }} <WeddingIcon name="out" /></a>
       </div>
     </header>
 
@@ -78,7 +78,7 @@ const nextStep = computed(() => steps.find(s => !status.value[s.key]?.done) ?? n
 .checklist { list-style: none; margin: 0; padding: 0; max-width: 44rem; background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
 .checklist li + li { border-top: 1px solid var(--c-line-soft); }
 .item { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); text-decoration: none; color: var(--c-text); }
-.item:hover { background: color-mix(in srgb, var(--c-secondary) 4%, transparent); }
+@media (hover: hover) { .item:hover { background: color-mix(in oklab, var(--c-secondary) 4%, transparent); } }
 .item:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: -2px; }
 .checklist li:first-child .item { border-radius: var(--radius) var(--radius) 0 0; }
 .checklist li:last-child .item { border-radius: 0 0 var(--radius) var(--radius); }

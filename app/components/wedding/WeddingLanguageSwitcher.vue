@@ -70,16 +70,19 @@ async function pick(code: string, e: MouseEvent) {
   position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px);
   border-radius: 999px; background: var(--c-secondary); box-shadow: 0 2px 6px -2px rgb(0 0 0 / 0.3);
   transform: translateX(calc(var(--at) * 100%));
-  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transition: transform 0.3s var(--ease-in-out), scale 0.3s var(--ease-in-out);
 }
+/* Stretched by the press, it settles back while it slides */
+.lang:active .thumb { scale: 1.12 1; }
 .lang-link {
   position: relative; min-width: 44px; min-height: 32px; padding: 0 0.7rem;
   display: grid; place-items: center;
   border-radius: 999px; font-size: 0.85rem; text-decoration: none; color: var(--c-muted);
-  transition: color 0.3s;
-  -webkit-tap-highlight-color: transparent;
+  transition: color 0.3s, scale 0.12s var(--ease-out);
 }
+/* Taller to tap than to look at */
+.lang-link::after { content: ''; position: absolute; inset: -6px 0; }
 .lang-link[aria-current] { color: var(--c-on-secondary); }
-.lang-link:active { scale: 0.94; }
+.lang-link:active { scale: 0.97; }
 @media (prefers-reduced-motion: reduce) { .thumb { transition: none; } }
 </style>

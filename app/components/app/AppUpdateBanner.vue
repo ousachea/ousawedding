@@ -9,7 +9,7 @@ useNuxtApp().hooks.hook('app:manifest:update', () => { outdated.value = true })
   <div v-if="outdated" class="update" role="status">
     <span>{{ t('common.updateAvailable') }}</span>
     <button type="button" class="btn btn-primary btn-sm" @click="reloadNuxtApp({ force: true })">{{ t('common.refresh') }}</button>
-    <button type="button" class="dismiss" :aria-label="t('common.close')" @click="outdated = false">✕</button>
+    <button type="button" class="dismiss" :aria-label="t('common.close')" @click="outdated = false"><WeddingIcon name="close" /></button>
   </div>
 </template>
 
@@ -21,5 +21,5 @@ useNuxtApp().hooks.hook('app:manifest:update', () => { outdated.value = true })
   background: var(--c-surface, #fff); color: var(--c-text, #222); box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.35);
   font-size: 0.9rem;
 }
-.dismiss { width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
+.dismiss { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
 </style>

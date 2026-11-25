@@ -51,6 +51,8 @@ const choices = [
   { key: 'no', value: false, icon: 'envelope' },
 ] as const
 const form = reactive({ name: props.guestName ?? '', phone: '', attending: null as boolean | null, guests: 1, message: '', website: '' })
+// A personal link's name is read after the page loads; it never replaces what the guest typed
+watch(() => props.guestName, (name) => { if (name && !form.name) form.name = name })
 const hasName = computed(() => form.name.trim().length > 0)
 const sending = ref(false)
 const failed = ref(false)
@@ -88,7 +90,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
           <p class="center">{{ t('rsvp.intro') }}</p>
           <p class="center deadline">{{ t('rsvp.deadline', { date: data.display[locale].deadline }) }}</p>
           <p v-if="w.rsvp.formUrl" class="center">
-            <a ref="button" :href="w.rsvp.formUrl" target="_blank" rel="noopener" class="btn btn-primary" @click="onReply">{{ t('rsvp.reply') }} ↗</a>
+            <a ref="button" :href="w.rsvp.formUrl" target="_blank" rel="noopener" class="btn btn-primary" @click="onReply">{{ t('rsvp.reply') }} <WeddingIcon name="out" /></a>
           </p>
           <div v-else-if="sent" class="thanks" role="status">
             <!-- A ring draws itself round, then the icon pops in -->
@@ -114,14 +116,14 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
                   <input v-model="form.attending" type="radio" name="attending" :value="c.value" required class="visually-hidden">
                   <span class="choice-icon"><WeddingIcon :name="c.icon" /></span>
                   <span class="choice-label">{{ t(`rsvp.${c.key}`) }}</span>
-                  <span class="choice-check" aria-hidden="true">✓</span>
+                  <span class="choice-check"><WeddingIcon name="check" /></span>
                 </label>
               </div>
             </fieldset>
 
             <div class="field">
               <label for="rsvp-name">{{ t('rsvp.name') }}</label>
-              <input id="rsvp-name" v-model="form.name" required maxlength="120" autocomplete="name">
+              <input id="rsvp-name" v-model="form.name" required maxlength="120" autocomplete="name" enterkeyhint="next">
             </div>
 
             <!-- Optional phone, offered once the guest has written their name -->
@@ -130,7 +132,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
                 <label for="rsvp-phone">{{ t('rsvp.phone') }} <span class="optional">{{ t('rsvp.optional') }}</span></label>
                 <div class="with-icon">
                   <WeddingIcon name="phone" class="field-icon" />
-                  <input id="rsvp-phone" v-model="form.phone" type="tel" maxlength="40" autocomplete="tel" inputmode="tel" placeholder="012 345 678" class="tabular">
+                  <input id="rsvp-phone" v-model="form.phone" type="tel" maxlength="40" autocomplete="tel" inputmode="tel" enterkeyhint="next" placeholder="012 345 678" class="tabular">
                 </div>
               </div>
             </div>
@@ -204,7 +206,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 }
 .field input:focus-visible, .field textarea:focus-visible {
   outline: none; border-color: var(--c-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 22%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-accent) 22%, transparent);
 }
 .field textarea { resize: vertical; }
 .question { padding: 0; margin-bottom: var(--space-3); width: 100%; text-align: center; font-family: var(--font-serif); font-size: 1.35rem; color: var(--c-secondary); }
@@ -217,36 +219,40 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
   padding: var(--space-5) var(--space-3);
   text-align: center; line-height: 1.3; cursor: pointer;
   background: var(--c-bg); border: 1.5px solid var(--c-line); border-radius: var(--radius-lg);
-  transition: border-color 0.25s, background-color 0.25s, transform 0.25s var(--ease-out), box-shadow 0.25s;
-  -webkit-tap-highlight-color: transparent;
+  isolation: isolate; overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s var(--ease-out), box-shadow 0.25s;
 }
+/* The colour spreads out from the icon */
+.choice::before { content: ''; position: absolute; inset: 0; z-index: -1; background: color-mix(in oklab, var(--c-secondary) 8%, var(--c-bg)); clip-path: circle(0 at 50% 35%); transition: clip-path 0.3s var(--ease-out); }
+.choice.on::before { clip-path: circle(120% at 50% 35%); }
 @media (hover: hover) { .choice:hover { border-color: var(--c-accent); transform: translateY(-2px); box-shadow: var(--shadow); } }
 .choice:active { transform: scale(0.97); }
-.choice:focus-within { border-color: var(--c-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 22%, transparent); }
+.choice:focus-within { border-color: var(--c-accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-accent) 22%, transparent); }
 .choice-icon {
   display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%;
   font-size: 1.5rem; color: var(--c-secondary);
-  background: color-mix(in srgb, var(--c-secondary) 8%, transparent);
+  background: color-mix(in oklab, var(--c-secondary) 8%, transparent);
   transition: background-color 0.25s, color 0.25s;
 }
 .choice-label { font-weight: 600; }
 .choice-check {
   position: absolute; top: var(--space-2); right: var(--space-2);
   display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%;
-  font-size: 0.8rem; font-weight: 700; color: var(--c-on-secondary); background: var(--c-secondary);
+  font-size: 0.75rem; color: var(--c-on-secondary); background: var(--c-secondary);
   opacity: 0; transform: scale(0.4); transition: opacity 0.2s, transform 0.3s var(--ease-out);
 }
-.choice.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 6%, var(--c-bg)); box-shadow: var(--shadow); }
-.choice.on .choice-icon { background: var(--c-secondary); color: var(--c-on-secondary); animation: pop 0.45s var(--ease-out); }
+.choice.on { border-color: var(--c-secondary); box-shadow: var(--shadow); }
+.choice.on .choice-icon { background: var(--c-secondary); color: var(--c-on-secondary); animation: pop 0.3s var(--ease-out); }
+.choice-check .icon { stroke-width: 2.5; }
 .choice.on .choice-check { opacity: 1; transform: scale(1); }
 @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.25) rotate(-8deg); } 100% { transform: scale(1); } }
 
 /* Guest count opens below once "yes" is picked */
-.expand { display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: calc(var(--space-5) * -1); transition: grid-template-rows 0.4s var(--ease-out), opacity 0.3s, margin-top 0.4s var(--ease-out); }
+.expand { display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: calc(var(--space-5) * -1); transition: grid-template-rows 0.24s var(--ease-out), opacity 0.2s, margin-top 0.24s var(--ease-out); }
 .expand > * { overflow: hidden; }
-.expand.open { grid-template-rows: 1fr; opacity: 1; margin-top: 0; }
+.expand.open { grid-template-rows: 1fr; opacity: 1; margin-top: 0; transition-duration: 0.3s; }
 /* The field inside also slides down into place as it opens */
-.expand .field { transform: translateY(-10px); transition: transform 0.45s var(--ease-out); }
+.expand .field { transform: translateY(-10px); transition: transform 0.3s var(--ease-out); }
 .expand.open .field { transform: none; }
 .optional { font-weight: 400; color: var(--c-muted); }
 .with-icon { position: relative; }
@@ -262,19 +268,18 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-3) var(--space-1);
   border: 1.5px solid var(--c-line); border-radius: var(--radius); background: var(--c-bg); cursor: pointer; text-align: center;
   transition: border-color 0.2s, background-color 0.2s, transform 0.2s var(--ease-out), box-shadow 0.2s;
-  -webkit-tap-highlight-color: transparent;
 }
 @media (hover: hover) { .seat:hover { border-color: var(--c-accent); } }
-.seat:active { transform: scale(0.95); }
+.seat:active { transform: scale(0.97); }
 .seat:has(input:focus-visible) { outline: 2px solid var(--c-accent); outline-offset: 2px; }
-.seat.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 8%, var(--c-bg)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 14%, transparent); }
+.seat.on { border-color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 8%, var(--c-bg)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-secondary) 14%, transparent); }
 .people { display: flex; justify-content: center; gap: 1px; height: 16px; color: var(--c-line); transition: color 0.2s; }
 .people svg { fill: currentColor; }
 .seat.on .people { color: var(--c-accent); }
 .seat.on .people svg { animation: hop 0.35s var(--ease-out) backwards; }
-.seat.on .people svg:nth-child(2) { animation-delay: 0.05s; }
-.seat.on .people svg:nth-child(3) { animation-delay: 0.1s; }
-.seat.on .people svg:nth-child(4) { animation-delay: 0.15s; }
+.seat.on .people svg:nth-child(2) { animation-delay: 0.03s; }
+.seat.on .people svg:nth-child(3) { animation-delay: 0.06s; }
+.seat.on .people svg:nth-child(4) { animation-delay: 0.09s; }
 @keyframes hop { 40% { transform: translateY(-4px); } }
 .seat-n { font-family: var(--font-serif); font-size: 1.7rem; line-height: 1.2; color: var(--c-text); }
 .seat.on .seat-n { color: var(--c-secondary); }
@@ -295,7 +300,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 .thanks { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding-block: var(--space-3); text-align: center; }
 .thanks-mark {
   position: relative; display: grid; place-items: center; width: 5.5rem; height: 5.5rem; border-radius: 50%;
-  font-size: 2.2rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-accent) 14%, var(--c-surface));
+  font-size: 2.2rem; color: var(--c-secondary); background: color-mix(in oklab, var(--c-accent) 14%, var(--c-surface));
 }
 /* .ring, not svg: the icon is an svg too and must stay upright */
 .thanks-mark .ring { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); transform: rotate(-90deg); }
@@ -313,10 +318,10 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 .summary dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 .change {
   min-height: 44px; padding: 0 var(--space-3); border: 0; background: none; font: inherit; cursor: pointer;
-  color: var(--c-secondary); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  color: var(--c-secondary); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
   animation: rise 0.6s 1.1s var(--ease-out) backwards;
 }
-.change:hover { text-decoration-color: currentColor; }
+@media (hover: hover) { .change:hover { text-decoration-color: currentColor; } }
 @media (prefers-reduced-motion: reduce) { .thanks *, .thanks-mark circle { animation: none; } .thanks-mark circle { stroke-dashoffset: 0; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes pop-in { from { transform: scale(0); opacity: 0; } 70% { transform: scale(1.2); } }
@@ -326,6 +331,6 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
 <style>
 /* Burst pieces are added outside this component's markup, so these rules are not scoped */
 .burst { position: fixed; z-index: var(--z-overlay); pointer-events: none; }
-.burst-petal { width: 11px; height: 15px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: color-mix(in srgb, var(--c-accent) 70%, #fff); }
-.burst-gold { width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #f3e2a6, #c9a24a 60%, #8a6a22); }
+.burst-petal { width: 11px; height: 15px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: color-mix(in oklab, var(--c-accent) 70%, #fff); }
+.burst-gold { width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30% var(--oklch), #f3e2a6, #c9a24a 60%, #8a6a22); }
 </style>

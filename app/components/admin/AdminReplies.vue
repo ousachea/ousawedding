@@ -82,13 +82,13 @@ function download() {
             <span class="n tabular">{{ count(f) }}</span>
           </button>
         </div>
-        <input v-if="replies.length > 5" v-model="q" type="search" class="input search" :placeholder="t('admin.replies.search')" :aria-label="t('admin.replies.search')">
+        <input v-if="replies.length > 5" v-model="q" type="search" enterkeyhint="search" class="input search" :placeholder="t('admin.replies.search')" :aria-label="t('admin.replies.search')">
       </div>
 
       <p v-if="!shown.length" class="muted">{{ t('admin.replies.noMatch') }}</p>
       <ul v-else class="list">
         <li v-for="r in shown" :key="`${r.name}-${r.at}`" class="row">
-          <span class="answer" :class="r.attending ? 'yes' : 'no'" aria-hidden="true">{{ r.attending ? '✓' : '✕' }}</span>
+          <span class="answer" :class="r.attending ? 'yes' : 'no'" aria-hidden="true"><WeddingIcon :name="r.attending ? 'check' : 'close'" /></span>
           <div class="who">
             <p class="name">
               {{ r.name }}
@@ -105,25 +105,26 @@ function download() {
         </li>
       </ul>
     </template>
-    <p v-else-if="!loading" class="muted empty">{{ t('admin.replies.none') }}</p>
+    <p v-else class="muted empty">{{ loading ? t('common.loading') : t('admin.replies.none') }}</p>
   </section>
 </template>
 
 <style scoped>
 .replies-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-.note { padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface)); font-size: 0.9rem; }
+.note { padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: color-mix(in oklab, var(--c-accent) 12%, var(--c-surface)); font-size: 0.9rem; }
 .stats { display: grid; gap: var(--space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 480px) { .stats { grid-template-columns: 1fr 1fr; } .stats > :last-child { grid-column: 1 / -1; } }
-.stats .yes :deep(.value) { color: #2F7A50; }
-.stats .no :deep(.value) { color: #B03A40; }
+.stats .yes :deep(.value) { color: var(--c-success); }
+.stats .no :deep(.value) { color: var(--c-danger); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .search { flex: 1 1 14rem; max-width: 22rem; }
 .list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
 .row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
 .row + .row { border-top: 1px solid var(--c-line-soft); }
-.answer { display: grid; place-items: center; width: 2rem; height: 2rem; margin-top: 2px; border-radius: 50%; font-size: 0.9rem; font-weight: 700; color: #fff; }
-.answer.yes { background: #2F7A50; }
-.answer.no { background: #B03A40; }
+.answer { display: grid; place-items: center; width: 2rem; height: 2rem; margin-top: 2px; border-radius: 50%; font-size: 0.9rem; color: #fff; }
+.answer .icon { stroke-width: 2.5; }
+.answer.yes { background: var(--c-success); }
+.answer.no { background: var(--c-danger); }
 .name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); font-weight: 600; overflow-wrap: anywhere; }
 .meta a { color: inherit; }
 .message { margin-top: var(--space-1); font-style: italic; overflow-wrap: anywhere; }

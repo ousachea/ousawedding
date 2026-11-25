@@ -46,6 +46,10 @@ async function logout() {
   await navigateTo(localePath('/admin/login'))
 }
 
+// Kept while the dialog closes, so its words don't vanish first
+const question = shallowRef(confirmState.value)
+watch(confirmState, (s) => { if (s) question.value = s })
+
 function answer(ok: boolean) {
   confirmState.value?.resolve(ok)
   confirmState.value = null
@@ -67,14 +71,14 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 
     <div v-if="inCouple && ready" class="couple-bar">
       <div class="couple-inner">
-        <NuxtLink :to="localePath('/admin')" class="back">← {{ t('admin.couples.all') }}</NuxtLink>
+        <NuxtLink :to="localePath('/admin')" class="back"><WeddingIcon name="left" /> {{ t('admin.couples.all') }}</NuxtLink>
         <div class="couple-row">
           <div class="couple">
-            <p class="couple-names">{{ names }}</p>
+            <p class="couple-names clamp">{{ names }}</p>
             <p class="couple-date">{{ dateLabel }} · <span class="tabular">/{{ wedding!.slug }}</span></p>
           </div>
           <!-- Every invitation link opens the same named tab, so viewing it never piles up tabs -->
-          <a :href="localePath(`/${wedding!.slug}`)" target="wedding-invitation" class="btn btn-outline btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
+          <a :href="localePath(`/${wedding!.slug}`)" target="wedding-invitation" class="btn btn-outline btn-sm">{{ t('admin.nav.viewSite') }} <WeddingIcon name="out" /></a>
         </div>
         <nav ref="tabs" class="tabs" :aria-label="t('admin.nav.steps')">
           <NuxtLink :to="tab('/admin/overview')" class="tab" :class="{ active: isOverview }" :aria-current="isOverview ? 'page' : undefined">
@@ -103,16 +107,16 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
       <p v-else class="muted">{{ t('admin.wedding.none') }}</p>
     </main>
 
-    <div class="toasts" role="status" aria-live="polite">
+    <TransitionGroup tag="div" name="toast" class="toasts" role="status" aria-live="polite">
       <p v-for="toast in toasts" :key="toast.id" class="toast" :class="toast.kind">{{ toast.message }}</p>
-    </div>
+    </TransitionGroup>
 
     <AdminModal :open="!!confirmState" :title="t('common.confirm')" @close="answer(false)">
-      <p>{{ confirmState?.message }}</p>
+      <p>{{ question?.message }}</p>
       <template #footer>
         <button type="button" class="btn btn-ghost" @click="answer(false)">{{ t('common.cancel') }}</button>
-        <button type="button" class="btn" :class="confirmState?.danger ? 'btn-primary' : 'btn-outline'" @click="answer(true)">
-          {{ confirmState?.action || t('common.confirm') }}
+        <button type="button" class="btn" :class="question?.danger ? 'btn-primary' : 'btn-outline'" @click="answer(true)">
+          {{ question?.action || t('common.confirm') }}
         </button>
       </template>
     </AdminModal>
@@ -138,15 +142,15 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
   text-decoration: none; color: var(--c-text); font-weight: 500; white-space: nowrap;
   transition: background-color 0.2s, color 0.2s;
 }
-.bar-link:hover { background: var(--c-line-soft); }
-.bar-link.active { background: color-mix(in srgb, var(--c-secondary) 10%, transparent); color: var(--c-secondary); }
+@media (hover: hover) { .bar-link:hover { background: var(--c-line-soft); } }
+.bar-link.active { background: color-mix(in oklab, var(--c-secondary) 10%, transparent); color: var(--c-secondary); }
 /* Phones: Couples already leads home, so the name gives its room to the links */
 @media (max-width: 520px) { .brand { display: none; } .bar-link { padding: 0 0.7rem; } }
 
 .couple-bar { background: var(--c-surface); border-bottom: 1px solid var(--c-line-soft); }
 .couple-inner { max-width: var(--wrap); margin-inline: auto; padding: var(--space-3) max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left)); }
-.back { display: inline-flex; align-items: center; min-height: 36px; font-size: 0.9rem; color: var(--c-muted); text-decoration: none; }
-.back:hover { color: var(--c-secondary); }
+.back { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 44px; font-size: 0.9rem; color: var(--c-muted); text-decoration: none; }
+@media (hover: hover) { .back:hover { color: var(--c-secondary); } }
 .couple-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
 .couple { min-width: 0; }
 .couple-names { font-size: 1.5rem; font-weight: 700; line-height: 1.2; color: var(--c-secondary); text-wrap: balance; }
@@ -154,21 +158,24 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 
 .tabs {
   display: flex; gap: var(--space-1); margin-top: var(--space-3);
-  overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--space-4);
+  overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--space-4); scroll-snap-type: x proximity;
+  /* Fades out at both edges, over room of its own, so a tab at rest is never dimmed */
+  margin-inline: -1rem; padding-inline: 1rem;
+  mask: linear-gradient(90deg, transparent, #000 1rem calc(100% - 1rem), transparent);
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
-  flex: none; display: inline-flex; align-items: center; gap: var(--space-2);
+  flex: none; scroll-snap-align: center; display: inline-flex; align-items: center; gap: var(--space-2);
   min-height: 48px; padding: 0 0.9rem; border-bottom: 3px solid transparent;
-  text-decoration: none; color: var(--c-muted); font-weight: 500; white-space: nowrap;
+  text-decoration: none; color: var(--c-muted); font-weight: 600; white-space: nowrap;
   transition: color 0.2s, border-color 0.2s;
 }
-.tab:hover { color: var(--c-text); }
+@media (hover: hover) { .tab:hover { color: var(--c-text); } }
 .tab-n {
   display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%;
   border: 1.5px solid currentColor; font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums;
 }
-.tab.active { color: var(--c-secondary); border-bottom-color: var(--c-secondary); font-weight: 600; }
+.tab.active { color: var(--c-secondary); border-bottom-color: var(--c-secondary); }
 .tab.active .tab-n { background: var(--c-secondary); border-color: var(--c-secondary); color: var(--c-on-secondary); }
 .tab:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: -2px; }
 
@@ -183,7 +190,9 @@ useHead({ title: () => t('admin.title'), meta: [{ name: 'robots', content: 'noin
 .step-lead { color: var(--c-muted); max-width: 38rem; }
 
 .toasts { position: fixed; z-index: var(--z-toast); right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--space-2); max-width: min(24rem, calc(100vw - 2rem)); }
-.toast { padding: 0.7rem 1rem; border-radius: var(--radius); background: var(--c-text); color: var(--c-bg); box-shadow: var(--shadow); font-size: 0.9rem; animation: in 0.2s var(--ease-out); }
+.toast { padding: 0.7rem 1rem; border-radius: var(--radius); background: var(--c-text); color: var(--c-bg); box-shadow: var(--shadow); font-size: 0.9rem; }
 .toast.error { background: var(--c-danger); color: #fff; }
-@keyframes in { from { opacity: 0; transform: translateY(8px); } }
+.toast-enter-active { transition: opacity 0.2s var(--ease-out), translate 0.2s var(--ease-out); }
+.toast-leave-active { transition: opacity 0.16s var(--ease-out), translate 0.16s var(--ease-out); }
+.toast-enter-from, .toast-leave-to { opacity: 0; translate: 0 8px; }
 </style>

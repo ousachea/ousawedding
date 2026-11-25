@@ -45,9 +45,7 @@ onBeforeUnmount(() => {
 // Specks of warm light drifting up through the hero: left %, top %, size px, duration s, delay s.
 // Fixed numbers so server and browser render the same markup.
 const motes = [
-  [8, 62, 5, 9, 0], [16, 30, 3, 11, 4], [24, 78, 4, 10, 2], [33, 44, 6, 13, 7], [41, 20, 3, 9, 5],
-  [52, 70, 5, 12, 1], [60, 36, 4, 10, 8], [68, 84, 3, 11, 3], [76, 52, 6, 14, 6], [84, 24, 4, 9, 2],
-  [91, 66, 5, 12, 9], [47, 52, 3, 10, 11],
+  [8, 62, 5, 9, 0], [24, 78, 4, 10, 2], [33, 44, 6, 13, 7], [60, 36, 4, 10, 8], [76, 52, 6, 14, 6], [91, 66, 5, 12, 9],
 ].map(([left, top, size, dur, delay]) => ({ left: `${left}%`, top: `${top}%`, width: `${size}px`, height: `${size}px`, animationDuration: `${dur}s`, animationDelay: `${-delay!}s` }))
 </script>
 
@@ -158,12 +156,12 @@ const motes = [
   border: 1px solid var(--c-line);
   border-radius: 999px 999px var(--radius) var(--radius);
 }
-.frame { display: block; overflow: clip; border-radius: 999px 999px 6px 6px; }
+.frame { display: block; overflow: clip; border-radius: 999px 999px calc(var(--radius) - 11px) calc(var(--radius) - 11px); }
 .photo img {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  border-radius: 999px 999px 6px 6px;
+  border-radius: inherit;
   outline: 1px solid rgb(0 0 0 / 0.06);
   outline-offset: -1px;
 }
@@ -184,7 +182,7 @@ const motes = [
 .db-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-3); width: min(100%, 22rem); }
 .db-row > span:not(.db-day) { padding-block: var(--space-1); border-block: 1px solid var(--c-text); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
 .db-row > span:not(.db-day):lang(km) { letter-spacing: 0; }
-.db-day { font-family: var(--font-script); font-size: 4rem; line-height: 1; color: var(--c-accent); }
+.db-day { font-family: var(--font-script); font-size: 4rem; line-height: 1; color: var(--c-accent-large); }
 .style-floral .photo {
   width: min(100vw, 46rem); max-width: none; margin-inline: calc(50% - min(50vw, 23rem));
   padding: 0; border: 0; border-radius: 0;
@@ -223,7 +221,7 @@ const motes = [
 
 /* Entrance, played once as the envelope opens */
 .intro .step {
-  animation: rise 1.3s ease both;
+  animation: rise 0.8s var(--ease-out) both;
   animation-delay: calc(var(--intro-delay) + var(--i) * 110ms);
 }
 .intro .step-photo {
@@ -241,26 +239,26 @@ const motes = [
    streak in its middle that sits outside the name at rest; moving the gradient sweeps the streak across. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .name {
-    padding-inline: 0.12em; /* the script's swashes stay inside the painted area */
-    background: linear-gradient(105deg, var(--c-gold-deep) 0 40%, var(--c-gold) 46%, var(--c-gold-light) 50%, var(--c-gold) 54%, var(--c-gold-deep) 60% 100%) 100% 0 / 260% 100%;
+    padding: 0.15em 0.12em; margin-block: -0.15em; /* the script's swashes stay inside the painted area */
+    background: linear-gradient(105deg var(--oklch), var(--c-gold-deep) 0 40%, var(--c-gold) 46%, var(--c-gold-light) 50%, var(--c-gold) 54%, var(--c-gold-deep) 60% 100%) 100% 0 / 260% 100%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   /* Khmer marks above and below the line stay inside the painted area too */
-  .name:lang(km) { padding-block: 0.15em; }
+  .name:lang(km) { margin-block: 0; }
 }
 /* Soft warm light behind the names */
 .names { position: relative; }
 .names::before {
-  content: ''; position: absolute; inset: -35% -25%; z-index: -1; pointer-events: none;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--c-gold-light) 70%, transparent), color-mix(in srgb, var(--c-gold-light) 25%, transparent) 55%, transparent);
+  content: ''; position: absolute; inset: -35% -25%; z-index: -1; pointer-events: none; mix-blend-mode: multiply;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--c-gold-light) 70%, transparent), color-mix(in oklab, var(--c-gold-light) 25%, transparent) 55%, transparent);
 }
 .motes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .mote {
   position: absolute; border-radius: 50%; opacity: 0.55;
   background: radial-gradient(circle, #fff 0 25%, var(--c-gold-light) 45%, transparent 70%);
-  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--c-gold-light) 60%, transparent);
+  box-shadow: 0 0 8px 2px color-mix(in oklab, var(--c-gold-light) 60%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
   .name { animation: shine 9s ease-in-out 2.5s infinite; }
@@ -269,12 +267,10 @@ const motes = [
     animation: write 1.5s cubic-bezier(0.45, 0, 0.25, 1) both, shine 9s ease-in-out infinite;
     animation-delay: calc(var(--intro-delay) + var(--i) * 160ms), calc(var(--intro-delay) + 2.2s);
   }
-  .names::before { animation: glow 7s ease-in-out infinite alternate; }
   .mote { animation: float linear infinite; }
 }
 @keyframes write { from { clip-path: inset(-30% 100% -30% -10%); } to { clip-path: inset(-30% -10% -30% -10%); } }
 @keyframes shine { 0% { background-position: 100% 0; } 25%, 100% { background-position: 0 0; } }
-@keyframes glow { from { opacity: 0.7; scale: 0.95; } to { opacity: 1; scale: 1.05; } }
 @keyframes float {
   0% { transform: translate3d(0, 0, 0); opacity: 0; }
   20% { opacity: 0.7; }
@@ -293,13 +289,13 @@ const motes = [
 .scroll-cue {
   position: absolute; left: 50%; bottom: var(--space-4); translate: -50% 0;
   display: grid; place-items: center; width: 44px; height: 44px; color: var(--c-accent-ink);
+  transition: scale 0.12s var(--ease-out);
 }
+.scroll-cue:active { scale: 0.97; }
 @media (prefers-reduced-motion: no-preference) {
-  .halo { animation: halo 4.5s ease-in-out infinite; }
   .text > :deep(.flower g) { transform-box: fill-box; transform-origin: 50% 95%; animation: sway 6s ease-in-out infinite; }
   .scroll-cue svg { animation: bob 2.2s ease-in-out infinite; }
 }
-@keyframes halo { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.015); } }
 @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 @keyframes bob { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(6px); opacity: 1; } }
 

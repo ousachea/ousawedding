@@ -34,10 +34,16 @@ function untilt(e: PointerEvent) {
 
 const dialog = ref<HTMLDialogElement>()
 const zoomed = ref<GiftQr | null>(null)
+const morph = useMorph()
+const small = () => section.value?.querySelector<HTMLElement>('.bank-item.open .qr img')
+const large = () => dialog.value?.querySelector('img')
 function show(g: GiftQr) {
-  zoomed.value = g
-  dialog.value?.showModal()
+  morph(small, () => {
+    zoomed.value = g
+    dialog.value?.showModal()
+  }, large, 300)
 }
+const hide = () => morph(large, () => dialog.value?.close(), small, 240)
 // Bank logos (the banks' app icons, in public/banks/), matched from the bank name typed in Settings
 const LOGOS: Array<[RegExp, string]> = [[/\baba\b/i, 'aba'], [/acleda/i, 'acleda'], [/canadia/i, 'canadia']]
 const logoFor = (bank: string) => LOGOS.find(([re]) => re.test(bank))?.[1]
@@ -50,10 +56,10 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
       <span v-reveal class="section-icon"><WeddingIcon name="gift" /></span>
       <h2 v-reveal id="gift-title" class="section-title">{{ t('gift.title') }}</h2>
       <WeddingOrnament v-reveal="100" :motif="w.theme.motif" />
-      <p v-reveal="150" class="intro">{{ t('gift.intro') }}</p>
+      <i18n-t v-reveal="150" keypath="gift.intro" tag="p" class="intro" scope="global"><template #khqr><abbr class="caps">KHQR</abbr></template></i18n-t>
 
       <div class="banks">
-        <div v-for="(g, i) in gifts" :key="g.id" v-reveal="200 + i * 100" class="bank-item" :class="{ open: openId === g.id }">
+        <div v-for="(g, i) in gifts" :key="g.id" v-reveal="150 + i * 30" class="bank-item" :class="{ open: openId === g.id }">
           <button
             :id="`gift-head-${g.id}`" type="button" class="head"
             :aria-expanded="openId === g.id" :aria-controls="`gift-panel-${g.id}`" @click="toggle(g.id)"
@@ -81,7 +87,7 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
                 <span class="shine" aria-hidden="true" />
               </button>
               <p class="tap">{{ t('gift.tapHint') }}</p>
-              <a :href="g.image" :download="fileName(g)" class="btn btn-primary btn-sm save">↓ {{ t('gift.save') }}</a>
+              <a :href="g.image" :download="fileName(g)" class="btn btn-primary btn-sm save"><WeddingIcon name="download" /> {{ t('gift.save') }}</a>
             </div>
           </div>
         </div>
@@ -89,11 +95,11 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
       <p v-reveal="300" class="hint">{{ t('gift.hint') }}</p>
     </div>
 
-    <dialog ref="dialog" class="zoom" @click.self="dialog?.close()" @close="zoomed = null">
+    <dialog ref="dialog" class="zoom" @cancel.prevent="hide" @click.self="hide" @close="zoomed = null">
       <template v-if="zoomed">
         <img :src="zoomed.image" :alt="t('gift.alt', { name: zoomed.name })">
         <p class="zoom-name"><template v-if="zoomed.bank">{{ zoomed.bank }} · </template>{{ zoomed.name }}</p>
-        <button type="button" class="btn btn-ghost" @click="dialog?.close()">{{ t('gift.close') }}</button>
+        <button type="button" class="btn btn-ghost" @click="hide">{{ t('gift.close') }}</button>
       </template>
     </dialog>
   </section>
@@ -109,26 +115,26 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
 .bank-item {
   background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm); overflow: hidden;
-  transition: box-shadow 0.4s, border-color 0.4s, transform 0.4s var(--ease-out);
+  transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s var(--ease-out);
 }
-.bank-item.open { border-color: color-mix(in srgb, var(--c-accent) 60%, var(--c-line)); box-shadow: var(--shadow); }
+.bank-item.open { border-color: color-mix(in oklab, var(--c-accent) 60%, var(--c-line)); box-shadow: var(--shadow); }
 
 /* The row: logo, bank and name, and a chevron that turns when open */
 .head {
   display: flex; align-items: center; gap: var(--space-3); width: 100%;
   padding: var(--space-3) var(--space-4); text-align: left; cursor: pointer;
-  background: none; border: 0; color: inherit; -webkit-tap-highlight-color: transparent;
+  background: none; border: 0; color: inherit;
 }
 .head:focus-visible { outline: 2px solid var(--c-accent); outline-offset: -4px; border-radius: var(--radius-lg); }
 @media (hover: hover) { .bank-item:not(.open):hover { transform: translateY(-2px); box-shadow: var(--shadow); } }
-.head:active .logo { transform: scale(0.92); }
+.head:active .logo { transform: scale(0.97); }
 /* Scaled a touch inside a rounded square, so icons that come with their own corners all end up alike */
 .logo {
   flex: none; width: 2.75rem; height: 2.75rem; border-radius: 24%; object-fit: cover;
   clip-path: inset(3% round 24%); box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
   transition: transform 0.3s var(--ease-out);
 }
-.logo-blank { display: grid; place-items: center; font-size: 1.3rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 10%, transparent); }
+.logo-blank { display: grid; place-items: center; font-size: 1.3rem; color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 10%, transparent); }
 .open .logo { animation: wiggle 0.5s var(--ease-out); }
 @keyframes wiggle { 30% { transform: rotate(-8deg) scale(1.08); } 60% { transform: rotate(5deg); } }
 .head-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -138,24 +144,24 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
 .chevron {
   flex: none; width: 0.6rem; height: 0.6rem; margin: 0 0.2rem 0.2rem;
   border-right: 2px solid var(--c-accent-ink); border-bottom: 2px solid var(--c-accent-ink);
-  transform: rotate(45deg); transition: transform 0.4s var(--ease-out);
+  transform: rotate(45deg); transition: transform 0.3s var(--ease-in-out);
 }
 .open .chevron { transform: translateY(0.2rem) rotate(225deg); }
 
 /* The panel slides open; the code inside rises and settles */
-.qr-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s var(--ease-out); }
-.open .qr-panel { grid-template-rows: 1fr; }
+.qr-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.24s var(--ease-out); }
+.open .qr-panel { grid-template-rows: 1fr; transition-duration: 0.3s; }
 .panel-inner {
   overflow: hidden; min-height: 0;
   display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
   padding: 0 var(--space-4);
-  transition: padding 0.5s var(--ease-out);
+  transition: padding 0.24s var(--ease-out);
 }
-.open .panel-inner { padding: var(--space-2) var(--space-4) var(--space-5); }
-.panel-inner > * { opacity: 0; transform: translateY(14px) scale(0.94); transition: opacity 0.3s, transform 0.5s var(--ease-out); }
+.open .panel-inner { transition-duration: 0.3s; padding: var(--space-2) var(--space-4) var(--space-5); }
+.panel-inner > * { opacity: 0; transform: translateY(14px) scale(0.94); transition: opacity 0.2s, transform 0.3s var(--ease-out); }
 .open .panel-inner > * { opacity: 1; transform: none; }
-.open .panel-inner > :nth-child(2) { transition-delay: 0.1s; }
-.open .panel-inner > :nth-child(3) { transition-delay: 0.15s; }
+.open .panel-inner > :nth-child(2) { transition-delay: 0.03s; }
+.open .panel-inner > :nth-child(3) { transition-delay: 0.06s; }
 
 /* The code sits on white so every banking app can read it, whatever the theme. It tilts towards the pointer. */
 .qr {
@@ -182,11 +188,11 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
 .open .corners i:nth-child(4) { inset: auto 3% 3% auto; }
 /* A scan line passes down the code once when it opens; a gold gleam crosses it on hover */
 .scan, .shine { position: absolute; pointer-events: none; opacity: 0; }
-.scan { left: 6%; right: 6%; top: 0; height: 3px; border-radius: 3px; background: var(--c-gold); box-shadow: 0 0 12px 3px color-mix(in srgb, var(--c-gold) 60%, transparent); }
+.scan { left: 6%; right: 6%; top: 0; height: 3px; border-radius: 3px; background: var(--c-gold); box-shadow: 0 0 12px 3px color-mix(in oklab, var(--c-gold) 60%, transparent); }
 .shine { inset: 0; opacity: 1; background: linear-gradient(105deg, transparent 35%, rgb(243 226 166 / 0.5) 50%, transparent 65%); transform: translateX(-110%); }
 @media (prefers-reduced-motion: no-preference) {
   .open .scan { animation: scan 1.4s 0.35s ease-in-out; }
-  .qr:hover .shine { animation: sweep 1s var(--ease-out); }
+  @media (hover: hover) { .qr:hover .shine { animation: sweep 1s var(--ease-out); } }
 }
 @keyframes scan { 0% { top: 4%; opacity: 0; } 15%, 85% { opacity: 1; } 100% { top: 96%; opacity: 0; } }
 @keyframes sweep { to { transform: translateX(110%); } }
@@ -203,9 +209,9 @@ const fileName = (g: GiftQr) => `KHQR-${[g.bank, g.name].filter(Boolean).join(' 
 .zoom img { display: block; width: 100%; height: auto; border-radius: var(--radius); background: #fff; }
 .zoom-name { margin-block: var(--space-3); font-family: var(--font-serif); font-size: 1.2rem; color: var(--c-secondary); }
 @media (prefers-reduced-motion: no-preference) {
-  .zoom[open] { animation: zoom-in 0.35s var(--ease-out); }
-  .zoom[open]::backdrop { animation: fade 0.35s; }
+  .zoom[open] { animation: zoom-in 0.25s var(--ease-out); }
+  .zoom[open]::backdrop { animation: fade 0.25s; }
 }
-@keyframes zoom-in { from { opacity: 0; transform: scale(0.85) translateY(12px); } }
+@keyframes zoom-in { from { opacity: 0; transform: scale(0.95); } }
 @keyframes fade { from { opacity: 0; } }
 </style>

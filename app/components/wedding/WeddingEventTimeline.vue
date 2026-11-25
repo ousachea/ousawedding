@@ -97,8 +97,9 @@ function remaining(e: Item) {
                   <span class="time">{{ e.display[locale].time }}</span>
                   <span v-if="started(e)" class="left">{{ remaining(e) }}</span>
                 </p>
-                <h4 class="event-title"><WeddingIcon :name="e.icon ?? 'calendar'" class="event-icon" />{{ L(e.title) }}</h4>
-                <p v-if="L(e.description)" class="desc">{{ L(e.description) }}</p>
+                <h4 class="event-title"><WeddingIcon :name="e.icon ?? 'calendar'" class="event-icon" /><span class="clamp event-name">{{ L(e.title) }}</span></h4>
+                <!-- Safe as HTML: rebuilt by richText from a short list of tags -->
+                <div v-if="L(e.description)" class="desc" v-html="richText(L(e.description))" />
                 <address v-if="L(e.venue) || L(e.address)" class="venue">
                   <WeddingIcon name="pin" class="venue-icon" />
                   <span class="venue-text">
@@ -163,10 +164,11 @@ function remaining(e: Item) {
 
 .timeline { list-style: none; padding: 0; margin: var(--space-4) auto 0; max-width: 40rem; position: relative; }
 .day + .day { margin-top: var(--space-6); }
-/* Opacity only: a blur here would be redrawn every frame while scrolling, which stutters on iPhone */
-.focusing .item > * { transition: opacity 0.6s ease; }
-.focusing .item:not(.active, :focus-within) > * { opacity: 0.35; }
-@media (prefers-reduced-motion: reduce) { .focusing .item > * { transition: none; } }
+/* The number, flower and icon fade; the words always stay readable.
+   Opacity only: a blur here would be redrawn every frame while scrolling, which stutters on iPhone */
+.focusing :is(.dot, .bloom, .event-icon) { transition: opacity 0.3s ease; }
+.focusing .item:not(.active, :focus-within) :is(.dot, .bloom, .event-icon) { opacity: 0.35; }
+@media (prefers-reduced-motion: reduce) { .focusing :is(.dot, .bloom, .event-icon) { transition: none; } }
 .day-title { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-family: var(--font-serif); font-size: 1.3rem; text-align: center; color: var(--c-accent-ink); }
 .day-title .left { font-family: var(--font-sans); font-size: 0.8rem; color: var(--c-text); }
 @media (min-width: 760px) { .timeline { max-width: 44rem; } .event-title { font-size: 1.7rem; } }
@@ -204,8 +206,10 @@ function remaining(e: Item) {
 .when { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); font-size: 0.9rem; color: var(--c-accent-ink); font-weight: 500; }
 .event-title { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: var(--space-2); }
 .event-icon { color: var(--c-accent); }
-.left { padding: 0 0.6em; border-radius: 999px; background: color-mix(in srgb, var(--c-accent) 14%, transparent); font-weight: 500; }
-.desc { color: var(--c-muted); }
+.event-name { --lines: 3; }
+.left { padding: 0 0.6em; border-radius: 999px; background: color-mix(in oklab, var(--c-accent) 14%, transparent); font-weight: 500; }
+.desc { color: var(--c-muted); text-wrap: pretty; }
+.desc :deep(:is(ul, ol)) { display: inline-block; margin: 0.3em 0; padding-left: 1.3em; text-align: left; }
 .venue { font-style: normal; display: flex; gap: var(--space-2); font-size: 0.95rem; }
 .venue-icon { color: var(--c-accent-ink); margin-top: 0.3em; }
 .venue-text { display: flex; flex-direction: column; }
@@ -222,7 +226,7 @@ function remaining(e: Item) {
   padding: var(--space-6) var(--space-5) var(--space-5);
   background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s;
 }
 /* A gold hairline across the top of each card */
 .info-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, transparent, var(--c-gold), transparent); }
@@ -230,11 +234,11 @@ function remaining(e: Item) {
 .info-badge {
   display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin-bottom: var(--space-3);
   border-radius: 50%; font-size: 1.6rem; color: var(--c-secondary);
-  background: color-mix(in srgb, var(--c-secondary) 9%, transparent);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--c-secondary) 4%, transparent);
+  background: color-mix(in oklab, var(--c-secondary) 9%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--c-secondary) 4%, transparent);
 }
 /* The badge pops in as the card comes into view */
-@media (prefers-reduced-motion: no-preference) { .info-card.revealed .info-badge { animation: badge 0.7s 0.2s var(--ease-out) backwards; } }
+@media (prefers-reduced-motion: no-preference) { .info-card.revealed .info-badge { animation: badge 0.4s 0.2s var(--ease-out) backwards; } }
 @keyframes badge { from { transform: scale(0.4) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.12); } }
 .info-card h3 { font-size: 1.3rem; color: var(--c-secondary); text-wrap: balance; }
 .info-rule { width: 2.5rem; height: 2px; margin: var(--space-3) auto; border-radius: 2px; background: var(--c-gold); opacity: 0.7; }
@@ -244,20 +248,20 @@ function remaining(e: Item) {
 .calls { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
 .call {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
-  min-width: 11rem; padding: 0.55rem 1.1rem; border-radius: 999px;
+  min-width: 11rem; min-height: 44px; padding: 0.55rem 1.1rem; border-radius: 999px;
   color: var(--c-secondary); text-decoration: none; font-weight: 500;
-  border: 1px solid color-mix(in srgb, var(--c-secondary) 30%, transparent);
+  border: 1px solid color-mix(in oklab, var(--c-secondary) 30%, transparent);
   transition: background-color 0.2s, color 0.2s, transform 0.15s;
 }
-.call:hover { background: var(--c-secondary); color: var(--c-on-secondary); }
-.call:active { transform: scale(0.96); }
+@media (hover: hover) { .call:hover { background: var(--c-secondary); color: var(--c-on-secondary); } }
+.call:active { transform: scale(0.97); }
 .call-icon { font-size: 0.95rem; }
 .colours-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
 .colours-label:lang(km) { font-size: 0.85rem; letter-spacing: 0; text-transform: none; }
 .colours { display: flex; justify-content: center; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
 /* A thin ring keeps light colours visible against the card */
 .colours li { width: 30px; height: 30px; border-radius: 50%; background: var(--swatch); box-shadow: 0 0 0 2px var(--c-bg), 0 0 0 3px var(--c-line), 0 2px 6px -2px rgb(0 0 0 / 0.3); }
-.colours li.gold { background: radial-gradient(circle at 35% 30%, var(--c-gold-light), var(--c-gold) 55%, var(--c-gold-deep)); }
+.colours li.gold { background: radial-gradient(circle at 35% 30% var(--oklch), var(--c-gold-light), var(--c-gold) 55%, var(--c-gold-deep)); }
 
 /* Floral style: no cards. On phones one column, line on the left, each item clearly on its own.
    From tablet width, items zig-zag left and right of a centre line. */
@@ -276,7 +280,7 @@ function remaining(e: Item) {
 .style-floral .bloom, .style-floral .dot { z-index: 1; }
 .style-floral .bloom {
   display: block; position: absolute; left: -10.5px; top: -10.5px; width: 48px; height: 48px;
-  fill: color-mix(in srgb, var(--c-accent) 45%, #fff); stroke: var(--c-accent); stroke-width: 0.8;
+  fill: color-mix(in oklab, var(--c-accent) 45%, #fff); stroke: var(--c-accent); stroke-width: 0.8;
 }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
@@ -291,13 +295,13 @@ function remaining(e: Item) {
 .style-floral .day-title { margin-bottom: var(--space-5); padding-bottom: var(--space-2); border-bottom: 1px solid var(--c-line-soft); }
 .style-floral .day + .day { margin-top: var(--space-7); }
 /* Time first, as a small label, so each item starts clearly */
-.style-floral .when { align-self: flex-start; padding: 0.15rem 0.6rem; border-radius: 999px; background: color-mix(in srgb, var(--c-secondary) 9%, transparent); font-size: 0.75rem; letter-spacing: 0.06em; color: var(--c-secondary); }
+.style-floral .when { align-self: flex-start; padding: 0.15rem 0.6rem; border-radius: 999px; background: color-mix(in oklab, var(--c-secondary) 9%, transparent); font-size: 0.75rem; letter-spacing: 0.06em; color: color-mix(in oklab, var(--c-secondary) 85%, var(--c-text)); }
 .style-floral .when > .icon { display: none; }
 .style-floral .event-title { display: flex; align-items: center; gap: var(--space-2); margin-top: 2px; font-size: 1.15rem; line-height: 1.35; font-family: var(--font-serif); font-weight: 600; text-wrap: balance; }
-.style-floral .event-icon { flex: none; font-size: 1.35rem; color: var(--c-secondary); }
+.style-floral .event-icon { flex: none; font-size: 1.35rem; stroke-width: 1.9; color: var(--c-secondary); }
 .style-floral .desc { font-size: 0.88rem; line-height: 1.7; text-wrap: pretty; }
 .style-floral .venue { font-size: 0.85rem; }
-.style-floral .left { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
+.style-floral .left { background: color-mix(in oklab, var(--c-accent) 18%, transparent); }
 
 @media (min-width: 700px) {
   .style-floral .timeline::before { left: 50%; }

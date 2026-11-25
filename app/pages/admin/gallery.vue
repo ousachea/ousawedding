@@ -36,8 +36,7 @@ const filter = ref<'all' | 'used' | 'unused'>('all')
 const matches = (f: typeof filter.value, img: GalleryImage) => f === 'all' || (f === 'used') === usesOf(img.url, img).length > 0
 const shown = computed(() => images.value.filter(img => matches(filter.value, img)))
 async function copy(url: string) {
-  await navigator.clipboard.writeText(new URL(url, location.origin).href)
-  push(t('admin.assets.copied'))
+  try { await navigator.clipboard.writeText(new URL(url, location.origin).href); push(t('admin.assets.copied')) } catch { push(t('common.error'), 'error') }
 }
 
 // Cover crop: click the photo to choose the point that stays in view (e.g. the faces)
@@ -139,7 +138,7 @@ const name = (img: GalleryImage, i: number) => img.caption[locale.value as Local
         <div class="thumb">
           <img :src="img.thumbUrl || img.url" :alt="img.alt.en || img.caption.en" loading="lazy">
           <span class="flags">
-            <span v-if="wedding?.coverImage === img.url" class="flag">★ {{ t('admin.gallery.isCover') }}</span>
+            <span v-if="wedding?.coverImage === img.url" class="flag"><WeddingIcon name="star" /> {{ t('admin.gallery.isCover') }}</span>
             <span v-if="!img.visible" class="flag dim">{{ t('admin.gallery.hidden') }}</span>
           </span>
         </div>
@@ -159,7 +158,7 @@ const name = (img: GalleryImage, i: number) => img.caption[locale.value as Local
         <details class="fold">
           <summary>
             {{ t('admin.gallery.more') }}
-            <span v-if="img.caption.en || img.caption.km || img.alt.en || img.alt.km" class="filled" :title="t('admin.gallery.text')">✓</span>
+            <span v-if="img.caption.en || img.caption.km || img.alt.en || img.alt.km" class="filled" :title="t('admin.gallery.text')"><WeddingIcon name="check" /></span>
           </summary>
           <form class="form-grid" @submit.prevent="saveText(img)">
             <AdminLocalizedField v-model="img.caption" :label="t('admin.gallery.caption')" />
@@ -195,7 +194,8 @@ const name = (img: GalleryImage, i: number) => img.caption[locale.value as Local
   border: 2px dashed var(--c-line); border-radius: var(--radius-lg); background: var(--c-surface); text-align: center; cursor: pointer;
   transition: border-color 0.15s, background-color 0.15s;
 }
-.drop:hover, .drop.over { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 5%, var(--c-surface)); }
+.drop.over { border-color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 5%, var(--c-surface)); }
+@media (hover: hover) { .drop:hover { border-color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 5%, var(--c-surface)); } }
 .drop:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 3px; }
 .drop.busy { cursor: progress; }
 .drop-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: var(--c-secondary); color: var(--c-on-secondary); font-size: 1.8rem; line-height: 1; }
@@ -211,25 +211,27 @@ const name = (img: GalleryImage, i: number) => img.caption[locale.value as Local
 .tile { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2); background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
 .thumb { position: relative; }
 /* 3:4, cropped as on the invitation */
-.thumb img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 35%; border-radius: var(--radius-sm); background: var(--c-line-soft); }
+.thumb img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 35%; border-radius: calc(var(--radius) - var(--space-2) - 1px); background: var(--c-line-soft); }
 .tile.hidden .thumb img { opacity: 0.4; }
 .flags { position: absolute; top: var(--space-2); left: var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.flag { padding: 2px 8px; border-radius: 999px; background: var(--c-secondary); color: var(--c-on-secondary); font-size: 0.75rem; font-weight: 600; }
+.flag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: var(--c-secondary); color: var(--c-on-secondary); font-size: 0.75rem; font-weight: 600; }
 .flag.dim { background: rgb(0 0 0 / 0.6); color: #fff; }
 .tile-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .tile .uses, .tile .fold { padding-inline: var(--space-1); }
 .uses { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .uses .badge { white-space: normal; }
-.filled { color: #2F7A50; }
+.filled { color: var(--c-success); }
 .row-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-3); }
 .delete { color: var(--c-danger); }
-@media (prefers-reduced-motion: no-preference) { .reorder-move { transition: transform 0.3s var(--ease-out); } }
+@media (prefers-reduced-motion: no-preference) { .reorder-move { transition: transform 0.3s var(--ease-in-out); } }
 
 /* On/off switch for showing a photo in the public gallery */
 .switch { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; margin-left: auto; cursor: pointer; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch .track { position: relative; width: 2.6rem; height: 1.5rem; border-radius: 999px; background: var(--c-line); transition: background-color 0.2s; }
-.switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: calc(1.5rem - 6px); height: calc(1.5rem - 6px); border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); transition: translate 0.2s var(--ease-out); }
+.switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: calc(1.5rem - 6px); height: calc(1.5rem - 6px); border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); transition: translate 0.2s var(--ease-in-out), scale 0.2s var(--ease-in-out); }
+/* Stretched by the press, it settles back while it slides */
+.switch:active .track::after { scale: 1.12 1; }
 .switch input:checked + .track { background: var(--c-secondary); }
 .switch input:checked + .track::after { translate: 1.1rem 0; }
 .switch input:focus-visible + .track { outline: 2px solid var(--c-secondary); outline-offset: 2px; }

@@ -41,7 +41,7 @@ async function save() {
         <h1>{{ t('admin.business.title') }}</h1>
         <p class="muted">{{ t('admin.business.hint') }}</p>
       </div>
-      <a href="/" target="wedding-invitation" class="btn btn-ghost">{{ t('admin.business.view') }} ↗</a>
+      <a href="/" target="wedding-invitation" class="btn btn-ghost">{{ t('admin.business.view') }} <WeddingIcon name="out" /></a>
     </header>
 
     <form v-if="site" class="form-grid business" @submit.prevent="save">

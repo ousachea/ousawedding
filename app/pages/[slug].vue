@@ -243,7 +243,7 @@ useSeoMeta({
     <WeddingButterflies />
     <WeddingNavigation :music-url="w.musicUrl" :monogram="w.monogram" />
 
-    <main>
+    <main class="themed paper">
       <WeddingHero :data="data!" :intro-delay="introDelay" />
       <WeddingCountdown :date-utc="data!.dateUtc" :timezone="w.timezone" :when="`${data!.display[loc].date} · ${data!.display[loc].time}`" :event-days="data!.events.map(e => e.startUtc)" :ics-url="`/api/public/weddings/${w.slug}/events/${loc === 'en' ? 'all-en' : 'all'}.ics`" />
       <WeddingLocation :data="data!" />
@@ -274,7 +274,7 @@ useSeoMeta({
       <WeddingFlorals flip />
     </div>
     <WeddingFooter :data="data!" />
-    <WeddingTabBar :sections="sections" />
+    <WeddingTabBar class="themed paper" :sections="sections" />
   </div>
 </template>
 

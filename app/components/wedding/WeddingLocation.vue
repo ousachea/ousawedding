@@ -40,13 +40,16 @@ const map = computed(() => venueMap(w.value.location))
   background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius-lg); box-shadow: var(--shadow);
 }
 .frame::before {
-  content: ''; position: absolute; inset: 5px; border: 1px solid var(--c-line-soft); border-radius: calc(var(--radius-lg) - 4px); pointer-events: none;
+  content: ''; position: absolute; inset: 5px; border: 1px solid var(--c-line-soft); border-radius: calc(var(--radius-lg) - 6px); pointer-events: none;
 }
 .mat {
-  position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius);
+  position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: calc(var(--radius-lg) - var(--space-3) - 1px);
   box-shadow: inset 0 0 0 1px var(--c-line), 0 1px 2px rgb(0 0 0 / 0.08);
-  background: color-mix(in srgb, var(--c-secondary) 8%, var(--c-bg));
+  /* Shimmers until the map covers it */
+  background: linear-gradient(100deg, transparent 30%, color-mix(in oklab, var(--c-surface) 70%, transparent) 50%, transparent 70%) 0 0 / 200% 100%, color-mix(in oklab, var(--c-secondary) 8%, var(--c-bg));
 }
+@media (prefers-reduced-motion: no-preference) { .mat { animation: shimmer 1.2s linear 12; } }
+@keyframes shimmer { to { background-position: -200% 0, 0 0; } }
 .mat iframe {
   display: block; width: 100%; height: 100%; border: 0;
   /* Google's own colours, so streets and the red pin read clearly; just a touch warmer, like the paper */
@@ -63,7 +66,7 @@ const map = computed(() => venueMap(w.value.location))
 /* A plain rounded map in every style: an arch would cut off Google's place card in the top corner */
 .style-floral .mat {
   border-radius: var(--radius-lg);
-  box-shadow: 0 0 0 6px var(--c-bg), 0 0 0 7px color-mix(in srgb, var(--c-secondary) 45%, transparent), 0 18px 30px -20px rgb(0 0 0 / 0.4);
+  box-shadow: 0 0 0 6px var(--c-bg), 0 0 0 7px color-mix(in oklab, var(--c-secondary) 45%, transparent), 0 18px 30px -20px rgb(0 0 0 / 0.4);
 }
 .style-floral .place strong { font-weight: 600; }
 

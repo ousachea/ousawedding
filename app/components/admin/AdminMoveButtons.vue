@@ -35,13 +35,12 @@ const label = (step: -1 | 1) => `${t(props.horizontal ? (step < 0 ? 'admin.galle
 .mover { display: flex; flex-direction: column; align-items: center; }
 .mover.horizontal { flex-direction: row; gap: var(--space-1); }
 .arrow {
-  display: grid; place-items: center; width: 44px; height: 40px; padding: 0; border: 0; border-radius: var(--radius-sm);
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-sm);
   background: transparent; color: var(--c-secondary); cursor: pointer;
   transition: background-color 0.15s, scale 0.15s var(--ease-out);
 }
-.horizontal .arrow { height: 44px; }
-.arrow:hover:not(:disabled) { background: color-mix(in srgb, var(--c-secondary) 10%, transparent); }
-.arrow:active:not(:disabled) { scale: 0.9; }
+@media (hover: hover) { .arrow:hover:not(:disabled) { background: color-mix(in oklab, var(--c-secondary) 10%, transparent); } }
+.arrow:active:not(:disabled) { scale: 0.97; }
 .arrow:disabled { color: var(--c-line); cursor: default; }
 .arrow:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: -2px; }
 .pos { min-width: 1.2rem; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--c-muted); line-height: 1; }

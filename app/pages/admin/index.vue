@@ -41,7 +41,7 @@ const p2 = ref('')
 const slug = ref('')
 let slugEdited = false
 const suggested = computed(() => [p1.value, p2.value]
-  .map(n => n.trim().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))
+  .map(slugify)
   .filter(Boolean).join('-'))
 watch(suggested, (v) => { if (!slugEdited) slug.value = v })
 const site = (useRuntimeConfig().public.siteUrl || '').replace(/^https?:\/\//, '').replace(/\/$/, '')
@@ -85,10 +85,10 @@ async function create() {
         <h1>{{ t('admin.couples.title') }}</h1>
         <p class="muted">{{ t('admin.couples.hint') }}</p>
       </div>
-      <button type="button" class="btn btn-primary" @click="adding = true">+ {{ t('admin.couples.new') }}</button>
+      <button type="button" class="btn btn-primary" @click="adding = true"><WeddingIcon name="plus" /> {{ t('admin.couples.new') }}</button>
     </header>
 
-    <input v-if="couples.length > 3" v-model="q" type="search" class="input search" :placeholder="t('admin.couples.search')" :aria-label="t('admin.couples.search')">
+    <input v-if="couples.length > 3" v-model="q" type="search" enterkeyhint="search" class="input search" :placeholder="t('admin.couples.search')" :aria-label="t('admin.couples.search')">
 
     <p v-if="!couples.length" class="panel empty-state">{{ t('admin.couples.none') }}</p>
     <p v-else-if="!found.length" class="panel empty-state">{{ t('admin.couples.noMatch') }}</p>
@@ -97,7 +97,7 @@ async function create() {
       <h2 class="sub">{{ t('admin.couples.upcoming') }} <span class="count">{{ upcoming.length }}</span></h2>
       <ul class="cards">
         <li v-for="w in upcoming" :key="w.id" class="panel card">
-          <NuxtLink :to="open(w)" class="names">{{ names(w) }}</NuxtLink>
+          <NuxtLink :to="open(w)" class="names clamp">{{ names(w) }}</NuxtLink>
           <p class="when">
             {{ fmt(w) }} ·
             <strong v-if="daysLeft(w) === 0">{{ t('admin.couples.today') }}</strong>
@@ -109,7 +109,7 @@ async function create() {
           </ul>
           <div class="actions">
             <NuxtLink :to="open(w)" class="btn btn-primary btn-sm">{{ t('admin.couples.open') }}</NuxtLink>
-            <a :href="localePath(`/${w.slug}`)" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
+            <a :href="localePath(`/${w.slug}`)" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.nav.viewSite') }} <WeddingIcon name="out" /></a>
             <button type="button" class="btn btn-ghost btn-sm delete" @click="remove(w)">{{ t('common.delete') }}</button>
           </div>
         </li>
@@ -122,7 +122,7 @@ async function create() {
         <li v-for="w in past" :key="w.id" class="row">
           <NuxtLink :to="open(w)" class="row-name">{{ names(w) }}</NuxtLink>
           <span class="muted small">{{ fmt(w) }}</span>
-          <a :href="localePath(`/${w.slug}`)" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
+          <a :href="localePath(`/${w.slug}`)" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.nav.viewSite') }} <WeddingIcon name="out" /></a>
           <button type="button" class="btn btn-ghost btn-sm delete" @click="remove(w)">{{ t('common.delete') }}</button>
         </li>
       </ul>
@@ -135,7 +135,7 @@ async function create() {
         <li v-for="w in samples" :key="w.id" class="row">
           <NuxtLink :to="open(w)" class="row-name">{{ names(w) }}</NuxtLink>
           <span class="muted small tabular">/{{ w.slug }}</span>
-          <a :href="localePath(`/${w.slug}`)" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.nav.viewSite') }} ↗</a>
+          <a :href="localePath(`/${w.slug}`)" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.nav.viewSite') }} <WeddingIcon name="out" /></a>
           <button v-if="!isDemo(w)" type="button" class="btn btn-ghost btn-sm delete" @click="remove(w)">{{ t('common.delete') }}</button>
         </li>
       </ul>
@@ -146,18 +146,18 @@ async function create() {
         <div class="form-grid cols-2">
           <div class="field">
             <label for="n-p1">{{ t('admin.settings.partner1') }}</label>
-            <input id="n-p1" v-model="p1" required maxlength="60" autocomplete="off" placeholder="Sokha">
+            <input id="n-p1" v-model="p1" required maxlength="60" autocomplete="off" placeholder="Sokha" enterkeyhint="next">
           </div>
           <div class="field">
             <label for="n-p2">{{ t('admin.settings.partner2') }}</label>
-            <input id="n-p2" v-model="p2" required maxlength="60" autocomplete="off" placeholder="Dara">
+            <input id="n-p2" v-model="p2" required maxlength="60" autocomplete="off" placeholder="Dara" enterkeyhint="next">
           </div>
         </div>
         <div class="field">
           <label for="n-slug">{{ t('admin.couples.address') }}</label>
           <input
             id="n-slug" v-model="slug" required maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" autocapitalize="off" spellcheck="false"
-            @input="slugEdited = true"
+            enterkeyhint="done" @input="slugEdited = true" @change="slug = slugify(slug)"
           >
           <p class="hint tabular">{{ site }}/{{ slug || '…' }}</p>
         </div>
@@ -179,9 +179,9 @@ async function create() {
 
 .cards { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
 .card { display: flex; flex-direction: column; gap: var(--space-2); transition: box-shadow 0.2s; }
-.card:hover { box-shadow: var(--shadow-sm); }
-.names { font-size: 1.3rem; font-weight: 700; line-height: 1.25; color: var(--c-secondary); text-decoration: none; text-wrap: balance; }
-.names:hover { text-decoration: underline; }
+@media (hover: hover) { .card:hover { box-shadow: var(--shadow-sm); } }
+.names { font-size: 1.3rem; font-weight: 700; line-height: 1.25; color: var(--c-secondary); text-decoration: none; text-wrap: balance; padding-block: 0.6rem; margin-block: -0.6rem; }
+@media (hover: hover) { .names:hover { text-decoration: underline; } }
 .when { font-weight: 500; }
 .tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: auto; padding-top: var(--space-3); }
@@ -190,12 +190,10 @@ async function create() {
 
 .more summary { cursor: pointer; list-style: none; display: flex; align-items: center; min-height: 44px; }
 .more summary::-webkit-details-marker { display: none; }
-.more summary::before { content: '▸'; margin-right: var(--space-2); color: var(--c-muted); transition: rotate 0.2s; }
-.more[open] summary::before { rotate: 90deg; }
 .rows { list-style: none; margin: var(--space-2) 0 0; padding: 0; background: var(--c-surface); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-4); }
 .row + .row { border-top: 1px solid var(--c-line-soft); }
-.row-name { flex: 1 1 12rem; font-weight: 600; color: var(--c-text); text-decoration: none; }
-.row-name:hover { color: var(--c-secondary); text-decoration: underline; }
+.row-name { flex: 1 1 12rem; font-weight: 600; color: var(--c-text); text-decoration: none; min-height: 44px; display: flex; align-items: center; }
+@media (hover: hover) { .row-name:hover { color: var(--c-secondary); text-decoration: underline; } }
 .row .delete { margin-left: 0; }
 </style>

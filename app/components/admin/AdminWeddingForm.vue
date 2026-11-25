@@ -211,8 +211,9 @@ const guestLang = ref<Locale>(locale.value as Locale)
 const guestLink = computed(() => draft.value && guestName.value.trim()
   ? `${site}${guestLang.value === 'km' ? '/km' : ''}/${draft.value.slug}/${encodeURIComponent(guestName.value.trim().replace(/\s+/g, '-'))}`
   : '')
+const shownLink = computed(() => guestLink.value ? decodeURIComponent(guestLink.value) : `${site}/${draft.value?.slug}/…`)
 async function copyLink() {
-  try { await navigator.clipboard.writeText(guestLink.value); push(t('admin.share.copied')) } catch {}
+  try { await navigator.clipboard.writeText(guestLink.value); push(t('admin.share.copied')) } catch { push(t('common.error'), 'error') }
 }
 </script>
 
@@ -455,7 +456,7 @@ async function copyLink() {
           <div class="link-maker">
             <div class="field">
               <label for="s-guest">{{ t('admin.share.guestName') }}</label>
-              <input id="s-guest" v-model="guestName" maxlength="120" placeholder="Mr Chea Ousa" autocomplete="off">
+              <input id="s-guest" v-model="guestName" maxlength="120" placeholder="Mr Chea Ousa" autocomplete="off" enterkeyhint="done">
             </div>
             <div class="field">
               <label for="s-guest-lang">{{ t('common.language') }}</label>
@@ -466,7 +467,8 @@ async function copyLink() {
             </div>
           </div>
           <div class="link-out" :class="{ empty: !guestLink }">
-            <code>{{ guestLink || `${site}/${draft.slug}/…` }}</code>
+            <!-- Shortened in the middle: the guest's name, at the end, always shows -->
+            <code :title="guestLink"><span>{{ shownLink.slice(0, -14) }}</span><span>{{ shownLink.slice(-14) }}</span></code>
             <button type="button" class="btn btn-primary btn-sm" :disabled="!guestLink" @click="copyLink">{{ t('admin.share.copy') }}</button>
           </div>
         </section>
@@ -487,7 +489,7 @@ async function copyLink() {
             <div class="form-grid">
               <div class="field narrow">
                 <label for="s-slug">{{ t('admin.settings.slug') }}</label>
-                <input id="s-slug" v-model="draft.slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="60" required>
+                <input id="s-slug" v-model="draft.slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="60" autocapitalize="off" required @change="draft.slug = slugify(draft.slug)">
                 <p class="hint tabular">{{ site }}/{{ draft.slug }}</p>
               </div>
               <label class="check"><input v-model="draft.privacy.allowIndexing" type="checkbox"> {{ t('admin.settings.allowIndexing') }}</label>
@@ -523,13 +525,13 @@ git push</pre>
 
 /* Couple: one card per partner, photo first */
 .people { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
-.person { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-4); border-radius: var(--radius); background: color-mix(in srgb, var(--c-accent) 6%, var(--c-bg)); }
+.person { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-4); border-radius: var(--radius); background: color-mix(in oklab, var(--c-accent) 6%, var(--c-bg)); }
 .person-head { display: flex; align-items: center; gap: var(--space-3); }
 .avatar { width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 3px var(--c-surface), 0 0 0 4px var(--c-line); }
 .avatar.empty { display: grid; place-items: center; background: var(--c-surface); color: var(--c-secondary); font-size: 1.6rem; font-weight: 700; }
 .photo-pick { border: 0; padding: 0; margin: 0; min-width: 0; }
 .photo-pick legend { padding: 0; margin-bottom: var(--space-2); font-weight: 500; }
-.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: var(--space-2); max-height: 15rem; overflow-y: auto; padding: 4px; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: var(--space-2); max-height: 15rem; overflow-y: auto; padding: 0.75rem 4px; mask: linear-gradient(transparent, #000 0.75rem calc(100% - 0.75rem), transparent); }
 .photo-opt { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; overflow: hidden; cursor: pointer; background: var(--c-surface); outline: 3px solid transparent; outline-offset: 1px; transition: outline-color 0.15s; }
 .photo-opt img { width: 100%; height: 100%; object-fit: cover; }
 .photo-opt.none span { font-size: 0.7rem; text-align: center; padding: var(--space-1); }
@@ -539,21 +541,21 @@ git push</pre>
 /* Words: each text block with its arrows */
 .blocks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 .block { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start; padding: var(--space-3) var(--space-3) var(--space-3) var(--space-1); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
-@media (prefers-reduced-motion: no-preference) { .reorder-move { transition: transform 0.3s var(--ease-out); } }
+@media (prefers-reduced-motion: no-preference) { .reorder-move { transition: transform 0.3s var(--ease-in-out); } }
 .track { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .music-preview { flex: 1 1 16rem; max-width: 26rem; }
 
 /* Replies */
 .status { display: flex; align-items: center; gap: var(--space-2); font-weight: 500; }
 .status .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c-muted); }
-.status.on .dot { background: #2F7A50; }
+.status.on .dot { background: var(--c-success); }
 .chat-row { display: flex; gap: var(--space-2); }
 .chat-row input { flex: 1; min-width: 0; }
 /* Fixed width, so the box beside it doesn't jump while the label reads "Loading…" */
 .chat-row .btn { min-width: 7.5rem; }
 .chats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .chat-pick { width: 100%; justify-content: space-between; gap: var(--space-3); border: 1px solid var(--c-line-soft); }
-.chat-pick.on { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 8%, transparent); }
+.chat-pick.on { border-color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 8%, transparent); }
 .map-preview { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--c-line); border-radius: var(--radius); }
 .gifts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
 .gift { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; padding: var(--space-3); border: 1px solid var(--c-line-soft); border-radius: var(--radius); }
@@ -563,16 +565,17 @@ git push</pre>
   min-height: 14rem; justify-content: center; align-items: center; text-align: center; cursor: pointer;
   border: 2px dashed var(--c-line); color: var(--c-secondary); font-weight: 500; transition: border-color 0.15s, background-color 0.15s;
 }
-.gift.add:hover { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 5%, transparent); }
+@media (hover: hover) { .gift.add:hover { border-color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 5%, transparent); } }
 .gift.add:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 .gift.add.busy { opacity: 0.7; cursor: progress; }
 .plus { font-size: 2rem; line-height: 1; }
 
 /* Share */
-.guest-links { border-color: color-mix(in srgb, var(--c-secondary) 25%, var(--c-line-soft)); }
+.guest-links { border-color: color-mix(in oklab, var(--c-secondary) 25%, var(--c-line-soft)); }
 .link-maker { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr) 9rem; }
-.link-out { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface)); }
+.link-out { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: color-mix(in oklab, var(--c-accent) 12%, var(--c-surface)); }
 .link-out.empty code { color: var(--c-muted); }
-.link-out code { flex: 1 1 16rem; overflow-wrap: anywhere; font-size: 0.92rem; }
+.link-out code { flex: 1 1 16rem; min-width: 0; display: flex; white-space: pre; font-size: 0.92rem; }
+.link-out code span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .cmd { margin: 0; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--c-text); color: var(--c-bg); font-size: 0.85rem; overflow-x: auto; }
 </style>

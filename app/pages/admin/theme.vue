@@ -139,12 +139,12 @@ async function save(e?: Event) {
       <p class="muted small">{{ t('admin.settings.preview') }}</p>
       <div class="preview" :style="{ background: theme.background, color: theme.text }">
         <span class="p-rule" :style="{ background: theme.accent }" />
-        <p class="p-invite" :style="{ color: theme.accent }">{{ t('admin.look.sampleInvite') }}</p>
+        <p class="p-invite" :style="{ color: `color-mix(in oklab, ${theme.accent} 50%, ${theme.text})` }">{{ t('admin.look.sampleInvite') }}</p>
         <p class="p-names" :style="{ fontFamily: headingFamily, color: theme.secondary }">{{ wedding?.names.en.partner1 }} &amp; {{ wedding?.names.en.partner2 }}</p>
         <p class="p-text">{{ t('admin.look.sampleText') }}</p>
-        <span class="p-btn" :style="{ background: theme.secondary }">RSVP</span>
+        <span class="p-btn" :style="{ background: theme.secondary }"><abbr class="caps">RSVP</abbr></span>
         <span class="p-band" :style="{ background: theme.tertiary }">
-          <span v-for="n in ['12', '08', '30']" :key="n" class="tabular" :style="{ color: theme.accent }">{{ n }}</span>
+          <span v-for="n in ['12', '08', '30']" :key="n" class="tabular">{{ n }}</span>
         </span>
       </div>
     </aside>
@@ -166,7 +166,7 @@ async function save(e?: Event) {
 
 .swatches { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
 .swatch { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2); border: 1px solid var(--c-line-soft); border-radius: var(--radius); cursor: pointer; }
-.swatch:hover { border-color: var(--c-line); }
+@media (hover: hover) { .swatch:hover { border-color: var(--c-line); } }
 .swatch input[type='color'] { flex: none; width: 3rem; height: 3rem; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
 .swatch input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
 .swatch input[type='color']::-webkit-color-swatch { border: 1px solid var(--c-line); border-radius: 50%; }
@@ -190,5 +190,5 @@ async function save(e?: Event) {
 .p-names { font-size: 1.9rem; line-height: 1.15; text-wrap: balance; }
 .p-text { font-size: 0.9rem; max-width: 15rem; }
 .p-btn { padding: 0.5rem 1.4rem; border-radius: 999px; color: #fff; font-size: 0.85rem; font-weight: 600; }
-.p-band { display: flex; justify-content: center; gap: var(--space-4); align-self: stretch; margin-top: var(--space-3); padding: var(--space-3); font-size: 1.4rem; font-weight: 600; }
+.p-band { display: flex; justify-content: center; gap: var(--space-4); align-self: stretch; margin-top: var(--space-3); padding: var(--space-3); color: #fff; font-size: 1.4rem; font-weight: 600; }
 </style>

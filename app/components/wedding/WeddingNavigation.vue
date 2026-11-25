@@ -25,7 +25,7 @@ const hidden = useBarsHidden()
   top: 0;
   z-index: var(--z-nav);
   padding-top: env(safe-area-inset-top);
-  background: color-mix(in srgb, var(--c-bg) 90%, transparent);
+  background: color-mix(in oklab, var(--c-bg) 90%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--c-line-soft);
@@ -34,7 +34,8 @@ const hidden = useBarsHidden()
 .nav.tucked { transform: translateY(-100%); }
 @media (prefers-reduced-motion: reduce) { .nav { transition: none; } }
 .nav-inner { display: flex; align-items: center; gap: var(--space-4); min-height: 3.75rem; }
-.mono { margin-right: auto; font-family: var(--font-serif); font-size: 1.15rem; color: var(--c-accent-ink); text-decoration: none; white-space: nowrap; }
+.mono { margin-right: auto; font-family: var(--font-serif); font-size: 1.15rem; color: var(--c-accent-ink); text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; transition: scale 0.12s var(--ease-out); }
+.mono:active { scale: 0.97; }
 /* Reading progress, driven by page scroll where supported */
 .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--c-accent); transform: scaleX(0); transform-origin: left; }
 @supports (animation-timeline: scroll()) {

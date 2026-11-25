@@ -76,7 +76,7 @@ const units = computed(() => {
           <!-- One flip per digit, so only the digit that changes moves (52 → 51 flips just the 2) -->
           <span class="num tabular">
             <span v-for="(c, i) in u.value" :key="`${u.value.length}-${i}`" class="digit">
-              <Transition name="flip" mode="out-in">
+              <Transition name="flip">
                 <span :key="c" class="digit-face">{{ c }}</span>
               </Transition>
             </span>
@@ -116,18 +116,19 @@ const units = computed(() => {
 
 <style scoped>
 .countdown { padding-block: var(--space-7); background: var(--c-tertiary); color: var(--c-bg); }
-.section-icon { color: color-mix(in srgb, var(--c-accent) 70%, #fff); }
-.title { text-align: center; font-size: 1.5rem; margin-bottom: var(--space-5); color: color-mix(in srgb, var(--c-accent) 55%, #fff); }
+.section-icon { color: color-mix(in oklab, var(--c-accent) 70%, #fff); }
+.title { text-align: center; font-size: 1.5rem; margin-bottom: var(--space-5); color: color-mix(in oklab, var(--c-accent) 55%, #fff); }
 .units { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); max-width: 30rem; margin-inline: auto; }
 .unit {
   display: flex; flex-direction: column; align-items: center;
   padding: var(--space-3) var(--space-1);
-  border: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent);
+  border: 1px solid color-mix(in oklab, var(--c-accent) 45%, transparent);
   border-radius: var(--radius);
 }
 .num { display: flex; justify-content: center; font-family: var(--font-serif); font-variant-numeric: lining-nums tabular-nums; font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 1.1; color: #fff; perspective: 300px; }
-.digit { display: inline-block; min-width: 0.6em; text-align: center; }
-.digit-face { display: inline-block; transform-origin: 50% 50%; backface-visibility: hidden; }
+.digit { display: inline-grid; min-width: 0.6em; text-align: center; }
+/* Old and new share one cell, so they turn over together */
+.digit-face { grid-area: 1 / 1; display: inline-block; transform-origin: 50% 50%; backface-visibility: hidden; }
 .lbl { font-size: 0.75rem; letter-spacing: 0.08em; opacity: 0.85; }
 .flip-leave-active { transition: transform 0.18s ease-in, opacity 0.18s ease-in; }
 .flip-enter-active { transition: transform 0.22s var(--ease-out), opacity 0.22s var(--ease-out); }
@@ -143,11 +144,11 @@ const units = computed(() => {
 .when { text-align: center; margin: calc(-1 * var(--space-3)) 0 var(--space-5); font-family: var(--font-serif); font-size: 1.15rem; }
 
 .calendar { margin: var(--space-6) auto 0; border-collapse: separate; border-spacing: 4px; text-align: center; }
-.calendar caption { margin-bottom: var(--space-2); font-family: var(--font-serif); font-size: 1.3rem; color: color-mix(in srgb, var(--c-accent) 55%, #fff); }
+.calendar caption { margin-bottom: var(--space-2); font-family: var(--font-serif); font-size: 1.3rem; color: color-mix(in oklab, var(--c-accent) 55%, #fff); }
 .calendar th { font-size: 0.7rem; white-space: nowrap; font-weight: 500; opacity: 0.7; padding-bottom: var(--space-1); }
 .calendar td { width: 2.6rem; height: 2.6rem; padding: 0; }
 .day { position: relative; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin: auto; border-radius: 50%; font-size: 0.95rem; }
-.day.event { border: 1px solid color-mix(in srgb, var(--c-accent) 75%, transparent); }
+.day.event { border: 1px solid color-mix(in oklab, var(--c-accent) 75%, transparent); }
 /* The big day is a filled heart (a mask, so it takes the theme colour), with the date on top */
 .countdown { --heart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21.5S1 15 1 7.6C1 4 3.6 1.2 6.9 1.2c2.2 0 4 1.2 5.1 3 1.1-1.8 2.9-3 5.1-3C20.4 1.2 23 4 23 7.6 23 15 12 21.5 12 21.5z'/%3E%3C/svg%3E"); }
 .day.wedding { isolation: isolate; padding-bottom: 0.2em; color: var(--c-tertiary); font-weight: 700; }
@@ -168,8 +169,8 @@ const units = computed(() => {
 .key.wedding { border-radius: 0; background: var(--c-accent); mask: var(--heart) center / contain no-repeat; }
 .key.event { border: 1px solid var(--c-accent); }
 .add-cal { margin-top: var(--space-5); text-align: center; }
-.add-cal .btn { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--c-accent); color: color-mix(in srgb, var(--c-accent) 55%, #fff); background: transparent; }
-.add-cal .btn:hover { background: color-mix(in srgb, var(--c-accent) 18%, transparent); }
+.add-cal .btn { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--c-accent); color: color-mix(in oklab, var(--c-accent) 55%, #fff); background: transparent; }
+@media (hover: hover) { .add-cal .btn:hover { background: color-mix(in oklab, var(--c-accent) 18%, transparent); } }
 @media (min-width: 760px) { .calendar td { width: 3.2rem; height: 3rem; } .day { width: 2.8rem; height: 2.8rem; } }
 
 /* Ruby style: a red embossed panel with a stadium-shaped foot, big white digits separated by colons */
@@ -187,7 +188,7 @@ const units = computed(() => {
 .style-ruby .day.wedding { color: var(--c-secondary); }
 .style-ruby .day.wedding::before, .style-ruby .key.wedding { background: #fff; }
 .style-ruby .add-cal .btn { background: #fff; border-color: #fff; color: var(--c-secondary); }
-.style-ruby .add-cal .btn:hover { background: #fff; }
+@media (hover: hover) { .style-ruby .add-cal .btn:hover { background: #fff; } }
 
 /* Floral style: on the paper, large lavender digits separated by colons */
 .style-floral .countdown { background: transparent; color: var(--c-text); }
@@ -199,14 +200,14 @@ const units = computed(() => {
 /* Colon centred in the gap and on the digits' line */
 .style-floral .unit:not(:last-child)::after {
   content: ':'; position: absolute; right: -0.5rem; top: var(--space-3); translate: 50% 0;
-  font-family: var(--font-serif); font-size: clamp(2.2rem, 10vw, 3.2rem); line-height: 1.1; color: var(--c-accent);
+  font-family: var(--font-serif); font-size: clamp(2.2rem, 10vw, 3.2rem); line-height: 1.1; color: var(--c-accent-large);
 }
-.style-floral .num { color: var(--c-accent); font-size: clamp(2.2rem, 10vw, 3.2rem); }
+.style-floral .num { color: var(--c-accent-large); font-size: clamp(2.2rem, 10vw, 3.2rem); }
 .style-floral .lbl { color: var(--c-text); opacity: 0.75; }
 .style-floral .calendar caption { color: var(--c-secondary); }
 .style-floral .day.wedding { color: #fff; }
 .style-floral .day.wedding::before { background: var(--c-secondary); }
 .style-floral .key.wedding { background: var(--c-secondary); }
 .style-floral .add-cal .btn { border-color: var(--c-secondary); color: var(--c-secondary); }
-.style-floral .add-cal .btn:hover { background: color-mix(in srgb, var(--c-secondary) 10%, transparent); }
+@media (hover: hover) { .style-floral .add-cal .btn:hover { background: color-mix(in oklab, var(--c-secondary) 10%, transparent); } }
 </style>

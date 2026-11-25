@@ -183,9 +183,9 @@ const art = computed(() => {
 })
 // Petal colours per rose tint: deep at the centre, light at the edges
 const TINTS: Record<Tint, [string, string, string, string]> = {
-  deep: ['color-mix(in srgb, var(--c-accent) 55%, #2a1846)', 'var(--c-accent)', 'color-mix(in srgb, var(--c-accent) 70%, #fff)', 'color-mix(in srgb, var(--c-accent) 40%, #fff)'],
-  blush: ['color-mix(in srgb, var(--c-accent) 50%, #9c3d63)', 'color-mix(in srgb, var(--c-accent) 55%, #e59bb4)', 'color-mix(in srgb, var(--c-accent) 30%, #f8d3df)', '#fbeef3'],
-  white: ['color-mix(in srgb, var(--c-accent) 60%, #fff)', 'color-mix(in srgb, var(--c-accent) 20%, #fff)', '#fbf9fd', '#fffefe'],
+  deep: ['color-mix(in oklab, var(--c-accent) 55%, #2a1846)', 'var(--c-accent)', 'color-mix(in oklab, var(--c-accent) 70%, #fff)', 'color-mix(in oklab, var(--c-accent) 40%, #fff)'],
+  blush: ['color-mix(in oklab, var(--c-accent) 50%, #9c3d63)', 'color-mix(in oklab, var(--c-accent) 55%, #e59bb4)', 'color-mix(in oklab, var(--c-accent) 30%, #f8d3df)', '#fbeef3'],
+  white: ['color-mix(in oklab, var(--c-accent) 60%, #fff)', 'color-mix(in oklab, var(--c-accent) 20%, #fff)', '#fbf9fd', '#fffefe'],
 }
 // Mirrored inside the drawing, so the element's own transform stays free for the tilt
 const mirror = computed(() => (props.flip ? `matrix(-1 0 0 1 ${art.value.box.split(' ')[2]} 0)` : undefined))
@@ -199,9 +199,9 @@ const breeze = computed(() => ({ '--dur': `${7 + ((props.seed * 1.7) % 3)}s`, '-
       <!-- No SVG filters here: the flowers animate, and iPhone Safari redraws a filter on every frame, which stutters.
            The wash is a soft-edged gradient instead of a blur. -->
       <radialGradient :id="`${uid}-wash`">
-        <stop offset="0" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)' }" />
-        <stop offset="0.6" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)', stopOpacity: 0.5 }" />
-        <stop offset="1" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)', stopOpacity: 0 }" />
+        <stop offset="0" :style="{ stopColor: 'color-mix(in oklab, var(--c-accent) 45%, #fff)' }" />
+        <stop offset="0.6" :style="{ stopColor: 'color-mix(in oklab, var(--c-accent) 45%, #fff)', stopOpacity: 0.5 }" />
+        <stop offset="1" :style="{ stopColor: 'color-mix(in oklab, var(--c-accent) 45%, #fff)', stopOpacity: 0 }" />
       </radialGradient>
       <!-- Petals are drawn rotated around each flower's centre, so the centre is (0,0) in their space -->
       <template v-for="(f, i) in art.flowers" :key="`g${i}`">
@@ -212,7 +212,7 @@ const breeze = computed(() => ({ '--dur': `${7 + ((props.seed * 1.7) % 3)}s`, '-
           <stop offset="1" :style="{ stopColor: TINTS[f.tint][3] }" />
         </radialGradient>
         <radialGradient v-else-if="f.kind === 'anemone'" :id="`${uid}-f${i}`" gradientUnits="userSpaceOnUse" cx="0" cy="0" :r="f.r">
-          <stop offset="0.2" :style="{ stopColor: 'color-mix(in srgb, var(--c-accent) 45%, #fff)' }" />
+          <stop offset="0.2" :style="{ stopColor: 'color-mix(in oklab, var(--c-accent) 45%, #fff)' }" />
           <stop offset="1" stop-color="#fdfbff" />
         </radialGradient>
       </template>
@@ -252,7 +252,7 @@ const breeze = computed(() => ({ '--dur': `${7 + ((props.seed * 1.7) % 3)}s`, '-
           <path :d="v.stem" stroke="#738a6c" stroke-width="1" fill="none" />
           <ellipse
             v-for="(b, j) in v.buds" :key="j" :cx="b.x" :cy="b.y" rx="2.6" ry="4.4" :transform="`rotate(${b.a} ${b.x} ${b.y})`"
-            :style="{ fill: 'color-mix(in srgb, var(--c-accent) 80%, #3b2466)' }" opacity="0.85"
+            :style="{ fill: 'color-mix(in oklab, var(--c-accent) 80%, #3b2466)' }" opacity="0.85"
           />
         </g>
       </g>
@@ -262,17 +262,17 @@ const breeze = computed(() => ({ '--dur': `${7 + ((props.seed * 1.7) % 3)}s`, '-
         <template v-if="f.kind === 'rose'">
           <path
             v-for="(p, j) in f.petals" :key="j" :d="p.d" :transform="p.t" :fill="`url(#${uid}-f${i})`"
-            :style="{ stroke: 'color-mix(in srgb, var(--c-accent) 55%, #2a1846)' }" stroke-width="0.7" :stroke-opacity="0.3 + p.ring * 0.1" :opacity="0.9 + p.ring * 0.03"
+            :style="{ stroke: 'color-mix(in oklab, var(--c-accent) 55%, #2a1846)' }" stroke-width="0.7" :stroke-opacity="0.3 + p.ring * 0.1" :opacity="0.9 + p.ring * 0.03"
           />
-          <path :d="f.core" fill="none" :style="{ stroke: 'color-mix(in srgb, var(--c-accent) 55%, #2a1846)' }" stroke-width="1.1" stroke-linecap="round" opacity="0.7" />
+          <path :d="f.core" fill="none" :style="{ stroke: 'color-mix(in oklab, var(--c-accent) 55%, #2a1846)' }" stroke-width="1.1" stroke-linecap="round" opacity="0.7" />
         </template>
         <template v-else-if="f.kind === 'anemone'">
-          <path v-for="(t, j) in f.petals" :key="j" :d="f.d" :transform="t" :fill="`url(#${uid}-f${i})`" :style="{ stroke: 'color-mix(in srgb, var(--c-accent) 50%, #fff)' }" stroke-width="0.6" />
+          <path v-for="(t, j) in f.petals" :key="j" :d="f.d" :transform="t" :fill="`url(#${uid}-f${i})`" :style="{ stroke: 'color-mix(in oklab, var(--c-accent) 50%, #fff)' }" stroke-width="0.6" />
           <circle v-for="(s, j) in f.stamens" :key="`s${j}`" :cx="s[0]" :cy="s[1]" r="1.1" fill="#3b2f52" />
           <circle :cx="f.cx" :cy="f.cy" :r="f.r * 0.2" fill="#2f2545" />
         </template>
         <template v-else>
-          <circle v-for="(p, j) in f.petals" :key="j" :cx="p[0]" :cy="p[1]" :r="f.r * 0.45" fill="#fcf9ff" :style="{ stroke: 'color-mix(in srgb, var(--c-accent) 55%, #fff)' }" stroke-width="0.6" />
+          <circle v-for="(p, j) in f.petals" :key="j" :cx="p[0]" :cy="p[1]" :r="f.r * 0.45" fill="#fcf9ff" :style="{ stroke: 'color-mix(in oklab, var(--c-accent) 55%, #fff)' }" stroke-width="0.6" />
           <circle :cx="f.cx" :cy="f.cy" :r="f.r * 0.2" fill="#d9b867" />
         </template>
       </g>

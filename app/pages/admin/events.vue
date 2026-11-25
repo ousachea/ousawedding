@@ -27,14 +27,20 @@ const blank = () => ({
 })
 type Draft = ReturnType<typeof blank>
 const editing = ref<{ id: string | null, data: Draft } | null>(null)
+// Apart from `editing`, so the form stays filled while the dialog closes
+const showing = ref(false)
 const saving = ref(false)
 const endError = computed(() => !!editing.value && editing.value.data.end < editing.value.data.start)
 
-const openNew = () => (editing.value = { id: null, data: blank() })
+function openNew() {
+  editing.value = { id: null, data: blank() }
+  showing.value = true
+}
 const openEdit = (item: WeddingEvent) => {
   // structuredClone can't copy Vue's reactive proxies
   const e = toRaw(item)
   editing.value = { id: e.id, data: structuredClone({ title: e.title, description: e.description, venue: e.venue, address: e.address, start: e.start, end: e.end, mapUrl: e.mapUrl, imageUrl: e.imageUrl, icon: e.icon ?? 'calendar' }) }
+  showing.value = true
 }
 
 async function save() {
@@ -43,7 +49,7 @@ async function save() {
   try {
     const { id: eventId, data } = editing.value
     await api(eventId ? `${base.value}/events/${eventId}` : `${base.value}/events`, { method: eventId ? 'PATCH' : 'POST', body: data })
-    editing.value = null
+    showing.value = false
     push(t('common.saved'))
     await load()
   } finally {
@@ -128,8 +134,8 @@ const L = useLocalized()
     <div class="toolbar-row">
       <p v-if="wedding" class="muted small">{{ t('admin.events.timezone', { tz: wedding.timezone }) }}<template v-if="events.length > 1"> {{ t('admin.events.orderHint') }}</template></p>
       <div class="page-actions">
-        <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} ↗</a>
-        <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
+        <a v-if="wedding" :href="`${localePath(`/${wedding.slug}`)}#schedule`" target="wedding-invitation" class="btn btn-ghost btn-sm">{{ t('admin.invitations.preview') }} <WeddingIcon name="out" /></a>
+        <button type="button" class="btn btn-primary" @click="openNew"><WeddingIcon name="plus" /> {{ t('admin.events.add') }}</button>
       </div>
     </div>
 
@@ -141,7 +147,7 @@ const L = useLocalized()
     <p v-if="loading && !events.length" class="muted">{{ t('common.loading') }}</p>
     <div v-else-if="!events.length" class="panel empty-state">
       <p>{{ t('admin.events.empty') }}</p>
-      <button type="button" class="btn btn-primary" @click="openNew">+ {{ t('admin.events.add') }}</button>
+      <button type="button" class="btn btn-primary" @click="openNew"><WeddingIcon name="plus" /> {{ t('admin.events.add') }}</button>
     </div>
     <TransitionGroup v-else tag="ol" name="reorder" class="timeline">
       <li v-for="(e, i) in events" :key="e.id" class="slot">
@@ -151,7 +157,7 @@ const L = useLocalized()
           <span class="mark" aria-hidden="true"><WeddingIcon :name="e.icon ?? 'calendar'" /></span>
           <div class="body">
             <p class="when tabular">{{ timeRange(e) }}</p>
-            <h3 class="title">{{ L(e.title) }}</h3>
+            <h3 class="title clamp">{{ L(e.title) }}</h3>
             <p v-if="L(e.venue) || L(e.address)" class="muted small place">{{ L(e.venue) }}<template v-if="L(e.venue) && L(e.address)"> · </template>{{ L(e.address) }}</p>
           </div>
           <div class="row-actions">
@@ -170,7 +176,7 @@ const L = useLocalized()
       <div><button type="submit" class="btn btn-outline">{{ t('common.save') }}</button></div>
     </form>
 
-    <AdminModal :open="!!editing" wide :title="editing?.id ? t('admin.events.editTitle') : t('admin.events.addTitle')" @close="editing = null">
+    <AdminModal :open="showing" wide :title="editing?.id ? t('admin.events.editTitle') : t('admin.events.addTitle')" @close="showing = false">
       <form v-if="editing" id="event-form" class="form-grid" @submit.prevent="save">
         <fieldset class="icons">
           <legend>{{ t('admin.events.icon') }}</legend>
@@ -193,7 +199,7 @@ const L = useLocalized()
         </div>
         <AdminLocalizedField v-model="editing.data.venue" :label="t('admin.events.venue')" />
         <AdminLocalizedField v-model="editing.data.address" :label="t('admin.events.address')" multiline />
-        <AdminLocalizedField v-model="editing.data.description" :label="t('admin.events.description')" multiline />
+        <AdminLocalizedField v-model="editing.data.description" :label="t('admin.events.description')" rich />
         <div class="form-grid cols-2">
           <div class="field">
             <label for="e-map">{{ t('admin.events.mapUrl') }}</label>
@@ -207,7 +213,7 @@ const L = useLocalized()
         </div>
       </form>
       <template #footer>
-        <button type="button" class="btn btn-ghost" @click="editing = null">{{ t('common.cancel') }}</button>
+        <button type="button" class="btn btn-ghost" @click="showing = false">{{ t('common.cancel') }}</button>
         <button type="submit" form="event-form" class="btn btn-primary" :disabled="saving || endError">{{ saving ? t('common.saving') : t('common.save') }}</button>
       </template>
     </AdminModal>
@@ -221,7 +227,7 @@ const L = useLocalized()
 .notice {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4);
   padding: var(--space-3) var(--space-4); border-radius: var(--radius);
-  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface)); border: 1px solid color-mix(in srgb, var(--c-accent) 35%, transparent);
+  background: color-mix(in oklab, var(--c-accent) 12%, var(--c-surface)); border: 1px solid color-mix(in oklab, var(--c-accent) 35%, transparent);
 }
 .notice p { flex: 1 1 16rem; }
 
@@ -236,11 +242,11 @@ const L = useLocalized()
   transition: box-shadow 0.3s, border-color 0.3s;
 }
 /* The item just moved keeps a ring for a moment, so the eye can follow it */
-.event.moved { border-color: var(--c-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-secondary) 18%, transparent); }
+.event.moved { border-color: var(--c-secondary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-secondary) 18%, transparent); }
 
 .mark {
   display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border-radius: 50%;
-  font-size: 1.3rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-accent) 16%, var(--c-surface));
+  font-size: 1.3rem; color: var(--c-secondary); background: color-mix(in oklab, var(--c-accent) 16%, var(--c-surface));
 }
 .body { min-width: 0; }
 .when { font-size: 0.9rem; font-weight: 600; color: var(--c-accent-ink); }
@@ -254,13 +260,13 @@ const L = useLocalized()
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .reorder-move { transition: transform 0.3s var(--ease-out); }
+  .reorder-move { transition: transform 0.3s var(--ease-in-out); }
 }
 
 .info { max-width: 56rem; }
 .icons { display: flex; flex-wrap: wrap; gap: var(--space-1); border: 0; padding: 0; margin: 0; }
 .icons legend { font-size: 0.9rem; font-weight: 500; padding: 0; margin-bottom: var(--space-1); }
 .icon-choice { display: grid; place-items: center; width: 3rem; height: 3rem; border: 1px solid var(--c-line); border-radius: var(--radius-sm); cursor: pointer; color: var(--c-accent-ink); font-size: 1.2rem; }
-.icon-choice:has(input:checked) { border-color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 10%, transparent); color: var(--c-secondary); }
+.icon-choice:has(input:checked) { border-color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 10%, transparent); color: var(--c-secondary); }
 .icon-choice:has(input:focus-visible) { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 </style>

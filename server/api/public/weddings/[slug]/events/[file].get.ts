@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       `DTEND:${stamp(item.end)}`,
       `SUMMARY:${esc(`${item.title[locale]} · ${names.partner1} & ${names.partner2}`)}`,
       `LOCATION:${esc([item.venue[locale], item.address[locale]].filter(Boolean).join(', '))}`,
-      `DESCRIPTION:${esc([item.description[locale], item.mapUrl, page].filter(Boolean).join('\n'))}`,
+      `DESCRIPTION:${esc([plainText(item.description[locale]), item.mapUrl, page].filter(Boolean).join('\n'))}`,
       'END:VEVENT',
     ]),
     'END:VCALENDAR',

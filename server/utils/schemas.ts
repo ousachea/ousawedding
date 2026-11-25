@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 const text = (max: number) => z.string().trim().max(max)
 const localized = (max: number) => z.object({ km: text(max), en: text(max) })
+// Formatted text: the limit leaves room for the tags
+const formatted = text(4000).transform(richText)
 const localDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Use YYYY-MM-DDTHH:mm')
 const url = z.union([z.literal(''), z.string().trim().max(2000).refine(v => /^https?:\/\//.test(v) || v.startsWith('/'), 'Must be a URL')])
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/)
@@ -70,7 +72,7 @@ export const weddingSchema = z.object({
 
 export const eventSchema = z.object({
   title: localized(120),
-  description: localized(1000),
+  description: z.object({ km: formatted, en: formatted }),
   venue: localized(200),
   address: localized(400),
   start: localDateTime,

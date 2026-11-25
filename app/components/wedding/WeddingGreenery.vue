@@ -54,4 +54,9 @@ const uid = useId()
 .layer { position: absolute; inset: 0; }
 .vine { position: absolute; top: 0; height: 100%; }
 .vine.right { scale: -1 1; }
+/* Phones have no margins to spare: only the near vines, gone before they reach the words */
+@media (max-width: 760px) {
+  .layer:first-child { display: none; }
+  .vine { mask: linear-gradient(90deg, #000 20%, transparent 50%); }
+}
 </style>

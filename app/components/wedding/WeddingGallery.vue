@@ -10,9 +10,21 @@ const current = computed(() => props.images[index.value])
 const altFor = (img: PublicWedding['gallery'][number], i: number) =>
   L(img.alt) || L(img.caption) || t('gallery.alt', { names: props.names, n: i + 1, total: props.images.length })
 
+const morph = useMorph()
+const centre = () => stage.value?.querySelector<HTMLElement>('.slide.current img')
+const shownPhoto = () => dialog.value?.querySelector<HTMLElement>('.viewer-photo img')
 function open(i: number) {
-  index.value = i
-  dialog.value?.showModal()
+  morph(centre, () => {
+    index.value = i
+    dialog.value?.showModal()
+  }, shownPhoto, 300)
+}
+// The photo being looked at goes back to the middle of the carousel, so it has somewhere to shrink back to
+function close() {
+  morph(shownPhoto, () => {
+    at.value = index.value
+    dialog.value?.close()
+  }, centre, 240)
 }
 const go = (step: number) => {
   index.value = (index.value + step + props.images.length) % props.images.length
@@ -32,11 +44,12 @@ function onViewStart(e: PointerEvent) {
   ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
 }
 function onViewMove(e: PointerEvent) {
-  if (viewX !== null && props.images.length > 1) viewDrag.value = e.clientX - viewX
+  // Follows the finger most of the way across, then resists; a lone photo resists at once
+  if (viewX !== null) viewDrag.value = rubber(e.clientX - viewX, props.images.length > 1 ? innerWidth * 0.6 : 0, 80)
 }
 function onViewEnd() {
   if (viewX === null) return
-  if (Math.abs(viewDrag.value) > 50) go(viewDrag.value < 0 ? 1 : -1)
+  if (props.images.length > 1 && Math.abs(viewDrag.value) > 50) go(viewDrag.value < 0 ? 1 : -1)
   viewX = null
   viewDrag.value = 0
 }
@@ -54,6 +67,9 @@ function offset(i: number) {
   return d
 }
 const step = (by: number) => (at.value = (((at.value + by) % count.value) + count.value) % count.value)
+// Past `max`, a drag gives less and less, up to `give` more
+const rubber = (v: number, max: number, give: number) =>
+  Math.abs(v) <= max ? v : Math.sign(v) * (max + give * (1 - 1 / ((Math.abs(v) - max) / give + 1)))
 // Each photo's place, set as the final transform rather than computed in CSS from a variable: Safari
 // can skip the transition when only a custom property changes. Photos further round wait hidden behind.
 // Value at x places from the middle, blending between whole places so photos follow a drag smoothly
@@ -79,6 +95,7 @@ function place(i: number) {
 function tap(i: number) {
   hold()
   if (dragged) return
+  flung.value = false
   if (offset(i) === 0) open(i)
   else step(offset(i))
 }
@@ -87,6 +104,8 @@ function tap(i: number) {
 // middle, then settle on release. Up and down still scrolls the page (touch-action: pan-y).
 // drag: how many places the photos have been pulled (negative = towards the next photo)
 const drag = ref(0)
+// After a swipe the photos coast to a stop (ease-out); moved by a tap or on their own they ease in and out
+const flung = ref(false)
 let swipeX: number | null = null
 let swipeY = 0
 let placeWidth = 1
@@ -106,13 +125,14 @@ function onSwipeMove(e: PointerEvent) {
     dragged = true
     ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
   }
-  if (dragged) drag.value = Math.max(-2, Math.min(2, dx / placeWidth))
+  if (dragged) drag.value = rubber(dx / placeWidth, loops.value ? 2 : 0, 0.35)
 }
 function onSwipeEnd() {
   if (swipeX === null) return
   // Past a third of a place, move on: by one, or two for a long drag
   const p = drag.value
-  if (dragged && Math.abs(p) > 0.3) step(-Math.sign(p) * Math.max(1, Math.round(Math.abs(p))))
+  flung.value = dragged
+  if (loops.value && dragged && Math.abs(p) > 0.3) step(-Math.sign(p) * Math.max(1, Math.round(Math.abs(p))))
   swipeX = null
   drag.value = 0
 }
@@ -133,7 +153,10 @@ onMounted(() => {
   seen = new IntersectionObserver(([en]) => (onScreen = !!en?.isIntersecting))
   if (stage.value) seen.observe(stage.value)
   autoplay = setInterval(() => {
-    if (onScreen && !document.hidden && Date.now() > holdUntil && !dialog.value?.open) step(1)
+    if (onScreen && !document.hidden && Date.now() > holdUntil && !dialog.value?.open) {
+      flung.value = false
+      step(1)
+    }
   }, 3500)
 })
 onBeforeUnmount(() => {
@@ -152,7 +175,7 @@ onBeforeUnmount(() => {
     <!-- Full width, outside the container, with room for the photos either side -->
     <div v-reveal="150" class="carousel" @mouseenter="hold" @focusin="hold">
       <ul
-        ref="stage" class="stage" :class="{ dragging: drag !== 0 }" :aria-label="t('gallery.title')"
+        ref="stage" class="stage" :class="{ dragging: drag !== 0, flung }" :aria-label="t('gallery.title')"
         @pointerdown="onSwipeStart" @pointermove="onSwipeMove" @pointerup="onSwipeEnd" @pointercancel="onSwipeEnd" @dragstart.prevent
       >
         <li
@@ -179,28 +202,29 @@ onBeforeUnmount(() => {
               >
             </span>
           </button>
-          <p v-if="L(img.caption)" class="caption">{{ L(img.caption) }}</p>
+          <p v-if="L(img.caption)" class="caption clamp">{{ L(img.caption) }}</p>
         </li>
       </ul>
     </div>
 
-    <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @click.self="dialog?.close()">
+    <dialog ref="dialog" class="viewer" :aria-label="t('gallery.viewer')" @keydown="onKey" @cancel.prevent="close" @click.self="close">
       <div
         v-if="current" class="viewer-inner" :class="{ dragging: viewDrag !== 0 }"
         @pointerdown="onViewStart" @pointermove="onViewMove" @pointerup="onViewEnd" @pointercancel="onViewEnd" @dragstart.prevent
       >
-        <Transition name="photo" mode="out-in">
-          <img :key="current.id" :style="{ translate: `${viewDrag}px 0` }" :src="current.url" :alt="altFor(current, index)" :width="current.width" :height="current.height" loading="lazy" decoding="async">
-        </Transition>
+        <!-- Old and new share one cell, so they cross-fade; the small photo shows until the full one has loaded -->
+        <div class="viewer-photo"><Transition name="photo">
+          <img :key="current.id" :style="{ translate: `${viewDrag}px 0`, backgroundImage: current.thumbUrl ? `url('${current.thumbUrl}')` : undefined }" :src="current.url" :alt="altFor(current, index)" :width="current.width" :height="current.height" loading="lazy" decoding="async">
+        </Transition></div>
         <p class="viewer-caption">
           <span class="tabular">{{ t('gallery.counter', { n: index + 1, total: images.length }) }}</span>
           <span v-if="L(current.caption)"> · {{ L(current.caption) }}</span>
         </p>
       </div>
-      <button type="button" class="nav-btn close" :aria-label="t('common.close')" @click="dialog?.close()">✕</button>
+      <button type="button" class="nav-btn close" :aria-label="t('common.close')" @click="close"><WeddingIcon name="close" /></button>
       <template v-if="images.length > 1">
-        <button type="button" class="nav-btn prev" :aria-label="t('common.previous')" @click="go(-1)">‹</button>
-        <button type="button" class="nav-btn next" :aria-label="t('common.next')" @click="go(1)">›</button>
+        <button type="button" class="nav-btn prev" :aria-label="t('common.previous')" @click="go(-1)"><WeddingIcon name="left" /></button>
+        <button type="button" class="nav-btn next" :aria-label="t('common.next')" @click="go(1)"><WeddingIcon name="right" /></button>
       </template>
     </dialog>
   </section>
@@ -230,6 +254,7 @@ onBeforeUnmount(() => {
 }
 /* While dragging, photos track the pointer directly; on release they animate to their places */
 .stage.dragging { cursor: grabbing; }
+.stage.flung .slide { transition-timing-function: var(--ease-out), var(--ease-out), linear; }
 .stage.dragging .slide, .stage.dragging .thumb { transition: none; }
 /* Sized by the screen's height too, so a whole photo (3:4) and its frame fit on screen.
    Position, size, order and opacity come from place(). Only transform and opacity animate (smooth on
@@ -238,7 +263,7 @@ onBeforeUnmount(() => {
 .slide {
   grid-area: 1 / 1;
   width: min(50vw, 18rem, 34svh);
-  transition: transform 0.6s var(--ease-out), opacity 0.6s var(--ease-out), z-index 0s linear 0.2s;
+  transition: transform 0.4s var(--ease-in-out), opacity 0.4s var(--ease-in-out), z-index 0s linear 0.2s;
   will-change: transform, opacity;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
@@ -248,16 +273,17 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
 
 .thumb { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); cursor: zoom-in; background: none; }
+.thumb:active .pic { scale: 0.97; }
 /* The photo is clipped inside its frame, so the hover zoom stays within it */
-.pic { display: block; overflow: hidden; border-radius: calc(var(--radius) - 4px); background: var(--c-line-soft); }
+.pic { transition: scale 0.15s var(--ease-out); display: block; overflow: hidden; border-radius: calc(var(--radius) - 8px); background: var(--c-line-soft); }
 
 /* Classic frame: a light mat with a gold edge, an inner gold line and gold corner brackets */
 .style-classic .thumb {
   position: relative; padding: 7px;
-  background: var(--c-surface); border: 1px solid color-mix(in srgb, var(--c-accent) 60%, transparent);
+  background: var(--c-surface); border: 1px solid color-mix(in oklab, var(--c-accent) 60%, transparent);
   box-shadow: var(--shadow-sm);
 }
-.style-classic .pic { outline: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent); outline-offset: 2px; }
+.style-classic .pic { outline: 1px solid color-mix(in oklab, var(--c-accent) 45%, transparent); outline-offset: 2px; }
 .style-classic .thumb::after {
   --c: var(--c-accent); --l: 16px; --w: 2px;
   content: ''; position: absolute; inset: -4px; pointer-events: none;
@@ -306,16 +332,22 @@ onBeforeUnmount(() => {
 .viewer-inner img { transition: translate 0.25s var(--ease-out); }
 .viewer-inner.dragging img { transition: none; }
 .viewer-inner img { max-height: 78dvh; width: auto; max-width: min(100%, 1200px); object-fit: contain; border-radius: var(--radius-sm); }
-.viewer-inner .photo-enter-active, .viewer-inner .photo-leave-active { transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out); }
-.photo-enter-from { opacity: 0; transform: scale(0.98); }
+.viewer-photo { display: grid; place-items: center; }
+.viewer-photo img { grid-area: 1 / 1; background: center / cover; }
+.viewer-inner .photo-enter-active { transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out); }
+.viewer-inner .photo-leave-active { transition: opacity 0.17s var(--ease-out); }
+.photo-enter-from { opacity: 0; transform: scale(0.95); }
 .photo-leave-to { opacity: 0; }
 .viewer-caption { font-size: 0.9rem; opacity: 0.85; text-align: center; }
 .nav-btn {
   position: fixed; width: 48px; height: 48px; display: grid; place-items: center;
   border: 1px solid rgb(255 255 255 / 0.25); border-radius: 50%; background: rgb(0 0 0 / 0.35); color: #fff;
-  font-size: 1.6rem; line-height: 1; cursor: pointer;
+  padding: 0; font-size: 1.25rem; line-height: 1; cursor: pointer;
+  transition: scale 0.12s var(--ease-out), background-color 0.2s;
 }
-.close { top: max(1rem, env(safe-area-inset-top)); right: 1rem; font-size: 1.1rem; }
+.nav-btn .icon { stroke-width: 2; }
+.nav-btn:active { scale: 0.97; background: rgb(255 255 255 / 0.15); }
+.close { top: max(1rem, env(safe-area-inset-top)); right: 1rem; }
 .prev { left: 0.75rem; top: 50%; translate: 0 -50%; }
 .next { right: 0.75rem; top: 50%; translate: 0 -50%; }
 </style>

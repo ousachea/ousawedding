@@ -9,19 +9,24 @@
 
 /* Derived colours are recomputed wherever a theme overrides the base colours */
 :root, .themed {
-  --c-surface: color-mix(in srgb, #fff 55%, var(--c-bg));
-  --c-muted: color-mix(in srgb, var(--c-text) 68%, var(--c-bg));
-  --c-line: color-mix(in srgb, var(--c-accent) 38%, var(--c-bg));
-  --c-line-soft: color-mix(in srgb, var(--c-accent) 18%, var(--c-bg));
+  --c-surface: color-mix(in oklab, #fff 55%, var(--c-bg));
+  --c-muted: color-mix(in oklab, var(--c-text) 70%, var(--c-bg));
+  /* Transparent, so they suit whatever they are drawn on */
+  --c-line: color-mix(in oklab, var(--c-accent) 38%, transparent);
+  --c-line-soft: color-mix(in oklab, var(--c-accent) 18%, transparent);
   /* Gold dark enough for small text on ivory (WCAG AA) */
-  --c-accent-ink: color-mix(in srgb, var(--c-accent) 50%, var(--c-text));
+  --c-accent-ink: color-mix(in oklab, var(--c-accent) 50%, var(--c-text));
+  /* Accent dark enough for large text on the page (3:1) */
+  --c-accent-large: color-mix(in oklab, var(--c-accent) 80%, var(--c-text));
   --c-on-secondary: #FFF9EE;
   /* Gold for the envelope, whatever accent the theme uses */
-  --c-gold: #C9A24A;
-  --c-gold-light: #F3E2A6;
-  --c-gold-deep: #8A6A22;
-  --c-danger: #A3262A;
-  --c-success: #2F6B47;
+  --c-gold: oklch(73.1% 0.115 85.2);
+  --c-gold-light: oklch(91.2% 0.079 94.2);
+  --c-gold-deep: oklch(54.3% 0.096 83.8);
+  /* Gold dark enough for small text and icons */
+  --c-gold-ink: color-mix(in oklab, var(--c-gold-deep) 75%, var(--c-text));
+  --c-danger: oklch(47.3% 0.161 24.4);
+  --c-success: oklch(47.7% 0.086 154.9);
 }
 
 :root {
@@ -50,7 +55,12 @@
   --shadow: 0 2px 6px rgb(51 43 41 / 0.06), 0 10px 24px -12px rgb(51 43 41 / 0.18);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Gradients mix in OKLCH where the browser can; elsewhere the empty value leaves them as they were */
+  --oklch: ;
   --z-nav: 10;
   --z-overlay: 50;
   --z-toast: 60;
 }
+
+@supports (background: linear-gradient(90deg in oklch, red, blue)) { :root { --oklch: in oklch; } }

@@ -2,7 +2,6 @@
 // The site's home page: the business behind the invitations. Each couple's invitation lives at its own
 // address (/<couple>); this page only introduces the service and how to get in touch.
 const { t, locale } = useI18n()
-const switchLocalePath = useSwitchLocalePath()
 const { data: site } = await useFetch<SiteInfo>('/api/public/site', { key: 'site' })
 const loc = computed(() => locale.value as Locale)
 const name = computed(() => site.value?.name || 'Theab Online')
@@ -156,16 +155,12 @@ useHead(() => ({
   <div class="home">
     <header class="top" :class="{ scrolled, hidden: navHidden }" @focusin="navHidden = false">
       <span class="brand">{{ name }}</span>
-      <nav class="langs" :aria-label="t('common.language')">
-        <NuxtLink :to="switchLocalePath('en')" :class="{ on: loc === 'en' }" lang="en">EN</NuxtLink>
-        <NuxtLink :to="switchLocalePath('km')" :class="{ on: loc === 'km' }" lang="km">ខ្មែរ</NuxtLink>
-      </nav>
+      <WeddingLanguageSwitcher />
     </header>
 
     <main>
       <section class="hero">
         <div class="hero-text">
-          <p class="eyebrow">{{ t('home.eyebrow') }}</p>
           <h1>{{ tagline }}</h1>
           <p class="lead">{{ about }}</p>
           <div class="ctas">
@@ -221,7 +216,7 @@ useHead(() => ({
       <section class="block" aria-labelledby="features-title">
         <h2 id="features-title" v-reveal>{{ t('home.featuresTitle') }}</h2>
         <ul class="features">
-          <li v-for="(f, i) in features" :key="f.key" v-reveal="120 + (i % 3) * 90">
+          <li v-for="(f, i) in features" :key="f.key" v-reveal="100 + (i % 3) * 30">
             <span class="badge-icon"><WeddingIcon :name="f.icon" /></span>
             <h3>{{ t(`home.features.${f.key}.title`) }}</h3>
             <p>{{ t(`home.features.${f.key}.text`) }}</p>
@@ -241,11 +236,11 @@ useHead(() => ({
             <tbody>
               <tr v-for="a in ALWAYS" :key="`always-${a.key}`">
                 <th scope="row"><WeddingIcon :name="a.icon" />{{ t(`home.always.${a.key}`) }}</th>
-                <td class="included">✓ {{ t('home.included') }}</td>
+                <td class="included"><WeddingIcon name="check" /> {{ t('home.included') }}</td>
               </tr>
               <tr v-for="f in includedFeatures" :key="f.key">
                 <th scope="row"><WeddingIcon :name="f.icon" />{{ t(`home.features.${f.key}.title`) }}</th>
-                <td class="included">✓ {{ t('home.included') }}</td>
+                <td class="included"><WeddingIcon name="check" /> {{ t('home.included') }}</td>
               </tr>
               <tr v-if="addonFeatures.length" class="group">
                 <th colspan="2" scope="rowgroup">{{ t('home.addons') }}</th>
@@ -270,7 +265,7 @@ useHead(() => ({
               <li v-for="k in picked" :key="k" class="extra">
                 <span>+ {{ t(`home.features.${k}.title`) }}</span>
                 <span class="tabular">{{ money(pricing!.addons[k]) }}</span>
-                <button type="button" class="remove" :aria-label="t('home.remove', { item: t(`home.features.${k}.title`) })" @click="picked = picked.filter(p => p !== k)">×</button>
+                <button type="button" class="remove" :aria-label="t('home.remove', { item: t(`home.features.${k}.title`) })" @click="picked = picked.filter(p => p !== k)"><WeddingIcon name="close" /></button>
               </li>
             </TransitionGroup>
           </ul>
@@ -285,7 +280,7 @@ useHead(() => ({
       <section class="block" aria-labelledby="how-title">
         <h2 id="how-title" v-reveal>{{ t('home.howTitle') }}</h2>
         <ol class="how">
-          <li v-for="(icon, i) in (['envelope', 'phone', 'heart'] as const)" :key="icon" v-reveal="60 + i * 110">
+          <li v-for="(icon, i) in (['envelope', 'phone', 'heart'] as const)" :key="icon" v-reveal="60 + i * 30">
             <div class="how-art" aria-hidden="true"><span class="how-icon"><WeddingIcon :name="icon" /></span></div>
             <div class="how-text">
               <p class="how-step">{{ t('home.step', { n: i + 1 }) }}</p>
@@ -300,7 +295,7 @@ useHead(() => ({
         <h2 id="need-title" v-reveal>{{ t('home.needTitle') }}</h2>
         <p v-reveal="80" class="block-lead">{{ t('home.needLead') }}</p>
         <ul class="need">
-          <li v-for="n in 6" :key="n" v-reveal="60 + n * 50">{{ t(`home.need.${n}`) }}</li>
+          <li v-for="n in 6" :key="n" v-reveal="60 + n * 30"><WeddingIcon name="check" />{{ t(`home.need.${n}`) }}</li>
         </ul>
       </section>
 
@@ -308,7 +303,7 @@ useHead(() => ({
         <h2 id="faq-title" v-reveal>{{ t('home.faqTitle') }}</h2>
         <!-- One answer open at a time (same name) -->
         <div class="faq">
-          <details v-for="n in 6" :key="n" v-reveal="40 + n * 50" name="faq">
+          <details v-for="n in 6" :key="n" v-reveal="40 + n * 30" name="faq">
             <summary>{{ t(`home.faq.${n}.q`) }}</summary>
             <p>{{ t(`home.faq.${n}.a`) }}</p>
           </details>
@@ -331,11 +326,11 @@ useHead(() => ({
           </div>
           <div class="field">
             <label for="c-name">{{ t('home.form.name') }}</label>
-            <input id="c-name" v-model="form.name" required maxlength="120" autocomplete="name">
+            <input id="c-name" v-model="form.name" required maxlength="120" autocomplete="name" enterkeyhint="next">
           </div>
           <div class="field">
             <label for="c-reach">{{ t('home.form.reach') }}</label>
-            <input id="c-reach" v-model="form.reach" required maxlength="120" autocomplete="tel" :placeholder="t('home.form.reachHint')">
+            <input id="c-reach" v-model="form.reach" required maxlength="120" autocomplete="tel" :placeholder="t('home.form.reachHint')" enterkeyhint="next">
           </div>
           <div class="field">
             <label for="c-date">{{ t('home.form.date') }}</label>
@@ -381,8 +376,8 @@ useHead(() => ({
   overflow-x: clip; overscroll-behavior-x: none;
   min-height: 100dvh; color: var(--c-text);
   background:
-    radial-gradient(60rem 30rem at 85% -10%, color-mix(in srgb, var(--c-gold) 16%, transparent), transparent 70%),
-    radial-gradient(50rem 30rem at -10% 10%, color-mix(in srgb, var(--c-secondary) 10%, transparent), transparent 70%),
+    radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklab, var(--c-gold) 16%, transparent), transparent 70%),
+    radial-gradient(50rem 30rem at -10% 10%, color-mix(in oklab, var(--c-secondary) 10%, transparent), transparent 70%),
     var(--c-bg);
 }
 .top, main, .foot { width: min(72rem, 100% - 2rem); margin-inline: auto; }
@@ -393,18 +388,13 @@ useHead(() => ({
   transition: background-color 0.3s, box-shadow 0.3s, backdrop-filter 0.3s, translate 0.35s var(--ease-out), opacity 0.35s;
 }
 .top.hidden { translate: 0 calc(-100% - var(--space-4) - env(safe-area-inset-top)); opacity: 0; }
-.top.scrolled { background: color-mix(in srgb, var(--c-bg) 75%, transparent); backdrop-filter: blur(12px); box-shadow: 0 0 0 1px var(--c-line-soft), var(--shadow-sm); }
+.top.scrolled { background: color-mix(in oklab, var(--c-bg) 75%, transparent); backdrop-filter: blur(12px); box-shadow: 0 0 0 1px var(--c-line-soft), var(--shadow-sm); }
 .brand { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; color: var(--c-secondary); }
-.langs { display: flex; gap: var(--space-1); padding: 3px; border: 1px solid var(--c-line); border-radius: 999px; }
-.langs a { min-width: 2.75rem; min-height: 2.75rem; display: grid; place-items: center; padding-inline: var(--space-3); border-radius: 999px; text-decoration: none; color: var(--c-muted); font-size: 0.9rem; }
-.langs a.on { background: var(--c-secondary); color: var(--c-on-secondary); }
 
 /* Hero: words on the left, a phone showing an invitation on the right (stacked on phones) */
 .hero { display: grid; gap: var(--space-7); align-items: center; padding-block: var(--space-7) var(--space-8); }
 @media (min-width: 860px) { .hero { grid-template-columns: 1.2fr 1fr; } }
-.eyebrow { font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-accent-ink); font-weight: 500; }
-.eyebrow:lang(km) { letter-spacing: 0; text-transform: none; font-size: 0.95rem; }
-.hero h1 { margin-block: var(--space-3) var(--space-4); font-family: var(--font-serif); font-weight: 600; font-size: clamp(2.3rem, 6vw, 3.6rem); line-height: 1.08; color: var(--c-tertiary); text-wrap: balance; }
+.hero h1 { margin-block: 0 var(--space-4); font-family: var(--font-serif); font-weight: 600; font-size: clamp(2.3rem, 6vw, 3.6rem); line-height: 1.08; color: var(--c-tertiary); text-wrap: balance; }
 .hero h1:lang(km) { line-height: 1.5; font-size: clamp(1.8rem, 5vw, 2.6rem); }
 .lead { font-size: 1.1rem; color: var(--c-muted); max-width: 34rem; text-wrap: pretty; }
 .ctas { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
@@ -415,13 +405,13 @@ useHead(() => ({
 .try { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
 .phone {
   --w: 18rem; --rim: 0.45rem; position: relative; width: var(--w); padding: var(--rim); border-radius: 3.1rem;
-  background: linear-gradient(140deg, #6f6a76 0%, #2a2630 18%, #17141b 50%, #2a2630 82%, #77727e 100%);
+  background: linear-gradient(140deg var(--oklch), #6f6a76 0%, #2a2630 18%, #17141b 50%, #2a2630 82%, #77727e 100%);
   box-shadow:
     0 0 0 1px rgb(0 0 0 / 0.6), inset 0 0 0 1px rgb(255 255 255 / 0.18),
     0 40px 70px -30px rgb(45 22 64 / 0.6), 0 18px 30px -18px rgb(0 0 0 / 0.35);
 }
 /* Side buttons: power on the right; action and volume on the left */
-.phone::before, .phone::after { content: ''; position: absolute; width: 3px; border-radius: 2px; background: linear-gradient(90deg, #2a2630, #77727e); }
+.phone::before, .phone::after { content: ''; position: absolute; width: 3px; border-radius: 2px; background: linear-gradient(90deg var(--oklch), #2a2630, #77727e); }
 .phone::before { right: -3px; top: 27%; height: 12%; }
 .phone::after { left: -3px; top: 17%; height: 4%; box-shadow: 0 3.4rem 0 #4a4550, 0 6.6rem 0 #4a4550; height: 2.6rem; }
 .screen {
@@ -447,7 +437,7 @@ useHead(() => ({
   border: 0; border-radius: 999px; background: none; color: var(--c-text); font: inherit; font-weight: 500; cursor: pointer;
   transition: background-color 0.2s, color 0.2s, scale 0.15s;
 }
-.tab:active { scale: 0.96; }
+.tab:active, .seg button:active { scale: 0.97; }
 .tab[aria-checked='true'] { background: var(--c-secondary); color: var(--c-on-secondary); }
 .tab:focus-visible, .seg button:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 .dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--dot); box-shadow: 0 0 0 2px rgb(255 255 255 / 0.8); }
@@ -455,10 +445,10 @@ useHead(() => ({
 .controls .field label { font-weight: 500; }
 .row { display: flex; justify-content: center; }
 .seg { display: flex; padding: 3px; border-radius: 999px; box-shadow: 0 0 0 1px var(--c-line) inset; }
-.seg button { min-width: 3rem; min-height: 44px; border: 0; border-radius: 999px; background: none; color: var(--c-muted); font: inherit; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.seg button { min-width: 3rem; min-height: 44px; border: 0; border-radius: 999px; background: none; color: var(--c-muted); font: inherit; cursor: pointer; transition: background-color 0.2s, color 0.2s, scale 0.15s; }
 .seg button[aria-checked='true'] { background: var(--c-secondary); color: var(--c-on-secondary); }
 
-.block { padding-block: var(--space-7); border-top: 1px solid var(--c-line-soft); }
+.block { padding-block: var(--space-7); }
 .block h2 { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.8rem, 4vw, 2.4rem); color: var(--c-tertiary); text-align: center; text-wrap: balance; }
 .block h2:lang(km) { line-height: 1.6; }
 .block-lead { text-align: center; color: var(--c-muted); margin: var(--space-2) auto 0; max-width: 36rem; }
@@ -474,25 +464,25 @@ useHead(() => ({
   .features li:hover .badge-icon { background: var(--c-secondary); color: var(--c-on-secondary); scale: 1.08; }
 }
 .features p, .how p { color: var(--c-muted); font-size: 0.95rem; }
-.badge-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; font-size: 1.4rem; color: var(--c-secondary); background: color-mix(in srgb, var(--c-secondary) 9%, transparent); }
+.badge-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; font-size: 1.4rem; color: var(--c-secondary); background: color-mix(in oklab, var(--c-secondary) 9%, transparent); }
 
 /* How it works: three tall cards, each with a large icon on a tinted panel. In a row when wide, stacked on phones. */
 .how { list-style: none; margin: var(--space-6) 0 0; padding: 0; display: grid; gap: var(--space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
 .how li {
   display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-lg);
   background: var(--c-surface); box-shadow: 0 0 0 1px var(--c-line-soft) inset, var(--shadow-sm);
-  transition: translate 0.35s var(--ease-out), box-shadow 0.35s; -webkit-tap-highlight-color: transparent;
+  transition: translate 0.35s var(--ease-out), box-shadow 0.35s;
 }
 .how-art {
   display: grid; place-items: center; aspect-ratio: 16 / 10;
   background:
-    radial-gradient(circle at 50% 50%, transparent 0 22%, color-mix(in srgb, var(--c-gold) 22%, transparent) 22.5% 23%, transparent 23.5% 32%, color-mix(in srgb, var(--c-gold) 14%, transparent) 32.5% 33%, transparent 33.5%),
-    linear-gradient(160deg, color-mix(in srgb, var(--c-secondary) 14%, var(--c-bg)), color-mix(in srgb, var(--c-gold) 18%, var(--c-bg)));
+    radial-gradient(circle at 50% 50%, transparent 0 22%, color-mix(in oklab, var(--c-gold) 22%, transparent) 22.5% 23%, transparent 23.5% 32%, color-mix(in oklab, var(--c-gold) 14%, transparent) 32.5% 33%, transparent 33.5%),
+    linear-gradient(160deg var(--oklch), color-mix(in oklab, var(--c-secondary) 14%, var(--c-bg)), color-mix(in oklab, var(--c-gold) 18%, var(--c-bg)));
 }
 .how-icon {
   display: grid; place-items: center; width: 5.5rem; height: 5.5rem; border-radius: 50%;
   font-size: 2.6rem; color: var(--c-secondary); background: var(--c-surface);
-  box-shadow: 0 10px 24px -10px rgb(45 22 64 / 0.45), 0 0 0 6px color-mix(in srgb, var(--c-surface) 55%, transparent);
+  box-shadow: 0 10px 24px -10px rgb(45 22 64 / 0.45), 0 0 0 6px color-mix(in oklab, var(--c-surface) 55%, transparent);
   transition: scale 0.35s var(--ease-out), rotate 0.35s var(--ease-out);
 }
 .how-text { padding: var(--space-4) var(--space-5) var(--space-5); text-align: center; }
@@ -509,21 +499,21 @@ useHead(() => ({
 /* What to send: a two-column checklist with gold ticks */
 .need { list-style: none; margin: var(--space-6) auto 0; padding: 0; max-width: 46rem; display: grid; gap: var(--space-3) var(--space-6); grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
 .need li { position: relative; padding-left: 2rem; text-wrap: pretty; }
-.need li::before { content: '✓'; position: absolute; left: 0; top: 0.05em; width: 1.4rem; height: 1.4rem; display: grid; place-items: center; border-radius: 50%; font-size: 0.8rem; font-weight: 700; color: var(--c-on-secondary); background: var(--c-gold); }
+.need .icon { position: absolute; left: 0; top: 0.15em; width: 1.4rem; height: 1.4rem; padding: 0.25rem; border-radius: 50%; stroke-width: 2.5; color: var(--c-tertiary); background: var(--c-gold); }
 
 .faq { max-width: 46rem; margin: var(--space-6) auto 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .faq details { border-radius: var(--radius); background: var(--c-surface); box-shadow: 0 0 0 1px var(--c-line-soft) inset; transition: box-shadow 0.2s; }
 .faq details[open] { box-shadow: 0 0 0 1px var(--c-line) inset, var(--shadow-sm); }
 .faq summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-3) var(--space-4); font-weight: 500; cursor: pointer; list-style: none; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: '+'; flex: none; font-size: 1.4rem; line-height: 1; color: var(--c-accent-ink); transition: rotate 0.2s var(--ease-out); }
+.faq summary::after { content: ''; flex: none; width: 0.9rem; height: 0.9rem; background: linear-gradient(var(--c-accent-ink) 0 0) center / 100% 2px no-repeat, linear-gradient(var(--c-accent-ink) 0 0) center / 2px 100% no-repeat; transition: rotate 0.2s var(--ease-in-out); }
 .faq details[open] summary::after { rotate: 45deg; }
 .faq summary:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: 2px; border-radius: var(--radius); }
 .faq details p { padding: 0 var(--space-4) var(--space-4); color: var(--c-muted); text-wrap: pretty; }
 /* Answers slide open and closed, and fade in (browsers without ::details-content just open them) */
 .faq { interpolate-size: allow-keywords; }
-.faq details::details-content { block-size: 0; overflow: hidden; transition: block-size 0.35s var(--ease-out), content-visibility 0.35s allow-discrete; }
-.faq details[open]::details-content { block-size: auto; }
+.faq details::details-content { block-size: 0; overflow: hidden; transition: block-size 0.24s var(--ease-out), content-visibility 0.24s allow-discrete; }
+.faq details[open]::details-content { block-size: auto; transition-duration: 0.3s; }
 @media (prefers-reduced-motion: no-preference) { .faq details[open] p { animation: answer 0.4s var(--ease-out); } }
 @keyframes answer { from { opacity: 0; translate: 0 -6px; } }
 
@@ -542,12 +532,13 @@ useHead(() => ({
 .prices th .icon { color: var(--c-accent-ink); }
 .prices td { text-align: right; white-space: nowrap; font-weight: 500; color: var(--c-secondary); }
 .prices td.included { color: var(--c-success); }
+.prices td.included .icon { vertical-align: -0.25em; stroke-width: 1.8; }
 .prices tr.group th { display: table-cell; padding-top: var(--space-5); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-accent-ink); }
 .prices tr.group th:lang(km) { letter-spacing: 0; text-transform: none; font-size: 0.95rem; }
-.prices tr.addon { cursor: pointer; transition: background-color 0.15s; -webkit-tap-highlight-color: transparent; }
-.prices tr.addon:hover { background: color-mix(in srgb, var(--c-secondary) 5%, transparent); }
+.prices tr.addon { cursor: pointer; transition: background-color 0.15s; }
+@media (hover: hover) { .prices tr.addon:hover { background: color-mix(in oklab, var(--c-secondary) 5%, transparent); } }
 .prices tr.on td { color: var(--c-secondary); }
-.pick { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pick { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
 .box {
   position: relative; flex: none; width: 1.35rem; height: 1.35rem; border-radius: 6px;
   box-shadow: inset 0 0 0 1.5px var(--c-line); background: var(--c-surface);
@@ -562,7 +553,7 @@ useHead(() => ({
 }
 .pick input:checked + .box { background: var(--c-secondary); box-shadow: inset 0 0 0 1.5px var(--c-secondary); }
 .pick input:checked + .box::after { scale: 1; opacity: 1; }
-.pick:active .box { scale: 0.96; }
+.pick:active .box { scale: 0.97; }
 .pick input:focus-visible + .box { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 @media (hover: hover) { .prices tr.addon:hover .box { box-shadow: inset 0 0 0 1.5px var(--c-secondary); } }
 /* The whole row toggles its add-on: the label stretches over it */
@@ -577,16 +568,18 @@ useHead(() => ({
 /* × is small to look at but a full fingertip to tap */
 .remove {
   position: relative; flex: none; width: 1.5rem; height: 1.5rem; display: grid; place-items: center; padding: 0;
-  border: 0; border-radius: 50%; background: color-mix(in srgb, var(--c-secondary) 10%, transparent);
-  color: var(--c-secondary); font-size: 1rem; line-height: 1; cursor: pointer;
+  border: 0; border-radius: 50%; background: color-mix(in oklab, var(--c-secondary) 10%, transparent);
+  color: var(--c-secondary); font-size: 0.75rem; line-height: 1; cursor: pointer;
   transition: background-color 0.15s, color 0.15s, scale 0.15s;
 }
-.remove::after { content: ''; position: absolute; inset: -0.6rem; }
-.remove:hover { background: var(--c-danger); color: #fff; }
-.remove:active { scale: 0.96; }
+.remove::after { content: ''; position: absolute; inset: -0.65rem; }
+@media (hover: hover) { .remove:hover { background: var(--c-danger); color: #fff; } }
+.remove:active { scale: 0.97; }
 .remove:focus-visible { outline: 2px solid var(--c-secondary); outline-offset: 2px; }
 /* Lines slide in when ticked and fade out when unticked (the others move up smoothly) */
-.line-enter-active, .line-leave-active, .line-move { transition: opacity 0.25s var(--ease-out), translate 0.25s var(--ease-out); }
+.line-enter-active, .line-leave-active { transition: opacity 0.25s var(--ease-out), translate 0.25s var(--ease-out); }
+.line-leave-active { transition-duration: 0.2s; }
+.line-move { transition: transform 0.25s var(--ease-in-out); }
 .line-enter-from, .line-leave-to { opacity: 0; translate: 0 -6px; }
 .line-leave-active { position: absolute; width: 100%; }
 .total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--c-line); font-weight: 500; }
@@ -612,7 +605,7 @@ useHead(() => ({
 .home .field input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .enquiry .btn { min-height: 48px; min-width: 12rem; }
 .failed { color: var(--c-danger); }
-.chosen { padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--c-secondary) 6%, var(--c-surface)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-secondary) 25%, transparent) inset; }
+.chosen { padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); background: color-mix(in oklab, var(--c-secondary) 6%, var(--c-surface)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--c-secondary) 25%, transparent) inset; }
 .chosen-title { font-weight: 600; color: var(--c-secondary); }
 .chosen ul { list-style: none; margin: var(--space-2) 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
 .chosen li { padding: 0.15rem 0.7rem; border-radius: 999px; background: var(--c-surface); font-size: 0.9rem; box-shadow: 0 0 0 1px var(--c-line-soft) inset; }
@@ -622,5 +615,5 @@ useHead(() => ({
 .sent { margin: var(--space-6) auto 0; max-width: 30rem; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--c-surface); font-family: var(--font-serif); font-size: 1.3rem; color: var(--c-secondary); }
 .contacts { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin-top: var(--space-6); }
 .contacts .btn { min-height: 48px; gap: var(--space-2); }
-.foot { padding-block: var(--space-6); text-align: center; color: var(--c-muted); font-size: 0.85rem; border-top: 1px solid var(--c-line-soft); }
+.foot { padding-block: var(--space-6); text-align: center; color: var(--c-muted); font-size: 0.85rem; }
 </style>
